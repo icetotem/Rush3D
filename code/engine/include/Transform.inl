@@ -63,17 +63,17 @@ namespace rush
 
     inline void Transform::SetParent(Ref<Entity> parent)
     {
-        if (m_Parent == parent)
-            return;
-
-        if (m_Parent != nullptr)
-            m_Parent->GetComponent<Transform>()->RemoveChild(GetOwner());
-
-        if (parent != nullptr)
-        {
-            parent->GetComponent<Transform>()->AddChild(GetOwner());
-            parent->GetComponent<Transform>()->CheckUpdateTree();
-        }
+//         if (m_Parent == parent)
+//             return;
+// 
+//         if (m_Parent != nullptr)
+//             m_Parent->GetComponent<Transform>()->RemoveChild(GetOwner());
+// 
+//         if (parent != nullptr)
+//         {
+//             parent->GetComponent<Transform>()->AddChild(GetOwner());
+//             parent->GetComponent<Transform>()->CheckUpdateTree();
+//         }
 
         m_Parent = parent;
 
@@ -557,15 +557,15 @@ namespace rush
             return 0;
         }
 
-        auto result = GetOwner();
-        int deep = 0;
-        while (result->GetComponent<Transform>()->GetParent() != nullptr)
-        {
-            result = result->GetComponent<Transform>()->GetParent();
-            ++deep;
-        }
-
-        return deep;
+//         auto result = GetOwner();
+//         int deep = 0;
+//         while (result->GetComponent<Transform>()->GetParent() != nullptr)
+//         {
+//             result = result->GetComponent<Transform>()->GetParent();
+//             ++deep;
+//         }
+//        return deep;
+        return 0;
     }
 
     inline void Transform::AddChild(Ref<Entity> child)
