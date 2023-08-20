@@ -27,8 +27,11 @@ namespace rush
     public:
 
         static WindowHandle CreateRenderWindow(const WindowDesc* desc);
+
         static void DestroyRenderWindow(WindowHandle window);
-        static void MessageLoop(WindowHandle window, Redraw redraw);
+
+        static void StartLoop(WindowHandle window, Redraw redraw);
+
         static void ShowRenderWindow(WindowHandle window, bool show);
     };
 

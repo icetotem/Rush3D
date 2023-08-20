@@ -18,7 +18,6 @@ project "Rush3D_Engine"
     {
 		path.join(ENGINE_DIR, "**.h"),
 		path.join(ENGINE_DIR, "**.inl"),
-		path.join(ENGINE_DIR, "**.h"),
 		path.join(ENGINE_DIR, "**.cpp"),
     }
 

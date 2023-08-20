@@ -565,7 +565,7 @@ namespace rush
 		window::destroy(reinterpret_cast<window::Handle>(window));
     }
 
-    void Platform::MessageLoop(WindowHandle window, Redraw redraw)
+    void Platform::StartLoop(WindowHandle window, Redraw redraw)
     {
         window::loop(reinterpret_cast<window::Handle>(window), redraw);
     }

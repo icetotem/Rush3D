@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "webgpu.h"
+#include "src/webgpu.h"
 
 #include <string.h>
 #include "windows/window.h"
@@ -412,7 +412,7 @@ int main(int argc, char* argv[])
 			createPipelineAndBuffers();
 
 			Platform::ShowRenderWindow(wHnd, true);
-			Platform::MessageLoop(wHnd, redraw);
+			Platform::StartLoop(wHnd, redraw);
 
 			wgpuBindGroupRelease(bindGroup);
 			wgpuBufferRelease(uRotBuf);

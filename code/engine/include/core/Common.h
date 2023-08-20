@@ -95,10 +95,32 @@
 #include <set>
 #include <deque>
 #include <algorithm>
+#include <string_view>
 #include "Logger.h"
 
 namespace rush
 { 
+
+    typedef std::string String;
+    typedef std::string_view StringView;
+    
+    template<typename T>
+    using List = std::list<T>;
+
+    template<typename T>
+    using DArray = std::vector<T>;
+
+    template<typename T, size_t N>
+    using SArray = std::array<T, N>;
+
+    template<typename Key, typename Value>
+    using Map = std::map<Key, Value>;
+
+    template<typename Key, typename Value>
+    using HMap = std::unordered_map<Key, Value>;
+
+    template<typename T>
+    using HSet = std::unordered_set<T>;
 
     template<typename T>
     using Unique = std::unique_ptr<T>;
@@ -132,152 +154,6 @@ namespace rush
         );
         return s;
     }
-
-    template <typename Key1, typename Key2, typename Type, typename Value>
-    class MultiKeyMap
-    {
-    public:
-        struct Info
-        {
-            Key1 key1;
-            Key2 key2;
-            Type type;
-            Value value;
-        };
-
-        struct iterator
-        {
-            using iterator_category = std::forward_iterator_tag;
-            using difference_type = std::ptrdiff_t;
-            using value_type = MultiKeyMap::Info;
-            using pointer = value_type*;
-            using reference = value_type&;
-
-            iterator(typename std::map<Key1, value_type>::iterator i) : inner(i) {}
-
-            reference operator*() const { return inner->second; }
-            pointer operator->() { return &inner; }
-            iterator& operator++() { inner++; return *this; }
-            friend bool operator== (const iterator& a, const iterator& b) { return a.inner == b.inner; };
-            friend bool operator!= (const iterator& a, const iterator& b) { return a.inner != b.inner; };
-
-        private:
-            typename std::map<Key1, value_type>::iterator inner;
-        };
-
-        iterator begin() { return iterator(key1_map.begin()); }
-        iterator end() { return iterator(key1_map.end()); }
-
-        bool Add(Key1 key1, Key2 key2, Type type, Value value)
-        {
-            if (Find(key1) != nullptr || Find(key2) != nullptr)
-                return false;
-            Info info = { key1, key2, type, value };
-            key1_map.insert({ key1, info });
-            key2_map.insert({ key2, &key1_map[key1] });
-            type_map.insert({ type, &key1_map[key1] });
-            return true;
-        }
-
-        Value* Find(Key1 key)
-        {
-            auto iter = key1_map.find(key);
-            if (iter == key1_map.end())
-            {
-                return nullptr;
-            }
-            else
-            {
-                return &iter->second.value;
-            }
-        }
-
-        Value* Find(Key2 key)
-        {
-            auto iter = key2_map.find(key);
-            if (iter == key2_map.end())
-            {
-                return nullptr;
-            }
-            else
-            {
-                return &iter->second->value;
-            }
-        }
-
-        void Find(Type type, std::vector<Value>& values)
-        {
-            values.clear();
-            auto iter = type_map.equal_range(type);
-            for (auto i = iter.first; i != iter.second; ++i)
-            {
-                values.push_back(i->second->value);
-            }
-        }
-
-        void Remove(Key1 key)
-        {
-            auto iter = key1_map.find(key);
-            if (iter != key1_map.end())
-            {
-                auto iter2 = type_map.equal_range(iter->second.type);
-                for (auto i = iter2.first; i != iter2.second; ++i)
-                {
-                    if (i->second->value == iter->second.value)
-                    {
-                        type_map.erase(i);
-                        break;
-                    }
-                }
-                key2_map.erase(iter->second.key2);
-                key1_map.erase(iter);
-            }
-        }
-
-        void Remove(Key2 key)
-        {
-            auto iter = key2_map.find(key);
-            if (iter != key2_map.end())
-            {
-                auto iter2 = type_map.equal_range(iter->second->type);
-                for (auto i = iter2.first; i != iter2.second; ++i)
-                {
-                    if (i->second->value == iter->second->value)
-                    {
-                        type_map.erase(i);
-                        break;
-                    }
-                }
-                key1_map.erase(iter->second->key1);
-                key2_map.erase(iter);
-            }
-        }
-
-        void Remove(Type type)
-        {
-            auto iter = type_map.equal_range(type);
-            for (auto i = iter.first; i != iter.second; ++i)
-            {
-                key1_map.erase(i->second.key1);
-                key2_map.erase(i->second.key2);
-            }
-            type_map.erase(iter.first, iter.second);
-        }
-
-        void RemoveAll()
-        {
-            type_map.clear();
-            key2_map.clear();
-            key1_map.clear();
-        }
-
-        size_t GetCount() const { return key1_map.size(); }
-
-    private:
-        std::map<Key1, Info> key1_map;
-        std::map<Key2, Info*> key2_map;
-        std::multimap<Type, Info*> type_map;
-    };
 
     /// <summary>
     /// FreeList
@@ -726,4 +602,6 @@ namespace rush
         int x2;
         int y2;
     };
+
+
 }
