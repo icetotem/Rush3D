@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "webgpu.h"
+#include "WebGpuHelper.h"
 
 /*
  * On Windows x86/x64 Dawn should have been built with the D3D12 and Vulkan
@@ -212,7 +212,7 @@ namespace webgpu
         return impl::device;
     }
 
-    WGPUSwapChain createSwapChain(WGPUDevice device) 
+    WGPUSwapChain createSwapChain(WGPUDevice device, int width, int height)
 	{
         WGPUSwapChainDescriptor swapDesc = {};
         /*
@@ -230,7 +230,7 @@ namespace webgpu
         /*
          * Currently failing on hi-DPI (with Vulkan).
          */
-        wgpuSwapChainConfigure(swapchain, impl::swapPref, WGPUTextureUsage_RenderAttachment, 800, 450);
+        wgpuSwapChainConfigure(swapchain, impl::swapPref, WGPUTextureUsage_RenderAttachment, width, height);
         return swapchain;
     }
 

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Render.h"
-#include "webgpu.h"
+#include "WebGpuHelper.h"
 #include "dawn/webgpu.h"
 
 namespace rush
@@ -82,6 +82,106 @@ namespace rush
         WGPUVertexFormat_Sint32x4
     };
 
+    WGPUTextureFormat g_WGPUTextureFormat[(int)TextureFormat::TF_Count] =
+    {
+        WGPUTextureFormat_R8Unorm,
+        WGPUTextureFormat_R8Snorm,
+        WGPUTextureFormat_R8Uint,
+        WGPUTextureFormat_R8Sint,
+        WGPUTextureFormat_R16Uint,
+        WGPUTextureFormat_R16Sint,
+        WGPUTextureFormat_R16Float,
+        WGPUTextureFormat_RG8Unorm,
+        WGPUTextureFormat_RG8Snorm,
+        WGPUTextureFormat_RG8Uint,
+        WGPUTextureFormat_RG8Sint,
+        WGPUTextureFormat_R32Float,
+        WGPUTextureFormat_R32Uint,
+        WGPUTextureFormat_R32Sint,
+        WGPUTextureFormat_RG16Uint,
+        WGPUTextureFormat_RG16Sint,
+        WGPUTextureFormat_RG16Float,
+        WGPUTextureFormat_RGBA8Unorm,
+        WGPUTextureFormat_RGBA8UnormSrgb,
+        WGPUTextureFormat_RGBA8Snorm,
+        WGPUTextureFormat_RGBA8Uint,
+        WGPUTextureFormat_RGBA8Sint,
+        WGPUTextureFormat_BGRA8Unorm,
+        WGPUTextureFormat_BGRA8UnormSrgb,
+        WGPUTextureFormat_RGB10A2Unorm,
+        WGPUTextureFormat_RG11B10Ufloat,
+        WGPUTextureFormat_RGB9E5Ufloat,
+        WGPUTextureFormat_RG32Float,
+        WGPUTextureFormat_RG32Uint,
+        WGPUTextureFormat_RG32Sint,
+        WGPUTextureFormat_RGBA16Uint,
+        WGPUTextureFormat_RGBA16Sint,
+        WGPUTextureFormat_RGBA16Float,
+        WGPUTextureFormat_RGBA32Float,
+        WGPUTextureFormat_RGBA32Uint,
+        WGPUTextureFormat_RGBA32Sint,
+        WGPUTextureFormat_Stencil8,
+        WGPUTextureFormat_Depth16Unorm,
+        WGPUTextureFormat_Depth24Plus,
+        WGPUTextureFormat_Depth24PlusStencil8,
+        WGPUTextureFormat_Depth32Float,
+        WGPUTextureFormat_Depth32FloatStencil8,
+        WGPUTextureFormat_BC1RGBAUnorm,
+        WGPUTextureFormat_BC1RGBAUnormSrgb,
+        WGPUTextureFormat_BC2RGBAUnorm,
+        WGPUTextureFormat_BC2RGBAUnormSrgb,
+        WGPUTextureFormat_BC3RGBAUnorm,
+        WGPUTextureFormat_BC3RGBAUnormSrgb,
+        WGPUTextureFormat_BC4RUnorm,
+        WGPUTextureFormat_BC4RSnorm,
+        WGPUTextureFormat_BC5RGUnorm,
+        WGPUTextureFormat_BC5RGSnorm,
+        WGPUTextureFormat_BC6HRGBUfloat,
+        WGPUTextureFormat_BC6HRGBFloat,
+        WGPUTextureFormat_BC7RGBAUnorm,
+        WGPUTextureFormat_BC7RGBAUnormSrgb,
+        WGPUTextureFormat_ETC2RGB8Unorm,
+        WGPUTextureFormat_ETC2RGB8UnormSrgb,
+        WGPUTextureFormat_ETC2RGB8A1Unorm,
+        WGPUTextureFormat_ETC2RGB8A1UnormSrgb,
+        WGPUTextureFormat_ETC2RGBA8Unorm,
+        WGPUTextureFormat_ETC2RGBA8UnormSrgb,
+        WGPUTextureFormat_EACR11Unorm,
+        WGPUTextureFormat_EACR11Snorm,
+        WGPUTextureFormat_EACRG11Unorm,
+        WGPUTextureFormat_EACRG11Snorm,
+        WGPUTextureFormat_ASTC4x4Unorm,
+        WGPUTextureFormat_ASTC4x4UnormSrgb,
+        WGPUTextureFormat_ASTC5x4Unorm,
+        WGPUTextureFormat_ASTC5x4UnormSrgb,
+        WGPUTextureFormat_ASTC5x5Unorm,
+        WGPUTextureFormat_ASTC5x5UnormSrgb,
+        WGPUTextureFormat_ASTC6x5Unorm,
+        WGPUTextureFormat_ASTC6x5UnormSrgb,
+        WGPUTextureFormat_ASTC6x6Unorm,
+        WGPUTextureFormat_ASTC6x6UnormSrgb,
+        WGPUTextureFormat_ASTC8x5Unorm,
+        WGPUTextureFormat_ASTC8x5UnormSrgb,
+        WGPUTextureFormat_ASTC8x6Unorm,
+        WGPUTextureFormat_ASTC8x6UnormSrgb,
+        WGPUTextureFormat_ASTC8x8Unorm,
+        WGPUTextureFormat_ASTC8x8UnormSrgb,
+        WGPUTextureFormat_ASTC10x5Unorm,
+        WGPUTextureFormat_ASTC10x5UnormSrgb,
+        WGPUTextureFormat_ASTC10x6Unorm,
+        WGPUTextureFormat_ASTC10x6UnormSrgb,
+        WGPUTextureFormat_ASTC10x8Unorm,
+        WGPUTextureFormat_ASTC10x8UnormSrgb,
+        WGPUTextureFormat_ASTC10x10Unorm,
+        WGPUTextureFormat_ASTC10x10UnormSrgb,
+        WGPUTextureFormat_ASTC12x10Unorm,
+        WGPUTextureFormat_ASTC12x10UnormSrgb,
+        WGPUTextureFormat_ASTC12x12Unorm,
+        WGPUTextureFormat_ASTC12x12UnormSrgb,
+        WGPUTextureFormat_R8BG8Biplanar420Unorm,
+        WGPUTextureFormat_Force32
+    };
+
     //////////////////////////////////////////////////////////////////////////
 
     struct RBuffer::WebGpuImpl
@@ -157,21 +257,37 @@ namespace rush
     }
 
     //////////////////////////////////////////////////////////////////////////
-
-    struct FrameBuffer::WebGpuImpl
+    struct RTexture::WebGpuImpl
     {
-        WGPUTextureView textureView = nullptr;
+        WGPUTexture texture = nullptr;
     };
 
-    FrameBuffer::FrameBuffer()
+    RTexture::RTexture()
     {
         m_Impl = CreateRef<WebGpuImpl>();
     }
 
-    FrameBuffer::~FrameBuffer()
+    RTexture::~RTexture()
     {
-        if (m_Impl->textureView)
-            wgpuTextureViewRelease(m_Impl->textureView);
+        if (m_Impl->texture)
+            wgpuTextureRelease(m_Impl->texture);
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    struct RenderPass::WebGpuImpl
+    {
+        WGPUTextureView view;
+    };
+
+    RenderPass::RenderPass()
+    {
+        m_Impl = CreateRef<WebGpuImpl>();
+    }
+
+    RenderPass::~RenderPass()
+    {
+        if (m_Impl->view)
+            wgpuTextureViewRelease(m_Impl->view);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -183,13 +299,17 @@ namespace rush
         WGPUSwapChain swapchain = nullptr;
     };
 
-    Renderer::Renderer(WindowHandle window)
+    Renderer::Renderer(WindowHandle window, const RendererDesc* rendererDesc)
         : m_WindowHandle(window)
     {
         m_Impl = CreateRef<WebGpuImpl>();
         m_Impl->device = webgpu::create(m_WindowHandle);
         m_Impl->queue = wgpuDeviceGetQueue(m_Impl->device);
-        m_Impl->swapchain = webgpu::createSwapChain(m_Impl->device);
+
+        m_Msaa = rendererDesc->msaa;
+
+        Platform::GetWindowSize(window, m_Width, m_Height);
+        m_Impl->swapchain = webgpu::createSwapChain(m_Impl->device, m_Width, m_Height);
     }
 
     Renderer::~Renderer()
@@ -264,19 +384,29 @@ namespace rush
         layoutDesc.bindGroupLayouts = &bindGroupLayout;
         WGPUPipelineLayout pipelineLayout = wgpuDeviceCreatePipelineLayout(m_Impl->device, &layoutDesc);
 
-        // describe buffer layouts
-        WGPUVertexAttribute vertAttrs[32] = {};
-        for (uint32_t i = 0; i < pipeDesc->VLayout.AttributeCount; ++i)
+        RUSH_ASSERT(pipeDesc->VLayouts.size() <= 16);
+
+        WGPUVertexAttribute vertAttrs[16][16] = {};
+        WGPUVertexBufferLayout vertexBufferLayouts[16] = {};
+        int bufferIndex = 0;
+        for (const auto& vLayout : pipeDesc->VLayouts)
         {
-            vertAttrs[i].format = g_WGPUVertexFormat[(int)pipeDesc->VLayout.Attributes[i].Format];
-            vertAttrs[i].offset = pipeDesc->VLayout.Attributes[i].Offset;
-            vertAttrs[i].shaderLocation = pipeDesc->VLayout.Attributes[i].ShaderLocation;
+            RUSH_ASSERT(vLayout.AttributeCount <= 16);
+
+            // describe buffer layouts
+            for (uint32_t i = 0; i < vLayout.AttributeCount; ++i)
+            {
+                vertAttrs[bufferIndex][i].format = g_WGPUVertexFormat[(int)vLayout.Attributes[i].Format];
+                vertAttrs[bufferIndex][i].offset = vLayout.Attributes[i].Offset;
+                vertAttrs[bufferIndex][i].shaderLocation = vLayout.Attributes[i].ShaderLocation;
+            }
+
+            vertexBufferLayouts[bufferIndex].arrayStride = vLayout.Stride;
+            vertexBufferLayouts[bufferIndex].attributeCount = vLayout.AttributeCount;
+            vertexBufferLayouts[bufferIndex].attributes = vertAttrs[bufferIndex];
+            ++bufferIndex;
         }
 
-        WGPUVertexBufferLayout vertexBufferLayout = {};
-        vertexBufferLayout.arrayStride = pipeDesc->VLayout.Stride;
-        vertexBufferLayout.attributeCount = pipeDesc->VLayout.AttributeCount;
-        vertexBufferLayout.attributes = vertAttrs;
 
         // Fragment state
         WGPUBlendState blend = {};
@@ -310,10 +440,10 @@ namespace rush
 
         desc.vertex.module = pipeDesc->VS->m_Impl->shaderModule;
         desc.vertex.entryPoint = "main";
-        desc.vertex.bufferCount = 1;//0;
-        desc.vertex.buffers = &vertexBufferLayout;
+        desc.vertex.bufferCount = pipeDesc->VLayouts.size();
+        desc.vertex.buffers = vertexBufferLayouts;
 
-        desc.multisample.count = 1;
+        desc.multisample.count = m_Msaa;
         desc.multisample.mask = 0xFFFFFFFF;
         desc.multisample.alphaToCoverageEnabled = false;
 
@@ -386,33 +516,83 @@ namespace rush
         wgpuQueueWriteBuffer(m_Impl->queue, buffer->m_Impl->buffer, offset, data, size);
     }
 
+    Ref<RenderPass> Renderer::CreateRenderPass(const RenderPassDesc* renderPassDesc)
+    {
+        WGPUTextureDescriptor textureDesc = {};
+        if (renderPassDesc->Width == 0 || renderPassDesc->Height == 0)
+        {
+            textureDesc.size.width = m_Width;
+            textureDesc.size.height = m_Height;
+        }
+        else
+        {
+            textureDesc.size.width = renderPassDesc->Width;
+            textureDesc.size.height = renderPassDesc->Height;
+        }
+
+        textureDesc.size.depthOrArrayLayers = 1;
+        textureDesc.sampleCount = m_Msaa;
+        textureDesc.dimension = WGPUTextureDimension_2D;
+        if (renderPassDesc->IsSwapBuffer)
+        {
+            textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
+        }
+        else
+        {
+            textureDesc.format = g_WGPUTextureFormat[(int)renderPassDesc->Format];
+        }
+        textureDesc.usage = WGPUTextureUsage_RenderAttachment;
+        textureDesc.mipLevelCount = 1;
+
+        Ref<RTexture> textureObject = CreateRef<RTexture>();
+        textureObject->m_Impl->texture = wgpuDeviceCreateTexture(m_Impl->device, &textureDesc);
+
+        WGPUTextureViewDescriptor textureViewDesc = {};
+        textureViewDesc.arrayLayerCount = 1;
+        textureViewDesc.mipLevelCount = 1;
+        WGPUTextureView view = wgpuTextureCreateView(textureObject->m_Impl->texture, &textureViewDesc);
+
+        Ref<RenderPass> renderPassObj = CreateRef<RenderPass>();
+        renderPassObj->m_RenderTarget = textureObject;
+        renderPassObj->m_Impl->view = view;
+        renderPassObj->ClearColor = renderPassDesc->ClearColor;
+        renderPassObj->IsSwapBuffer = renderPassDesc->IsSwapBuffer;
+
+        return renderPassObj;
+    }
+
     void Renderer::RenderOnePass(Ref<RenderPass> renderPass, Ref<RenderContent> content)
     {
-        WGPUTextureView backBufView = wgpuSwapChainGetCurrentTextureView(m_Impl->swapchain);			// create textureView
-
         WGPURenderPassColorAttachment colorDesc = {};
-        colorDesc.view = backBufView;
+        colorDesc.view = renderPass->m_Impl->view;
+
+        if (renderPass->IsSwapBuffer)
+        {
+            WGPUTextureView backBufView = wgpuSwapChainGetCurrentTextureView(m_Impl->swapchain);			// create textureView
+            colorDesc.resolveTarget = backBufView;
+        }
+
         colorDesc.loadOp = WGPULoadOp_Clear;
         colorDesc.storeOp = WGPUStoreOp_Store;
 #ifdef __EMSCRIPTEN__
         // Dawn has both clearValue/clearColor but only Color works; Emscripten only has Value
-        colorDesc.clearValue.r = renderPass->m_ClearColor.r;
-        colorDesc.clearValue.g = renderPass->m_ClearColor.g;
-        colorDesc.clearValue.b = renderPass->m_ClearColor.b;
-        colorDesc.clearValue.a = renderPass->m_ClearColor.a;
+        colorDesc.clearValue.r = renderPass->ClearColor.r;
+        colorDesc.clearValue.g = renderPass->ClearColor.g;
+        colorDesc.clearValue.b = renderPass->ClearColor.b;
+        colorDesc.clearValue.a = renderPass->ClearColor.a;
 #else
-        colorDesc.clearColor.r = renderPass->m_ClearColor.r;
-        colorDesc.clearColor.g = renderPass->m_ClearColor.g;
-        colorDesc.clearColor.b = renderPass->m_ClearColor.b;
-        colorDesc.clearColor.a = renderPass->m_ClearColor.a;
+        colorDesc.clearColor.r = renderPass->ClearColor.r;
+        colorDesc.clearColor.g = renderPass->ClearColor.g;
+        colorDesc.clearColor.b = renderPass->ClearColor.b;
+        colorDesc.clearColor.a = renderPass->ClearColor.a;
 #endif
 
-        WGPURenderPassDescriptor renderPassDesc = {};
-        renderPassDesc.colorAttachmentCount = 1;
-        renderPassDesc.colorAttachments = &colorDesc;
+        WGPURenderPassDescriptor desc = {};
+        desc.colorAttachmentCount = 1;
+        desc.colorAttachments = &colorDesc;
 
         WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(m_Impl->device, nullptr);			// create encoder
-        WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);	// create pass
+        WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(encoder, &desc);	// create pass
 
         for (const auto batch : content->m_Batches)
         {
@@ -455,7 +635,8 @@ namespace rush
         wgpuQueueSubmit(m_Impl->queue, 1, &commands);
         wgpuCommandBufferRelease(commands);														// release commands
 
-        wgpuTextureViewRelease(backBufView);													// release textureView
+        if (renderPass->IsSwapBuffer)
+            wgpuTextureViewRelease(colorDesc.resolveTarget);
     }
 
 
@@ -468,5 +649,7 @@ namespace rush
         wgpuSwapChainPresent(m_Impl->swapchain);
 #endif
     }
+
+
 
 }

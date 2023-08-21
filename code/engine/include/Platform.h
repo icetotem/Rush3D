@@ -30,6 +30,8 @@ namespace rush
 
         static void DestroyRenderWindow(WindowHandle window);
 
+        static void GetWindowSize(WindowHandle window, int& width, int& height);
+
         static void StartLoop(WindowHandle window, Redraw redraw);
 
         static void ShowRenderWindow(WindowHandle window, bool show);

@@ -451,7 +451,7 @@ static char const triangle_frag_wgsl[] = R"(
 
 Renderer* g_Renderer = nullptr;
 Ref<RenderContent> content = CreateRef<RenderContent>();
-Ref<RenderPass> pass = CreateRef<RenderPass>();
+Ref<RenderPass> pass;
 Ref<UniformBuffer> uniforms;
 
 static bool redraw2()
@@ -478,10 +478,16 @@ int main(int argc, char* argv[])
 	auto wHnd = Platform::CreateRenderWindow(&wndDesc);
 	if (wHnd)
 	{
-		Renderer renderer(wHnd);
+		RendererDesc rendererDesc;
+		rendererDesc.msaa = 4;
+		Renderer renderer(wHnd, &rendererDesc);
 		g_Renderer = &renderer;
 
-		pass->m_ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+		RenderPassDesc passDesc;
+		passDesc.DebugName = "FinalPass";
+		passDesc.IsSwapBuffer = true;
+		passDesc.ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+		pass = renderer.CreateRenderPass(&passDesc);
 
         Ref<Shader> vs = renderer.CreateShader(triangle_vert_wgsl);
         Ref<Shader> fs = renderer.CreateShader(triangle_frag_wgsl);
@@ -492,38 +498,57 @@ int main(int argc, char* argv[])
         vertAttrs[0].Offset = 0;
         vertAttrs[0].ShaderLocation = 0;
         vertAttrs[1].Format = VertexFormat::Float32x3;
-        vertAttrs[1].Offset = 2 * sizeof(float);
+        vertAttrs[1].Offset = 0;
         vertAttrs[1].ShaderLocation = 1;
 
         PipelineDesc pipeDesc;
-        pipeDesc.VLayout.Stride = sizeof(float) * 5;
-        pipeDesc.VLayout.Attributes = vertAttrs;
-        pipeDesc.VLayout.AttributeCount = 2;
+
+		auto& vLayout0 = pipeDesc.VLayouts.emplace_back();
+        vLayout0.Stride = sizeof(float) * 2;
+        vLayout0.Attributes = &vertAttrs[0];
+        vLayout0.AttributeCount = 1;
+
+        auto& vLayout1 = pipeDesc.VLayouts.emplace_back();
+        vLayout1.Stride = sizeof(float) * 3;
+        vLayout1.Attributes = &vertAttrs[1];
+        vLayout1.AttributeCount = 1;
+
         pipeDesc.VS = vs;
         pipeDesc.FS = fs;
 		pipeDesc.WriteMask = ColorWriteMask::Write_R;
 
         Ref<RPipeline> rpipe = renderer.CreatePipeline(&pipeDesc);
 
-        // create the buffers (x, y, r, g, b)
-        float const vertData[] = {
-            -0.8f, -0.8f, 1.0f, 1.0f, 1.0f, // BL
-             0.8f, -0.8f, 1.0f, 1.0f, 1.0f, // BR
-            -0.0f,  0.8f, 1.0f, 1.0f, 1.0f, // top
+        // create the buffers (x, y)
+        float const vertData0[] = {
+            -0.8f, -0.8f, // BL
+             0.8f, -0.8f, // BR
+            -0.0f,  0.8f, // top
         };
+
+        // create the buffers (r, g, b)
+        float const vertData1[] = {
+            1.0f, 1.0f, 1.0f, // BL
+            1.0f, 1.0f, 1.0f, // BR
+            1.0f, 1.0f, 1.0f, // top
+        };
+
         uint16_t const indxData[] = {
             0, 1, 2,
             0 // padding (better way of doing this?)
         };
 
 
-        Ref<RBuffer> vb = renderer.CreateVertexBuffer(vertData, sizeof(vertData), pipeDesc.VLayout.Stride);
+        Ref<RBuffer> vb0 = renderer.CreateVertexBuffer(vertData0, sizeof(vertData0), sizeof(float) * 2);
+        Ref<RBuffer> vb1 = renderer.CreateVertexBuffer(vertData1, sizeof(vertData1), sizeof(float) * 3);
+
         Ref<RBuffer> ib = renderer.CreateIndexBuffer(indxData, sizeof(indxData), sizeof(uint16_t));
 		uniforms = renderer.CreateUniformBuffer(&rotDeg, sizeof(rotDeg), ShaderStage::Vertex);
 
 		Ref<RenderBatch> batch = CreateRef<RenderBatch>();
         batch->Pipeline = rpipe;
-        batch->VBList.push_back(vb);
+        batch->VBList.push_back(vb0);
+        batch->VBList.push_back(vb1);
         batch->IB = ib;
 		batch->Uniforms = uniforms;
 		content->m_Batches.push_back(batch);

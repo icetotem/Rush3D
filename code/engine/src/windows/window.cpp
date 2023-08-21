@@ -565,6 +565,14 @@ namespace rush
 		window::destroy(reinterpret_cast<window::Handle>(window));
     }
 
+    void Platform::GetWindowSize(WindowHandle window, int& width, int& height)
+    {
+		RECT rect;
+		::GetClientRect(reinterpret_cast<HWND>(window), &rect);
+		width = rect.right - rect.left;
+		height = rect.bottom - rect.top;
+    }
+
     void Platform::StartLoop(WindowHandle window, Redraw redraw)
     {
         window::loop(reinterpret_cast<window::Handle>(window), redraw);

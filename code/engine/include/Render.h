@@ -259,7 +259,7 @@ namespace rush
     {
         Ref<Shader> VS;
         Ref<Shader> FS;
-        VertexLayout VLayout;
+        List<VertexLayout> VLayouts;
         PrimitiveType Primitive = PrimitiveType::TriangleList;
         BlendState Blend;
         FrontFace Front = FrontFace::CCW;
@@ -356,14 +356,11 @@ namespace rush
         List<Ref<RenderBatch>> m_Batches;
     };
 
-    /// <summary>
-    /// FrameBuffer
-    /// </summary>
-    class FrameBuffer
+    class RTexture
     {
     public:
-        FrameBuffer();
-        ~FrameBuffer();
+        RTexture();
+        ~RTexture();
 
     protected:
         friend class Renderer;
@@ -372,15 +369,47 @@ namespace rush
     };
 
     /// <summary>
+    /// RenderPassDesc
+    /// </summary>
+    struct RenderPassDesc
+    {
+        std::string DebugName;
+        TextureFormat Format = TextureFormat::RGBA8Snorm;
+        Vector4 ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+        bool IsSwapBuffer = false;
+        int Width = 0;
+        int Height = 0;
+    };
+
+    /// <summary>
     /// RenderPass
     /// </summary>
     class RenderPass
     {
     public:
+        RenderPass();
+        ~RenderPass();
 
-        Vector4 m_ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
-        Ref<FrameBuffer> m_FrameBuffer;
+        Ref<RTexture> GetRenderTarget() const { return m_RenderTarget; }
+
+    protected:
+        Ref<RTexture> m_RenderTarget;
+        friend class Renderer;
+        struct WebGpuImpl;
+        Ref<WebGpuImpl> m_Impl;
+        bool IsSwapBuffer = false;
+        Vector4 ClearColor;
     };
+
+    struct RendererDesc
+    {
+        int msaa = 4;
+        bool ssao = false;
+        bool bloom = false;
+        bool hdr = false;
+        bool gamma = false;
+    };
+
 
 
     /// <summary>
@@ -389,7 +418,7 @@ namespace rush
     class Renderer
     {
     public:
-        Renderer(WindowHandle window);
+        Renderer(WindowHandle window, const RendererDesc* rendererDesc);
         ~Renderer();
 
         Ref<Shader> CreateShader(const char* code, const char* debugName = nullptr);
@@ -404,6 +433,10 @@ namespace rush
 
         Ref<RPipeline> CreatePipeline(const PipelineDesc* pipeDesc);
 
+        //Ref<RTexture> CreateTexture();
+
+        Ref<RenderPass> CreateRenderPass(const RenderPassDesc* renderPassDesc);
+
         void RenderOnePass(Ref<RenderPass> renderPass, Ref<RenderContent> content);
 
         void SwapBuffers();
@@ -412,6 +445,8 @@ namespace rush
         struct WebGpuImpl;
         Ref<WebGpuImpl> m_Impl;
         WindowHandle m_WindowHandle;
+        int m_Width, m_Height;
+        int m_Msaa;
     };
 
 }
