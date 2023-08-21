@@ -1,8 +1,11 @@
 #include "stdafx.h"
-#include "src/webgpu.h"
-
 #include <string.h>
 #include "windows/window.h"
+#include "Render.h"
+
+#if 0
+
+#include "src/webgpu.h"
 
 WGPUDevice device;
 WGPUQueue queue;
@@ -336,6 +339,11 @@ static void createPipelineAndBuffers() {
  * Draws using the above pipeline and buffers.
  */
 static bool redraw() {
+
+    // update the rotation
+    rotDeg += 0.1f;
+    wgpuQueueWriteBuffer(queue, uRotBuf, 0, &rotDeg, sizeof(rotDeg));
+
 	WGPUTextureView backBufView = wgpuSwapChainGetCurrentTextureView(swapchain);			// create textureView
 
 	WGPURenderPassColorAttachment colorDesc = {};
@@ -362,9 +370,7 @@ static bool redraw() {
 	WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, nullptr);			// create encoder
 	WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPass);	// create pass
 
-	// update the rotation
-	rotDeg += 0.1f;
-	wgpuQueueWriteBuffer(queue, uRotBuf, 0, &rotDeg, sizeof(rotDeg));
+
 
 	// draw the triangle (comment these five lines to simply clear the screen)
 	wgpuRenderPassEncoderSetPipeline(pass, pipeline);
@@ -386,12 +392,79 @@ static bool redraw() {
 	 */
 	wgpuSwapChainPresent(swapchain);
 #endif
-	wgpuTextureViewRelease(backBufView);													// release textureView
+	//wgpuTextureViewRelease(backBufView);													// release textureView
 
 	return true;
 }
 
+#endif
+
+
 using namespace rush;
+
+/**
+ * Current rotation angle (in degrees, updated per frame).
+ */
+float rotDeg = 0.0f;
+
+/**
+ * WGSL equivalent of \c triangle_vert_spirv.
+ */
+static char const triangle_vert_wgsl[] = R"(
+	struct VertexIn {
+		@location(0) aPos : vec2<f32>,
+		@location(1) aCol : vec3<f32>
+	}
+	struct VertexOut {
+		@location(0) vCol : vec3<f32>,
+		@builtin(position) Position : vec4<f32>
+	}
+	struct Rotation {
+		@location(0) degs : f32
+	}
+	@group(0) @binding(0) var<uniform> uRot : Rotation;
+	@vertex
+	fn main(input : VertexIn) -> VertexOut {
+		var rads : f32 = radians(uRot.degs);
+		var cosA : f32 = cos(rads);
+		var sinA : f32 = sin(rads);
+		var rot : mat3x3<f32> = mat3x3<f32>(
+			vec3<f32>( cosA, sinA, 0.0),
+			vec3<f32>(-sinA, cosA, 0.0),
+			vec3<f32>( 0.0,  0.0,  1.0));
+		var output : VertexOut;
+		output.Position = vec4<f32>(rot * vec3<f32>(input.aPos, 1.0), 1.0);
+		output.vCol = input.aCol;
+		return output;
+	}
+)";
+
+/**
+ * WGSL equivalent of \c triangle_frag_spirv.
+ */
+static char const triangle_frag_wgsl[] = R"(
+	@fragment
+	fn main(@location(0) vCol : vec3<f32>) -> @location(0) vec4<f32> {
+		return vec4<f32>(vCol, 1.0);
+	}
+)";
+
+Renderer* g_Renderer = nullptr;
+Ref<RenderContent> content = CreateRef<RenderContent>();
+Ref<RenderPass> pass = CreateRef<RenderPass>();
+Ref<UniformBuffer> uniforms;
+
+static bool redraw2()
+{
+	if (g_Renderer)
+	{
+		rotDeg += 0.1f;
+		g_Renderer->WriteUniformBuffer(uniforms, 0, &rotDeg, sizeof(rotDeg));
+		g_Renderer->RenderOnePass(pass, content);
+		g_Renderer->SwapBuffers();
+	}
+    return true;
+}
 
 
 int main(int argc, char* argv[]) 
@@ -405,27 +478,81 @@ int main(int argc, char* argv[])
 	auto wHnd = Platform::CreateRenderWindow(&wndDesc);
 	if (wHnd)
 	{
-		if ((device = webgpu::create(wHnd)))
-		{
-			queue = wgpuDeviceGetQueue(device);
-			swapchain = webgpu::createSwapChain(device);
-			createPipelineAndBuffers();
+		Renderer renderer(wHnd);
+		g_Renderer = &renderer;
 
-			Platform::ShowRenderWindow(wHnd, true);
-			Platform::StartLoop(wHnd, redraw);
+		pass->m_ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
 
-			wgpuBindGroupRelease(bindGroup);
-			wgpuBufferRelease(uRotBuf);
-			wgpuBufferRelease(indxBuf);
-			wgpuBufferRelease(vertBuf);
-			wgpuRenderPipelineRelease(pipeline);
-			wgpuSwapChainRelease(swapchain);
-			wgpuQueueRelease(queue);
-			wgpuDeviceRelease(device);
-		}
+        Ref<Shader> vs = renderer.CreateShader(triangle_vert_wgsl);
+        Ref<Shader> fs = renderer.CreateShader(triangle_frag_wgsl);
 
-		Platform::DestroyRenderWindow(wHnd);
+
+        VertexAttribute vertAttrs[2];
+        vertAttrs[0].Format = VertexFormat::Float32x2;
+        vertAttrs[0].Offset = 0;
+        vertAttrs[0].ShaderLocation = 0;
+        vertAttrs[1].Format = VertexFormat::Float32x3;
+        vertAttrs[1].Offset = 2 * sizeof(float);
+        vertAttrs[1].ShaderLocation = 1;
+
+        PipelineDesc pipeDesc;
+        pipeDesc.VLayout.Stride = sizeof(float) * 5;
+        pipeDesc.VLayout.Attributes = vertAttrs;
+        pipeDesc.VLayout.AttributeCount = 2;
+        pipeDesc.VS = vs;
+        pipeDesc.FS = fs;
+		pipeDesc.WriteMask = ColorWriteMask::Write_R;
+
+        Ref<RPipeline> rpipe = renderer.CreatePipeline(&pipeDesc);
+
+        // create the buffers (x, y, r, g, b)
+        float const vertData[] = {
+            -0.8f, -0.8f, 1.0f, 1.0f, 1.0f, // BL
+             0.8f, -0.8f, 1.0f, 1.0f, 1.0f, // BR
+            -0.0f,  0.8f, 1.0f, 1.0f, 1.0f, // top
+        };
+        uint16_t const indxData[] = {
+            0, 1, 2,
+            0 // padding (better way of doing this?)
+        };
+
+
+        Ref<RBuffer> vb = renderer.CreateVertexBuffer(vertData, sizeof(vertData), pipeDesc.VLayout.Stride);
+        Ref<RBuffer> ib = renderer.CreateIndexBuffer(indxData, sizeof(indxData), sizeof(uint16_t));
+		uniforms = renderer.CreateUniformBuffer(&rotDeg, sizeof(rotDeg), ShaderStage::Vertex);
+
+		Ref<RenderBatch> batch = CreateRef<RenderBatch>();
+        batch->Pipeline = rpipe;
+        batch->VBList.push_back(vb);
+        batch->IB = ib;
+		batch->Uniforms = uniforms;
+		content->m_Batches.push_back(batch);
+
+        Platform::ShowRenderWindow(wHnd, true);
+        Platform::StartLoop(wHnd, redraw2);
+
+// 		if ((device = webgpu::create(wHnd)))
+// 		{
+// 			queue = wgpuDeviceGetQueue(device);
+// 			swapchain = webgpu::createSwapChain(device);
+// 			createPipelineAndBuffers();
+// 
+// 			Platform::ShowRenderWindow(wHnd, true);
+// 			Platform::StartLoop(wHnd, redraw2);
+// 
+// 			wgpuBindGroupRelease(bindGroup);
+// 			wgpuBufferRelease(uRotBuf);
+// 			wgpuBufferRelease(indxBuf);
+// 			wgpuBufferRelease(vertBuf);
+// 			wgpuRenderPipelineRelease(pipeline);
+// 			wgpuSwapChainRelease(swapchain);
+// 			wgpuQueueRelease(queue);
+// 			wgpuDeviceRelease(device);
+// 		}
+
 	}
+
+    Platform::DestroyRenderWindow(wHnd);
 
 	return 0;
 }
