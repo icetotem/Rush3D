@@ -4,7 +4,7 @@ DEP_DIR = "./"
 project "Rush3D_Deps"
     kind "StaticLib"
     language "C++"
-    cppdialect "C++17"
+    cppdialect "C++20"
     exceptionhandling "Off"
 	rtti "Off"
 
@@ -32,6 +32,16 @@ project "Rush3D_Deps"
         path.join(DEP_DIR, "pugixml/**"),
         path.join(DEP_DIR, "bullet3/**"),
         path.join(DEP_DIR, "recast/**"),
+        path.join(DEP_DIR, "glfw/include/GLFW/glfw3.h"),
+        path.join(DEP_DIR, "glfw/include/GLFW/glfw3native.h"),
+        path.join(DEP_DIR, "glfw/src/platform.c"),
+        path.join(DEP_DIR, "glfw/src/glfw_config.h"),
+        path.join(DEP_DIR, "glfw/src/context.c"),
+        path.join(DEP_DIR, "glfw/src/init.c"),
+        path.join(DEP_DIR, "glfw/src/input.c"),
+        path.join(DEP_DIR, "glfw/src/monitor.c"),
+        path.join(DEP_DIR, "glfw/src/vulkan.c"),
+        path.join(DEP_DIR, "glfw/src/window.c"),
     }
 
     includedirs
@@ -55,3 +65,26 @@ project "Rush3D_Deps"
         path.join(DEP_DIR, "recast/Recast/include"),
     }
 
+    filter "system:windows"
+        files
+        {
+            path.join(DEP_DIR, "glfw/src/platform.c"),
+            path.join(DEP_DIR, "glfw/src/null_init.c"),
+            path.join(DEP_DIR, "glfw/src/null_joystick.c"),
+            path.join(DEP_DIR, "glfw/src/null_monitor.c"),
+            path.join(DEP_DIR, "glfw/src/null_window.c"),
+            path.join(DEP_DIR, "glfw/src/win32_init.c"),
+            path.join(DEP_DIR, "glfw/src/win32_joystick.c"),
+            path.join(DEP_DIR, "glfw/src/win32_monitor.c"),
+            path.join(DEP_DIR, "glfw/src/win32_time.c"),
+            path.join(DEP_DIR, "glfw/src/win32_thread.c"),
+            path.join(DEP_DIR, "glfw/src/win32_window.c"),
+            path.join(DEP_DIR, "glfw/src/win32_module.c"),
+            path.join(DEP_DIR, "glfw/src/wgl_context.c"),
+            path.join(DEP_DIR, "glfw/src/egl_context.c"),
+            path.join(DEP_DIR, "glfw/src/osmesa_context.c")
+        }
+        defines
+        {
+            "_GLFW_WIN32",
+        }

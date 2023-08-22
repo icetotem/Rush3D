@@ -1,7 +1,7 @@
 #pragma once
 
 #include <webgpu/webgpu.h>
-#include "Platform.h"
+#include "Window.h"
 
 namespace webgpu
 {

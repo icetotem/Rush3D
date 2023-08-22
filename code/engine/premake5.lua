@@ -4,7 +4,7 @@ DEP_DIR = "../../3rdparty"
 project "Rush3D_Engine"
 	kind "ConsoleApp"
 	language "C++"
-	cppdialect "C++17"
+	cppdialect "C++20"
 	exceptionhandling "Off"
 	rtti "Off"
     defines { "__STDC_FORMAT_MACROS", "SPDLOG_NO_EXCEPTIONS" }
@@ -32,6 +32,7 @@ project "Rush3D_Engine"
 		path.join(ENGINE_DIR, "include"),
 		path.join(DEP_DIR, "dawn/inc"),
 		path.join(DEP_DIR, "spdlog/include"),
+		path.join(DEP_DIR, "glfw/include"),
 	}
 
 	links

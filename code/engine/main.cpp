@@ -1,11 +1,19 @@
 #include "stdafx.h"
 #include <string.h>
-#include "windows/window.h"
-#include "Render.h"
+#include "Engine.h"
+#include "Window.h"
+#include "render/Renderer.h"
+#include "render/RTexture.h"
+#include "render/RBuffer.h"
+#include "render/Shader.h"
+#include "render/Uniform.h"
+#include "render/RPipeline.h"
+
 
 #if 0
 
 #include "src/webgpu.h"
+#include "Engine.h"
 
 WGPUDevice device;
 WGPUQueue queue;
@@ -451,7 +459,8 @@ static char const triangle_frag_wgsl[] = R"(
 
 Renderer* g_Renderer = nullptr;
 Ref<RenderContent> content = CreateRef<RenderContent>();
-Ref<RenderPass> pass;
+Ref<RenderPass> pass0;
+Ref<RenderPass> pass1;
 Ref<UniformBuffer> uniforms;
 
 static bool redraw2()
@@ -460,7 +469,8 @@ static bool redraw2()
 	{
 		rotDeg += 0.1f;
 		g_Renderer->WriteUniformBuffer(uniforms, 0, &rotDeg, sizeof(rotDeg));
-		g_Renderer->RenderOnePass(pass, content);
+        //g_Renderer->RenderOnePass(pass1, content);
+        g_Renderer->RenderOnePass(pass0, content);
 		g_Renderer->SwapBuffers();
 	}
     return true;
@@ -469,25 +479,45 @@ static bool redraw2()
 
 int main(int argc, char* argv[]) 
 {	
-	WindowDesc wndDesc;
-	wndDesc.title = L"Rush3D Samples";
-	wndDesc.width = 1024;
-	wndDesc.height = 768;
-	wndDesc.mode = rush::WindowMode::Windowed;
-
-	auto wHnd = Platform::CreateRenderWindow(&wndDesc);
-	if (wHnd)
+	Engine engine;
+	
+	WindowDesc wndDesc = 
 	{
+		.Title = "RushDmeo",
+		.Width = 1280,
+		.Height = 900,
+		.Visible = false,
+	};
+
+	auto window = engine.CreateRenderWindow(wndDesc);
+	
+	if (window)
+    {
+		window->Show(true);
+
 		RendererDesc rendererDesc;
-		rendererDesc.msaa = 4;
-		Renderer renderer(wHnd, &rendererDesc);
+		rendererDesc.msaa = 1;
+		Renderer renderer(window, &rendererDesc);
 		g_Renderer = &renderer;
 
-		RenderPassDesc passDesc;
-		passDesc.DebugName = "FinalPass";
-		passDesc.IsSwapBuffer = true;
-		passDesc.ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
-		pass = renderer.CreateRenderPass(&passDesc);
+//         {
+//             RenderPassDesc passDesc;
+//             passDesc.DebugName = "Pass1";
+//             passDesc.IsSwapBuffer = false;
+// 			passDesc.Format = TextureFormat::RGBA8Unorm;
+//             passDesc.ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+//             pass1 = renderer.CreateRenderPass(&passDesc);
+//         }
+
+
+		{
+            RenderPassDesc passDesc;
+            passDesc.DebugName = "Pass0";
+            passDesc.IsSwapBuffer = true;
+            passDesc.ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+            pass0 = renderer.CreateRenderPass(&passDesc);
+		}
+
 
         Ref<Shader> vs = renderer.CreateShader(triangle_vert_wgsl);
         Ref<Shader> fs = renderer.CreateShader(triangle_frag_wgsl);
@@ -553,31 +583,11 @@ int main(int argc, char* argv[])
 		batch->Uniforms = uniforms;
 		content->m_Batches.push_back(batch);
 
-        Platform::ShowRenderWindow(wHnd, true);
-        Platform::StartLoop(wHnd, redraw2);
+        while (window->MessgeLoop())
+        {
 
-// 		if ((device = webgpu::create(wHnd)))
-// 		{
-// 			queue = wgpuDeviceGetQueue(device);
-// 			swapchain = webgpu::createSwapChain(device);
-// 			createPipelineAndBuffers();
-// 
-// 			Platform::ShowRenderWindow(wHnd, true);
-// 			Platform::StartLoop(wHnd, redraw2);
-// 
-// 			wgpuBindGroupRelease(bindGroup);
-// 			wgpuBufferRelease(uRotBuf);
-// 			wgpuBufferRelease(indxBuf);
-// 			wgpuBufferRelease(vertBuf);
-// 			wgpuRenderPipelineRelease(pipeline);
-// 			wgpuSwapChainRelease(swapchain);
-// 			wgpuQueueRelease(queue);
-// 			wgpuDeviceRelease(device);
-// 		}
-
+        }
 	}
-
-    Platform::DestroyRenderWindow(wHnd);
 
 	return 0;
 }
