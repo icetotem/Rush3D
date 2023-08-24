@@ -3,6 +3,18 @@
 namespace rush
 {
 
+    enum class RenderBackend
+    {
+        D3D11,
+        D3D12,
+        Metal,
+        Vulkan,
+        OpenGLES,
+        OpenGL,
+        Null,
+        Count,
+    };
+
     enum class FrontFace
     {
         CCW,
@@ -215,12 +227,13 @@ namespace rush
         Count
     };
 
-    enum ShaderStage
+    enum class ShaderStage
     {
-        None = 0x00000000,
-        Vertex = 0x00000001,
-        Fragment = 0x00000002,
-        Compute = 0x00000004
+        None,
+        Vertex,
+        Fragment,
+        Compute,
+        Count
     };
 
     enum class TextureDimension
@@ -231,44 +244,134 @@ namespace rush
         Count,
     };
 
+    enum class BufferBindingType
+    {
+        Undefined,
+        Uniform,
+        Storage,
+        ReadOnlyStorage,
+        Count
+    };
+
+    enum class SamplerBindingType
+    {
+        Undefined,
+        Filtering,
+        NonFiltering,
+        Comparison,
+        Count
+    };
+
+    enum class TextureSampleType
+    {
+        Undefined,
+        Float,
+        UnfilterableFloat,
+        Depth,
+        Sint,
+        Uint,
+        Count
+    };
+
+    enum class TextureViewDimension 
+    {
+        Undefined,
+        e1D,
+        e2D,
+        e2DArray,
+        Cube,
+        CubeArray,
+        e3D,
+        Count
+    };
+
     class RTexture;
-    class RBuffer;
+    class RVertexBuffer;
+    class RIndexBuffer;
     class Shader;
-    class UniformBuffer;
+    class BindGroup;
     struct PipelineDesc;
-    class RPipeline;
+    class RenderPipeline;
     class RenderPass;
     class RenderBatch;
     class RenderContent;
+    struct RenderContex;
+    class BindingLayout;
+    class UniformBuffer;
 
+    static constexpr uint32_t kMaxBindGroups = 4u;
+    static constexpr uint32_t kMaxBindingsPerBindGroup = 1000u;
+    static constexpr uint8_t kMaxVertexAttributes = 16u;
+    static constexpr uint8_t kMaxVertexBuffers = 8u;
+    static constexpr uint32_t kMaxVertexBufferArrayStride = 2048u;
+    static constexpr uint32_t kMaxBindGroupsPlusVertexBuffers = 24u;
+    static constexpr uint32_t kNumStages = 3;
+    static constexpr uint8_t kMaxColorAttachments = 8u;
+    static constexpr uint32_t kTextureBytesPerRowAlignment = 256u;
+    static constexpr uint32_t kQueryResolveAlignment = 256u;
+    static constexpr uint32_t kMaxInterStageShaderComponents = 60u;
+    static constexpr uint32_t kMaxInterStageShaderVariables = 16u;
+    static constexpr uint64_t kAssumedMaxBufferSize =
+        0x80000000u;  // Use 2 GB when the limit is unavailable
+
+    // Per stage maximum limits used to optimized Dawn internals.
+    static constexpr uint32_t kMaxSampledTexturesPerShaderStage = 16;
+    static constexpr uint32_t kMaxSamplersPerShaderStage = 16;
+    static constexpr uint32_t kMaxStorageBuffersPerShaderStage = 8;
+    static constexpr uint32_t kMaxStorageTexturesPerShaderStage = 8;
+    static constexpr uint32_t kMaxUniformBuffersPerShaderStage = 12;
+
+    // Indirect command sizes
+    static constexpr uint64_t kDispatchIndirectSize = 3 * sizeof(uint32_t);
+    static constexpr uint64_t kDrawIndirectSize = 4 * sizeof(uint32_t);
+    static constexpr uint64_t kDrawIndexedIndirectSize = 5 * sizeof(uint32_t);
+
+    // Non spec defined constants.
+    static constexpr float kLodMin = 0.0;
+    static constexpr float kLodMax = 1000.0;
+
+    // Offset alignment for CopyB2B. Strictly speaking this alignment is required only
+    // on macOS, but we decide to do it on all platforms.
+    static constexpr uint64_t kCopyBufferToBufferOffsetAlignment = 4u;
+
+    // Metal has a maximum size of 32Kb for a counter set buffer. Each query is 8 bytes.
+    // So, the maximum nymber of queries is 32Kb / 8.
+    static constexpr uint32_t kMaxQueryCount = 4096;
+
+    // An external texture occupies multiple binding slots. These are the per-external-texture bindings
+    // needed.
+    static constexpr uint8_t kSampledTexturesPerExternalTexture = 4u;
+    static constexpr uint8_t kSamplersPerExternalTexture = 1u;
+    static constexpr uint8_t kUniformsPerExternalTexture = 1u;
+
+    // Wire buffer alignments.
+    static constexpr size_t kWireBufferAlignment = 8u;
+
+
+    static constexpr uint32_t kArrayLayerCountUndefined = 0xffffffffUL;
+    static constexpr uint32_t kCopyStrideUndefined = 0xffffffffUL;
+    static constexpr uint32_t kLimitU32Undefined = 0xffffffffUL;
+    static constexpr uint64_t kLimitU64Undefined = 0xffffffffffffffffULL;
+    static constexpr uint32_t kMipLevelCountUndefined = 0xffffffffUL;
+    static constexpr size_t kWholeMapSize = SIZE_MAX;
+    static constexpr uint64_t kWholeSize = 0xffffffffffffffffULL;
 }
 
-struct WGPUAdapterImpl;
-struct WGPUBindGroupImpl;
-struct WGPUBindGroupLayoutImpl;
-struct WGPUBufferImpl;
-struct WGPUCommandBufferImpl;
-struct WGPUCommandEncoderImpl;
-struct WGPUComputePassEncoderImpl;
-struct WGPUComputePipelineImpl;
-struct WGPUDeviceImpl;
-struct WGPUExternalTextureImpl;
-struct WGPUInstanceImpl;
-struct WGPUPipelineLayoutImpl;
-struct WGPUQuerySetImpl;
-struct WGPUQueueImpl;
-struct WGPURenderBundleImpl;
-struct WGPURenderBundleEncoderImpl;
-struct WGPURenderPassEncoderImpl;
-struct WGPURenderPipelineImpl;
-struct WGPUSamplerImpl;
-struct WGPUShaderModuleImpl;
-struct WGPUSurfaceImpl;
-struct WGPUSwapChainImpl;
-struct WGPUTextureImpl;
-struct WGPUTextureViewImpl;
+namespace wgpu
+{
+    class RenderPipeline;
+    class Texture;
+    class TextureView;
+    class Sampler;
+    class Buffer;
+    class ComputePipeline;
+    class BindGroup;
+    class Queue;
+    class ShaderModule;
+    struct BindGroupLayoutEntry;
+    class BindGroupLayout;
+}
 
-#define CMD_BUFFER_SIZE 256
 
 #ifdef RUSH_PLATFORM_WINDOWS
 #define DAWN_ENABLE_BACKEND_D3D12

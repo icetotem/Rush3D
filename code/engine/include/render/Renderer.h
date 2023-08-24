@@ -2,18 +2,24 @@
 
 #include "core/Core.h"
 #include "render/RenderDefines.h"
+#include "Layout.h"
+#include "Uniform.h"
 
 namespace rush
 {
 
     struct RendererDesc
     {
+        RenderBackend backend = RenderBackend::D3D12;
         bool vsync = true;
         uint32_t msaa = 4;
         bool ssao = false;
         bool bloom = false;
         bool hdr = false;
         bool gamma = false;
+        std::vector<std::string> enableToggles;
+        std::vector<std::string> disableToggles;
+        Vector4 clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
     };
 
     struct RenderCaps
@@ -76,17 +82,19 @@ namespace rush
     public:
         ~Renderer();
 
-        Ref<Shader> CreateShader(const char* code, const char* debugName = nullptr);
+        Ref<Shader> CreateShader(const char* code, ShaderStage type, const char* lable = nullptr);
 
-        Ref<RBuffer> CreateVertexBuffer(const void* data, size_t size, uint32_t stride);
+        Ref<RVertexBuffer> CreateVertexBuffer(uint32_t stride, uint64_t size, const char* lable = nullptr);
 
-        Ref<RBuffer> CreateIndexBuffer(const void* data, size_t size, uint32_t stride);
+        Ref<RIndexBuffer> CreateIndexBuffer(uint64_t count, bool use32bits, const char* lable = nullptr);
 
-        Ref<UniformBuffer> CreateUniformBuffer(const void* data, size_t size, uint32_t shaderVisibility);
+        Ref<BindingLayout> CreateBindingLayout(std::initializer_list<BindingLayoutHelper> entriesInitializer);
 
-        void WriteUniformBuffer(Ref<UniformBuffer> buffer, size_t offset, const void* data, size_t size);
+        Ref<BindGroup> CreateBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable = nullptr);
 
-        Ref<RPipeline> CreatePipeline(const PipelineDesc* pipeDesc);
+        Ref<UniformBuffer> CreateUniformBuffer(uint64_t size, const char* lable = nullptr);
+
+        Ref<RenderPipeline> CreatePipeline(const PipelineDesc* pipeDesc, const char* lable = nullptr);
 
         Ref<RenderPass> CreateRenderPass(const RenderPassDesc* desc);
 
@@ -108,12 +116,11 @@ namespace rush
 
         Renderer(Ref<Window> window, const RendererDesc* rendererDesc);
 
-        void CreateAdapter();
-        void CreateDevice();
-        void CreateQueue();
-        void CreateSurface();
-        void CreateSwapChain();
-        void GetInformation();
+        void CreateAdapter(const RendererDesc* rendererDesc);
+        void InitWGPU(const RendererDesc* rendererDesc);
+        void CreateDefaultDepthStencilView();
+
+        void GetCaps();
 
 
     protected:
@@ -123,7 +130,7 @@ namespace rush
         uint32_t m_Width;
         uint32_t m_Height;
         uint32_t m_Msaa;
-
+        Vector4 m_ClearColor;
         Ref<Window> m_Window;
     };
 

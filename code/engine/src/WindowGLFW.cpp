@@ -9,12 +9,17 @@
 
 namespace rush
 {
+    void PrintGLFWError(int code, const char* message)
+    {
+        LOG_ERROR("GLFW error: {} - {}", code, message);
+    }
 
     static class GlfwInitialzer
     {
     public:
         GlfwInitialzer()
         {
+            glfwSetErrorCallback(PrintGLFWError);
             glfwInit();
         }
         ~GlfwInitialzer()
@@ -69,6 +74,7 @@ namespace rush
 #endif
     }
 
+
     bool Window::Create(const WindowDesc& desc)
     {        
         m_Width = desc.Width;
@@ -110,10 +116,14 @@ namespace rush
         return true;
     }
 
-    bool Window::MessgeLoop()
+    bool Window::ShouldClose() const
+    {
+        return !glfwWindowShouldClose(m_Impl->handle);
+    }
+
+    void Window::MessgeLoop()
     {
         glfwPollEvents();
-        return !glfwWindowShouldClose(m_Impl->handle);
     }
 
     void Window::Show(bool show /*= true*/)

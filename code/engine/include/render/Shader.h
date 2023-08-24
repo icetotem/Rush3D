@@ -12,13 +12,23 @@ namespace rush
     class Shader
     {
     public:
-        Shader();
         ~Shader();
+
+        ShaderStage GetType() const { return m_ShaderType; }
 
     protected:
         friend class Renderer;
+        friend class RenderPipeline;
 
-        WGPUShaderModuleImpl* m_ShaderModule = nullptr;
+        Shader(Ref<RenderContex> contex, ShaderStage type, const char* source, const char* lable);
+
+        static Ref<Shader> Construct(Ref<RenderContex> contex, ShaderStage type, const char* source, const char* lable)
+        {
+            return std::shared_ptr<Shader>(new Shader(contex, type, source, lable));
+        }
+
+        ShaderStage m_ShaderType = ShaderStage::None;
+        Ref<wgpu::ShaderModule> m_Module;
     };
 
 }

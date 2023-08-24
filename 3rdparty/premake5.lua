@@ -12,6 +12,9 @@ project "Rush3D_Deps"
         "SPDLOG_COMPILED_LIB", "SPDLOG_NO_EXCEPTIONS", "STB_IMAGE_IMPLEMENTATION", "MAKE_LIB", "B3_USE_CLEW", "BT_USE_SSE_IN_API"
     }
 
+    filter "action:vs*"
+        disablewarnings { "4305" }
+
     files
     {
         path.join(DEP_DIR, "box2d/**"),

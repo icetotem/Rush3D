@@ -5,17 +5,17 @@
 namespace rush
 {
 
-    class RPipeline;
-    class UniformBuffer;
-    class RBuffer;
+    class RenderPipeline;
+    class BindGroup;
+    class RVertexBuffer;
 
     class RenderBatch
     {
     public:
-        Ref<RPipeline> Pipeline;
-        Ref<UniformBuffer> Uniforms;
-        List<Ref<RBuffer>> VBList;
-        Ref<RBuffer> IB;
+        Ref<RenderPipeline> Pipeline;
+        Ref<BindGroup> Uniforms;
+        List<Ref<RVertexBuffer>> VBList;
+        Ref<RIndexBuffer> IB;
         uint32_t InstanceCount = 1;
         uint32_t FirstIndex = 0;
         uint32_t FirstVertex = 0;

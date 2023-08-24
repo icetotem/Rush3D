@@ -63,7 +63,8 @@ Ref<Renderer> g_Renderer = nullptr;
 Ref<RenderContent> content = CreateRef<RenderContent>();
 Ref<RenderPass> pass0;
 Ref<RenderPass> pass1;
-Ref<UniformBuffer> uniforms;
+Ref<BindGroup> bindGroup;
+Ref<UniformBuffer> uniformBuf;
 
 static bool redraw2()
 {
@@ -72,10 +73,6 @@ static bool redraw2()
 		g_Renderer->BeginDraw();
 
 		rotDeg += 0.1f;
-		//g_Renderer->WriteUniformBuffer(uniforms, 0, &rotDeg, sizeof(rotDeg));
-        //g_Renderer->RenderOnePass(pass1, content);
-        //g_Renderer->RenderOnePass(pass0, content);
-		//g_Renderer->SwapBuffers();
 
 		g_Renderer->DrawOfflinePass(pass0, content);
 		g_Renderer->DrawFinalPass(content);
@@ -118,9 +115,14 @@ int main(int argc, char* argv[])
 		pass0 = renderer->CreateRenderPass(&rpDesc);
 
 
-        Ref<Shader> vs = renderer->CreateShader(triangle_vert_wgsl);
-        Ref<Shader> fs = renderer->CreateShader(triangle_frag_wgsl);
+        Ref<Shader> vs = renderer->CreateShader(triangle_vert_wgsl, ShaderStage::Vertex);
+        Ref<Shader> fs = renderer->CreateShader(triangle_frag_wgsl, ShaderStage::Fragment);
 
+
+        PipelineDesc pipeDesc;
+
+		pipeDesc.ColorFormat = TextureFormat::RGBA8Unorm;
+		pipeDesc.DepthFormat = TextureFormat::Depth24PlusStencil8;
 
         VertexAttribute vertAttrs[2];
         vertAttrs[0].Format = VertexFormat::Float32x2;
@@ -130,9 +132,7 @@ int main(int argc, char* argv[])
         vertAttrs[1].Offset = 0;
         vertAttrs[1].ShaderLocation = 1;
 
-        PipelineDesc pipeDesc;
-
-		auto& vLayout0 = pipeDesc.VLayouts.emplace_back();
+        auto& vLayout0 = pipeDesc.VLayouts.emplace_back();
         vLayout0.Stride = sizeof(float) * 2;
         vLayout0.Attributes = &vertAttrs[0];
         vLayout0.AttributeCount = 1;
@@ -144,9 +144,15 @@ int main(int argc, char* argv[])
 
         pipeDesc.VS = vs;
         pipeDesc.FS = fs;
-		pipeDesc.WriteMask = ColorWriteMask::Write_R;
+        pipeDesc.WriteMask = ColorWriteMask::Write_All;
 
-        Ref<RPipeline> rpipe = renderer->CreatePipeline(&pipeDesc);
+		Ref<BindingLayout> bindingLayout = renderer->CreateBindingLayout({
+			{0, ShaderStage::Vertex, BufferBindingType::Uniform}
+		});
+
+		pipeDesc.BindLayout = bindingLayout;
+
+        Ref<RenderPipeline> rpipe = renderer->CreatePipeline(&pipeDesc);
 
         // create the buffers (x, y)
         float const vertData0[] = {
@@ -163,30 +169,42 @@ int main(int argc, char* argv[])
         };
 
         uint16_t const indxData[] = {
-            0, 1, 2,
-            0 // padding (better way of doing this?)
+            0, 1, 2
         };
 
 
-        Ref<RBuffer> vb0 = renderer->CreateVertexBuffer(vertData0, sizeof(vertData0), sizeof(float) * 2);
-        Ref<RBuffer> vb1 = renderer->CreateVertexBuffer(vertData1, sizeof(vertData1), sizeof(float) * 3);
+        Ref<RVertexBuffer> vb0 = renderer->CreateVertexBuffer(sizeof(float) * 2, sizeof(vertData0));
+		vb0->UpdateData(vertData0, sizeof(vertData0));
 
-        Ref<RBuffer> ib = renderer->CreateIndexBuffer(indxData, sizeof(indxData), sizeof(uint16_t));
-		uniforms = renderer->CreateUniformBuffer(&rotDeg, sizeof(rotDeg), ShaderStage::Vertex);
+        Ref<RVertexBuffer> vb1 = renderer->CreateVertexBuffer(sizeof(float) * 3, sizeof(vertData1));
+		vb1->UpdateData(vertData1, sizeof(vertData1));
+
+        Ref<RIndexBuffer> ib = renderer->CreateIndexBuffer(3, false);
+
+		uniformBuf = renderer->CreateUniformBuffer(sizeof(rotDeg));
+		uniformBuf->UpdateData(&rotDeg, sizeof(rotDeg));
+
+		bindGroup = renderer->CreateBindGroup(bindingLayout, {
+			{0, uniformBuf}
+		});
 
 		Ref<RenderBatch> batch = CreateRef<RenderBatch>();
         batch->Pipeline = rpipe;
         batch->VBList.push_back(vb0);
         batch->VBList.push_back(vb1);
         batch->IB = ib;
-		batch->Uniforms = uniforms;
+		batch->Uniforms = bindGroup;
 		content->m_Batches.push_back(batch);
 
-        while (window->MessgeLoop())
+        while (window->ShouldClose())
         {
+			window->MessgeLoop();
 			redraw2();
         }
 	}
+
+	g_Renderer.reset();
+	window.reset();
 
 	return 0;
 }

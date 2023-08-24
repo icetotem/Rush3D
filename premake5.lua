@@ -32,7 +32,6 @@ solution "Rush3D"
         architecture "x86_64"
 
     filter "action:vs*"
-        buildoptions { "/Zc:__cplusplus" }
         disablewarnings { "4251", "4996", "4267", "4244", "4291", "4819", "4005", "4065", "4001" }
         
     filter "system:windows"

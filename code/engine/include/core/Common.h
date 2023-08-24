@@ -159,6 +159,15 @@ namespace rush
         return s;
     }
 
+
+    // Only defined for unsigned integers because that is all that is
+    // needed at the time of writing.
+    template <typename Dst, typename Src, typename = std::enable_if_t<std::is_unsigned_v<Src>>>
+    inline Dst checked_cast(const Src& value) {
+        RUSH_ASSERT(value <= std::numeric_limits<Dst>::max());
+        return static_cast<Dst>(value);
+    }
+
     /// <summary>
     /// FreeList
     /// </summary>

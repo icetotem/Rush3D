@@ -43,7 +43,8 @@ namespace rush
 
         uint32_t GetHeight() const { return m_Height; }
 
-        bool MessgeLoop();
+        bool ShouldClose() const;
+        void MessgeLoop();
 
         void Show(bool show = true);
 
