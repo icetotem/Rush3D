@@ -18,7 +18,7 @@ namespace rush
     protected:
         friend class Renderer;
 
-        WGPUShaderModuleImpl* m_Handle = nullptr;
+        WGPUShaderModuleImpl* m_ShaderModule = nullptr;
     };
 
 }

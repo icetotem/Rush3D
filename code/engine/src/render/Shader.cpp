@@ -11,7 +11,7 @@ namespace rush
 
     Shader::~Shader()
     {
-        WGPU_RELEASE_RESOURCE(ShaderModule, m_Handle);
+        WGPU_RELEASE_RESOURCE(ShaderModule, m_ShaderModule);
     }
 
 }

@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Engine.h"
+#include "render/Renderer.h"
+#include "version.h"
 
 namespace rush
 {
@@ -8,7 +10,7 @@ namespace rush
     Engine::Engine()
     {
         Logger::Init("Rush3D.log", "Rush3D");
-        LOG_INFO("Rush3D Version {}", "0.01.0000");
+        LOG_INFO("Version {}", VERSION);
     }
 
     Ref<Window> Engine::CreateRenderWindow(const WindowDesc& desc)
@@ -16,6 +18,17 @@ namespace rush
         auto window = Window::Construct();
         window->Create(desc);
         return window;
+    }
+
+    Ref<Renderer> Engine::CreateRenderer(Ref<Window> window, const RendererDesc* rendererDesc)
+    {
+        auto renderer = Renderer::Construct(window, rendererDesc);
+        return renderer;
+    }
+
+    Ref<Scene> Engine::CreateScene(const StringView& name)
+    {
+        return nullptr;
     }
 
 }

@@ -237,6 +237,9 @@ namespace rush
     class UniformBuffer;
     struct PipelineDesc;
     class RPipeline;
+    class RenderPass;
+    class RenderBatch;
+    class RenderContent;
 
 }
 
@@ -264,6 +267,16 @@ struct WGPUSurfaceImpl;
 struct WGPUSwapChainImpl;
 struct WGPUTextureImpl;
 struct WGPUTextureViewImpl;
+
+#define CMD_BUFFER_SIZE 256
+
+#ifdef RUSH_PLATFORM_WINDOWS
+#define DAWN_ENABLE_BACKEND_D3D12
+#elif (defined(RUSH_PLATFORM_LINUX) || defined(RUSH_PLATFORM_ANDROID))
+#define DAWN_ENABLE_BACKEND_VULKAN
+#elif (defined(RUSH_PLATFORM_MAC) || defined(RUSH_PLATFORM_IOS))
+#define DAWN_ENABLE_BACKEND_METAL
+#endif
 
 
 #define WGPU_RELEASE_RESOURCE(Type, Name)                                      \

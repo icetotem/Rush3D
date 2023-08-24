@@ -55,6 +55,20 @@ namespace rush
 #endif
     }
 
+    static void* GetDisplay()
+    {
+#ifdef RUSH_PLATFORM_WINDOWS
+        return nullptr;
+#elif defined(RUSH_PLATFORM_MAC)
+        return (void*)glfwGetX11Display();
+#elif defined(RUSH_PLATFORM_LINUX)
+        return (void*)glfwGetX11Display();
+#else   
+        RUSH_ASSERT(false);
+        return nullptr;
+#endif
+    }
+
     bool Window::Create(const WindowDesc& desc)
     {        
         m_Width = desc.Width;
@@ -65,7 +79,7 @@ namespace rush
         glfwWindowHint(GLFW_RESIZABLE, desc.Resizable ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, desc.Transparent ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_DECORATED, desc.Frameless ? GLFW_FALSE : GLFW_TRUE);
-        glfwWindowHint(GLFW_FLOATING, desc.Floating ? GLFW_TRUE : GLFW_FALSE);
+        glfwWindowHint(GLFW_FLOATING, desc.OnTop ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_VISIBLE, desc.Visible ? GLFW_TRUE : GLFW_FALSE);
 
         if (desc.PosX >= 0)
@@ -91,6 +105,7 @@ namespace rush
         }
 
         m_Handle = GetNativeWindowHandle(m_Impl->handle);
+        m_Display = GetDisplay();
 
         return true;
     }

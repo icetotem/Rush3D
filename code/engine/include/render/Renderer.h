@@ -2,46 +2,13 @@
 
 #include "core/Core.h"
 #include "render/RenderDefines.h"
-#include "window.h"
 
 namespace rush
 {
 
-    /// <summary>
-    /// RenderPassDesc
-    /// </summary>
-    struct RenderPassDesc
-    {
-        std::string DebugName;
-        TextureFormat Format = TextureFormat::RGBA8Snorm;
-        Vector4 ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
-        bool IsSwapBuffer = false;
-        int Width = 0;
-        int Height = 0;
-    };
-
-    /// <summary>
-    /// RenderPass
-    /// </summary>
-    class RenderPass
-    {
-    public:
-        RenderPass();
-        ~RenderPass();
-
-        Ref<RTexture> GetRenderTarget() const { return m_RenderTarget; }
-
-    protected:
-        Ref<RTexture> m_RenderTarget;
-        friend class Renderer;
-        struct WebGpuImpl;
-        Ref<WebGpuImpl> m_Impl;
-        bool IsSwapBuffer = false;
-        Vector4 ClearColor;
-    };
-
     struct RendererDesc
     {
+        bool vsync = true;
         uint32_t msaa = 4;
         bool ssao = false;
         bool bloom = false;
@@ -56,6 +23,7 @@ namespace rush
         uint32_t maxTextureDimension3D;
         uint32_t maxTextureArrayLayers;
         uint32_t maxBindGroups;
+        uint32_t maxBindGroupsPlusVertexBuffers;
         uint32_t maxBindingsPerBindGroup;
         uint32_t maxDynamicUniformBuffersPerPipelineLayout;
         uint32_t maxDynamicStorageBuffersPerPipelineLayout;
@@ -75,6 +43,7 @@ namespace rush
         uint32_t maxInterStageShaderComponents;
         uint32_t maxInterStageShaderVariables;
         uint32_t maxColorAttachments;
+        uint32_t maxColorAttachmentBytesPerSample;
         uint32_t maxComputeWorkgroupStorageSize;
         uint32_t maxComputeInvocationsPerWorkgroup;
         uint32_t maxComputeWorkgroupSizeX;
@@ -83,27 +52,21 @@ namespace rush
         uint32_t maxComputeWorkgroupsPerDimension;
     };    
 
-    class RenderBatch
-    {
-    public:
-        Ref<RPipeline> Pipeline;
-        Ref<UniformBuffer> Uniforms;
-        List<Ref<RBuffer>> VBList;
-        Ref<RBuffer> IB;
-        uint32_t InstanceCount = 1;
-        uint32_t FirstIndex = 0;
-        uint32_t FirstVertex = 0;
-    };
-
-    class RenderContent
-    {
-    public:
-
-        friend class Renderer;
-        List<Ref<RenderBatch>> m_Batches;
-    };
 
     class Window;
+    struct RenderContex;
+
+    struct RenderPassDesc
+    {
+        uint32_t width = 128;
+        uint32_t height = 128;
+        TextureFormat color = TextureFormat::RGBA8Unorm;
+        TextureFormat depthStencil = TextureFormat::Depth24Plus;
+        Vector4 clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+        float clearDepth = 1.0f;
+        bool withDepth = true;
+        const char* lable = nullptr;
+    };
 
     /// <summary>
     /// Renderer
@@ -111,7 +74,6 @@ namespace rush
     class Renderer
     {
     public:
-        Renderer(Ref<Window> window, const RendererDesc* rendererDesc);
         ~Renderer();
 
         Ref<Shader> CreateShader(const char* code, const char* debugName = nullptr);
@@ -126,20 +88,38 @@ namespace rush
 
         Ref<RPipeline> CreatePipeline(const PipelineDesc* pipeDesc);
 
-        //Ref<RTexture> CreateTexture();
+        Ref<RenderPass> CreateRenderPass(const RenderPassDesc* desc);
 
-        Ref<RenderPass> CreateRenderPass(const RenderPassDesc* renderPassDesc);
+        void BeginDraw();
 
-        void RenderOnePass(Ref<RenderPass> renderPass, Ref<RenderContent> content);
+        void DrawOfflinePass(Ref<RenderPass> renderPass, Ref<RenderContent> content);
 
-        void SwapBuffers();
+        void DrawFinalPass(Ref<RenderContent> content);
+
+        void EndDraw();
 
     protected:
-        struct WebGpuImpl;
-        Ref<WebGpuImpl> m_Impl;
+        friend class Engine;
+
+        static Ref<Renderer> Construct(Ref<Window> window, const RendererDesc* rendererDesc)
+        {
+            return std::shared_ptr<Renderer>(new Renderer(window, rendererDesc));
+        }
+
+        Renderer(Ref<Window> window, const RendererDesc* rendererDesc);
+
+        void CreateAdapter();
+        void CreateDevice();
+        void CreateQueue();
+        void CreateSurface();
+        void CreateSwapChain();
+        void GetInformation();
+
+
+    protected:
+        Ref<RenderContex> m_Contex;
 
         RenderCaps m_Caps;
-        WindowHandle m_WindowHandle;
         uint32_t m_Width;
         uint32_t m_Height;
         uint32_t m_Msaa;

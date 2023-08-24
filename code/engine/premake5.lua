@@ -37,13 +37,13 @@ project "Rush3D_Engine"
 
 	links
     {
-        "Rush3D_Deps",
+        "Rush3D_Deps", "dawn_native", "dawn_platform", "dawn_proc", "dawncpp"
     }
 
-	filter "platforms:x86_64"
+	filter "system:windows"
 		libdirs
 		{
-			path.join(DEP_DIR, "dawn/bin/win/x64/%{cfg.buildcfg}"),
+			path.join(DEP_DIR, "dawn/lib/win/%{cfg.buildcfg}"),
 		}
 
 

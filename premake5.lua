@@ -37,6 +37,14 @@ solution "Rush3D"
         
     filter "system:windows"
         defines { "RUSH_PLATFORM_WINDOWS" }
+    filter "system:macosx"
+        defines { "RUSH_PLATFORM_MAC" }
+    filter "system:ios"
+        defines { "RUSH_PLATFORM_IOS" }
+    filter "system:android"
+        defines { "RUSH_PLATFORM_ANDROID" }
+    filter "system:linux"
+        defines { "RUSH_PLATFORM_LINUX" }
 
 include "3rdparty"
 include "code/Engine"

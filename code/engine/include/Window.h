@@ -21,11 +21,12 @@ namespace rush
         bool Transparent = false;
         bool Frameless = false;
         bool Resizable = true;
-        bool Floating = true;
+        bool OnTop = true;
         bool Visible = true;
     };
 
     typedef void* WindowHandle;
+    typedef void* DisplayHandle;
 
     class Window
     {
@@ -34,6 +35,7 @@ namespace rush
 
     public:
         WindowHandle GetNativeHandle() const { return m_Handle; }
+        DisplayHandle GetDisplay() const { return m_Display; }
 
         const char* GetTitle() const { return m_Title; }
 
@@ -66,6 +68,7 @@ namespace rush
         uint32_t m_Height = 768;
 
         WindowHandle m_Handle = nullptr;
+        DisplayHandle m_Display = nullptr;
     };
 
 }

@@ -74,6 +74,8 @@
         x = NULL; \
     }
 
+#define ARRAY_SIZE(Array) (sizeof(Array) / sizeof((Array)[0]))
+
 #include <memory>
 #include <utility>
 #include <functional>
