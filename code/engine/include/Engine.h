@@ -1,18 +1,12 @@
 #pragma once
+
 #include "core/Common.h"
-#include "Window.h"
 #include "render/Renderer.h"
+#include "Window.h"
 #include "Scene.h"
 
 namespace rush
 {
-    
-    class Window;
-    class Renderer;
-    class Scene;
-    struct WindowDesc;
-    struct RendererDesc;
-    struct RenderPassDesc;
 
     class Engine : public Singleton<Engine>
     {

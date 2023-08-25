@@ -367,17 +367,17 @@ namespace rush
         renderPassDesc.colorAttachmentCount = 1;
         renderPassDesc.colorAttachments = &attachment;
 
-        wgpu::RenderPassDepthStencilAttachment cDepthStencilAttachmentInfo = {};
-        cDepthStencilAttachmentInfo.depthReadOnly = false;
-        cDepthStencilAttachmentInfo.stencilReadOnly = false;
-        cDepthStencilAttachmentInfo.depthClearValue = 1.0f;
-        cDepthStencilAttachmentInfo.stencilClearValue = 0;
-        cDepthStencilAttachmentInfo.depthLoadOp = wgpu::LoadOp::Clear;
-        cDepthStencilAttachmentInfo.depthStoreOp = wgpu::StoreOp::Store;
-        cDepthStencilAttachmentInfo.stencilLoadOp = wgpu::LoadOp::Clear;
-        cDepthStencilAttachmentInfo.stencilStoreOp = wgpu::StoreOp::Store;
-        cDepthStencilAttachmentInfo.view = m_Contex->depthStencilView;
-        renderPassDesc.depthStencilAttachment = &cDepthStencilAttachmentInfo;
+//         wgpu::RenderPassDepthStencilAttachment cDepthStencilAttachmentInfo = {};
+//         cDepthStencilAttachmentInfo.depthReadOnly = false;
+//         cDepthStencilAttachmentInfo.stencilReadOnly = false;
+//         cDepthStencilAttachmentInfo.depthClearValue = 1.0f;
+//         cDepthStencilAttachmentInfo.stencilClearValue = 0;
+//         cDepthStencilAttachmentInfo.depthLoadOp = wgpu::LoadOp::Clear;
+//         cDepthStencilAttachmentInfo.depthStoreOp = wgpu::StoreOp::Store;
+//         cDepthStencilAttachmentInfo.stencilLoadOp = wgpu::LoadOp::Clear;
+//         cDepthStencilAttachmentInfo.stencilStoreOp = wgpu::StoreOp::Store;
+//         cDepthStencilAttachmentInfo.view = m_Contex->depthStencilView;
+//         renderPassDesc.depthStencilAttachment = &cDepthStencilAttachmentInfo;
 
         wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
 

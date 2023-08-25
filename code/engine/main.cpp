@@ -121,8 +121,8 @@ int main(int argc, char* argv[])
 
 
         PipelineDesc pipeDesc;
-        pipeDesc.DepthWrite = true;
-        pipeDesc.DepthTest = true;
+        pipeDesc.DepthWrite = false;
+        pipeDesc.DepthTest = false;
 		pipeDesc.ColorFormat = TextureFormat::BGRA8Unorm;
 		pipeDesc.DepthFormat = TextureFormat::Depth24PlusStencil8;
 		pipeDesc.DepthCompare = DepthCompareFunction::LessEqual;
