@@ -4,11 +4,12 @@ DEP_DIR = "./"
 project "Rush3D_Deps"
     kind "StaticLib"
     language "C++"
-    cppdialect "C++20"
+    cppdialect "C++17"
     exceptionhandling "Off"
 	rtti "Off"
 
-    defines{
+    defines
+    {
         "SPDLOG_COMPILED_LIB", "SPDLOG_NO_EXCEPTIONS", "STB_IMAGE_IMPLEMENTATION", "MAKE_LIB", "B3_USE_CLEW", "BT_USE_SSE_IN_API"
     }
 

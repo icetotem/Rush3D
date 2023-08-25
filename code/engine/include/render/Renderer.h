@@ -1,25 +1,30 @@
 #pragma once
 
 #include "core/Core.h"
-#include "render/RenderDefines.h"
-#include "Layout.h"
-#include "Uniform.h"
+#include "render/RDefines.h"
+#include "render/RLayout.h"
+#include "render/RUniform.h"
+#include "render/RShader.h"
+#include "render/RPipeline.h"
+#include "render/RPass.h"
+#include "render/RBatch.h"
+#include "Window.h"
 
 namespace rush
 {
 
     struct RendererDesc
     {
-        RenderBackend backend = RenderBackend::D3D12;
-        bool vsync = true;
-        uint32_t msaa = 4;
-        bool ssao = false;
-        bool bloom = false;
-        bool hdr = false;
-        bool gamma = false;
-        std::vector<std::string> enableToggles;
-        std::vector<std::string> disableToggles;
-        Vector4 clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+        RenderBackend Backend = RenderBackend::D3D12;
+        bool Vsync = true;
+        uint32_t Msaa = 4;
+        bool Ssao = false;
+        bool Bloom = false;
+        bool Hdr = false;
+        bool Gamma = false;
+        std::vector<std::string> EnableToggles;
+        std::vector<std::string> DisableToggles;
+        Vector4 ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
     };
 
     struct RenderCaps
@@ -58,20 +63,16 @@ namespace rush
         uint32_t maxComputeWorkgroupsPerDimension;
     };    
 
-
-    class Window;
-    struct RenderContex;
-
     struct RenderPassDesc
     {
-        uint32_t width = 128;
-        uint32_t height = 128;
-        TextureFormat color = TextureFormat::BGRA8Unorm;
-        TextureFormat depthStencil = TextureFormat::Depth24PlusStencil8;
-        Vector4 clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
-        float clearDepth = 1.0f;
-        bool withDepth = true;
-        const char* lable = nullptr;
+        uint32_t Width = 128;
+        uint32_t Height = 128;
+        TextureFormat ColorFormat = TextureFormat::BGRA8Unorm;
+        TextureFormat DepthStencilFormat = TextureFormat::Depth24PlusStencil8;
+        Vector4 ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+        float ClearDepth = 1.0f;
+        bool UseDepth = true;
+        bool UseStencile = true;
     };
 
     /// <summary>
@@ -82,27 +83,27 @@ namespace rush
     public:
         ~Renderer();
 
-        Ref<Shader> CreateShader(const char* code, ShaderStage type, const char* lable = nullptr);
+        Ref<RShader> CreateShader(const char* code, ShaderStage type, const char* lable = nullptr);
 
         Ref<RVertexBuffer> CreateVertexBuffer(uint32_t stride, uint64_t size, const char* lable = nullptr);
 
         Ref<RIndexBuffer> CreateIndexBuffer(uint64_t count, bool use32bits, const char* lable = nullptr);
 
-        Ref<BindingLayout> CreateBindingLayout(std::initializer_list<BindingLayoutHelper> entriesInitializer);
+        Ref<BindingLayout> CreateBindingLayout(std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable = nullptr);
 
-        Ref<BindGroup> CreateBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable = nullptr);
+        Ref<RBindGroup> CreateBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable = nullptr);
 
-        Ref<UniformBuffer> CreateUniformBuffer(uint64_t size, BufferUsage usage, const char* lable = nullptr);
+        Ref<RUniformBuffer> CreateUniformBuffer(uint64_t size, BufferUsage usage, const char* lable = nullptr);
 
-        Ref<RenderPipeline> CreatePipeline(const PipelineDesc* pipeDesc, const char* lable = nullptr);
+        Ref<RPipeline> CreatePipeline(const PipelineDesc* pipeDesc, const char* lable = nullptr);
 
-        Ref<RenderPass> CreateRenderPass(const RenderPassDesc* desc);
+        Ref<RPass> CreateRenderPass(const RenderPassDesc* desc, const char* lable = nullptr);
 
         void BeginDraw();
 
-        void DrawOfflinePass(Ref<RenderPass> renderPass, Ref<RenderContent> content);
+        void DrawOfflinePass(Ref<RPass> renderPass, Ref<RContent> content);
 
-        void DrawFinalPass(Ref<RenderContent> content);
+        void DrawFinalPass(Ref<RContent> content);
 
         void EndDraw();
 
@@ -120,11 +121,11 @@ namespace rush
         void InitWGPU(const RendererDesc* rendererDesc);
         void CreateDefaultDepthStencilView();
 
-        void GetCaps();
+        void GatherCaps();
 
 
     protected:
-        Ref<RenderContex> m_Contex;
+        Ref<RContex> m_Contex;
 
         RenderCaps m_Caps;
         uint32_t m_Width;

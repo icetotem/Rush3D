@@ -5,10 +5,10 @@
 #include "render/Renderer.h"
 #include "render/RTexture.h"
 #include "render/RBuffer.h"
-#include "render/Shader.h"
-#include "render/Uniform.h"
+#include "render/RShader.h"
+#include "render/RUniform.h"
 #include "render/RPipeline.h"
-#include "render/RenderBatch.h"
+#include "render/RBatch.h"
 
 using namespace rush;
 
@@ -60,11 +60,11 @@ static char const triangle_frag_wgsl[] = R"(
 )";
 
 Ref<Renderer> g_Renderer = nullptr;
-Ref<RenderContent> content = CreateRef<RenderContent>();
-Ref<RenderPass> pass0;
-Ref<RenderPass> pass1;
-Ref<BindGroup> bindGroup;
-Ref<UniformBuffer> uniformBuf;
+Ref<RContent> content = CreateRef<RContent>();
+Ref<RPass> pass0;
+Ref<RPass> pass1;
+Ref<RBindGroup> bindGroup;
+Ref<RUniformBuffer> uniformBuf;
 
 static bool redraw2()
 {
@@ -73,6 +73,8 @@ static bool redraw2()
 		g_Renderer->BeginDraw();
 
 		rotDeg += 0.1f;
+
+		uniformBuf->UpdateData(&rotDeg, sizeof(rotDeg));
 
 		g_Renderer->DrawOfflinePass(pass0, content);
 		g_Renderer->DrawFinalPass(content);
@@ -87,14 +89,12 @@ int main(int argc, char* argv[])
 {	
 	Engine engine;
 	
-	WindowDesc wndDesc = 
-	{
-		.Title = "RushDmeo",
-		.Width = 1280,
-		.Height = 900,
-        .OnTop = false,
-        .Visible = false,
-	};
+    WindowDesc wndDesc;
+    wndDesc.Title = "RushDmeo";
+    wndDesc.Width = 1280;
+    wndDesc.Height = 900;
+    wndDesc.OnTop = false;
+    wndDesc.Visible = false;
 
 	auto window = engine.CreateRenderWindow(wndDesc);
 	
@@ -103,27 +103,27 @@ int main(int argc, char* argv[])
 		window->Show(true);
 
 		RendererDesc rendererDesc;
-		rendererDesc.msaa = 1;
+		rendererDesc.Msaa = 1;
 		auto renderer = engine.CreateRenderer(window, &rendererDesc);
 		g_Renderer = renderer;
 
-		RenderPassDesc rpDesc = {
-			.width = 1280,
-			.height = 900,
-		};
+		RenderPassDesc rpDesc;
+		rpDesc.Width = 1280;
+		rpDesc.Height = 900;		
 
 		pass0 = renderer->CreateRenderPass(&rpDesc);
 
 
-        Ref<Shader> vs = renderer->CreateShader(triangle_vert_wgsl, ShaderStage::Vertex);
-        Ref<Shader> fs = renderer->CreateShader(triangle_frag_wgsl, ShaderStage::Fragment);
+        Ref<RShader> vs = renderer->CreateShader(triangle_vert_wgsl, ShaderStage::Vertex);
+        Ref<RShader> fs = renderer->CreateShader(triangle_frag_wgsl, ShaderStage::Fragment);
 
 
         PipelineDesc pipeDesc;
-        pipeDesc.DepthWrite = false;
-        pipeDesc.DepthTest = false;
+        pipeDesc.DepthWrite = true;
+        pipeDesc.DepthTest = true;
 		pipeDesc.ColorFormat = TextureFormat::BGRA8Unorm;
 		pipeDesc.DepthFormat = TextureFormat::Depth24PlusStencil8;
+		pipeDesc.DepthCompare = DepthCompareFunction::LessEqual;
 
         VertexAttribute vertAttrs[2];
         vertAttrs[0].Format = VertexFormat::Float32x2;
@@ -155,7 +155,7 @@ int main(int argc, char* argv[])
 
 		pipeDesc.Cull = CullMode::None;
 
-        Ref<RenderPipeline> rpipe = renderer->CreatePipeline(&pipeDesc);
+        Ref<RPipeline> rpipe = renderer->CreatePipeline(&pipeDesc);
 
         // create the buffers (x, y)
         float const vertData0[] = {
@@ -192,13 +192,12 @@ int main(int argc, char* argv[])
 			{0, uniformBuf}
 		});
 
-		Ref<RenderBatch> batch = CreateRef<RenderBatch>();
+		Ref<RBatch> batch = content->NewBatch();
         batch->Pipeline = rpipe;
         batch->VBList.push_back(vb0);
         batch->VBList.push_back(vb1);
         batch->IB = ib;
 		batch->Uniforms = bindGroup;
-		content->m_Batches.push_back(batch);
 
         while (window->ShouldClose())
         {
@@ -207,6 +206,9 @@ int main(int argc, char* argv[])
         }
 	}
 
+	content.reset();
+	bindGroup.reset();
+	uniformBuf.reset();
 	g_Renderer.reset();
 	window.reset();
 

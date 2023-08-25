@@ -1,13 +1,16 @@
 #include "stdafx.h"
+
+#include <dawn/webgpu_cpp.h>
+
 #include "render/RBuffer.h"
-#include "dawn/webgpu.h"
-#include "RenderContex.h"
+#include "RContex.h"
 
 namespace rush
 {
 
-    RVertexBuffer::RVertexBuffer(Ref<RenderContex> contex, uint32_t stride, uint64_t size, const char* lable)
+    RVertexBuffer::RVertexBuffer(Ref<RContex> contex, uint32_t stride, uint64_t size, const char* lable)
     {
+        m_Contex = contex;
         m_Size = size;
         m_Stride = stride;
         m_Count = m_Size / m_Stride;
@@ -18,7 +21,6 @@ namespace rush
         descriptor.size = m_Size;
         descriptor.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
         *m_Buffer = contex->device.CreateBuffer(&descriptor);
-        m_Queue = contex->queue;
     }
 
     RVertexBuffer::~RVertexBuffer()
@@ -31,7 +33,7 @@ namespace rush
         uint64_t offset = startVertex * m_Stride;
         if (data != nullptr && size > 0 && offset + size <= m_Size)
         {
-            m_Queue->WriteBuffer(*m_Buffer.get(), offset, data, size);
+            m_Contex->queue.WriteBuffer(*m_Buffer.get(), offset, data, size);
         }
         else
         {
@@ -41,8 +43,9 @@ namespace rush
 
     //////////////////////////////////////////////////////////////////////////
 
-    RIndexBuffer::RIndexBuffer(Ref<RenderContex> contex, uint64_t count, bool use32bits /*= false*/, const char* lable)
+    RIndexBuffer::RIndexBuffer(Ref<RContex> contex, uint64_t count, bool use32bits /*= false*/, const char* lable)
     {
+        m_Contex = contex;
         m_Use32Bits = use32bits;
         m_Count = count;
         m_Size = m_Count * (use32bits ? sizeof(uint32_t) : sizeof(uint16_t));
@@ -53,7 +56,6 @@ namespace rush
         descriptor.size = m_Size;
         descriptor.usage = wgpu::BufferUsage::Index | wgpu::BufferUsage::CopyDst;
         *m_Buffer = contex->device.CreateBuffer(&descriptor);
-        m_Queue = contex->queue;
     }
 
     RIndexBuffer::~RIndexBuffer()
@@ -66,7 +68,7 @@ namespace rush
         uint64_t offset = startIndex * (m_Use32Bits ? sizeof(uint32_t) : sizeof(uint16_t));
         if (data != nullptr && size > 0 && offset + size <= m_Size)
         {
-            m_Queue->WriteBuffer(*m_Buffer.get(), offset, data, size);
+            m_Contex->queue.WriteBuffer(*m_Buffer.get(), offset, data, size);
         }
         else
         {

@@ -12,7 +12,7 @@ namespace rush
 
     struct WindowDesc
     {
-        char Title[64] = "Rush3D";
+        String Title = "Rush3D";
         uint32_t Width = 1024;
         uint32_t Height = 768;
         int PosX = -1;
@@ -37,7 +37,7 @@ namespace rush
         WindowHandle GetNativeHandle() const { return m_Handle; }
         DisplayHandle GetDisplay() const { return m_Display; }
 
-        const char* GetTitle() const { return m_Title; }
+        const String& GetTitle() const { return m_Title; }
 
         uint32_t GetWidth() const { return m_Width; }
 
@@ -64,7 +64,7 @@ namespace rush
         struct Impl;
         Ref<Impl> m_Impl;
 
-        char m_Title[64];
+        String m_Title;
         uint32_t m_Width = 1024;
         uint32_t m_Height = 768;
 

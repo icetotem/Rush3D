@@ -1,18 +1,11 @@
 #include "stdafx.h"
-#include "render/Renderer.h"
-#include "render/RTexture.h"
-#include "render/RBuffer.h"
-#include "render/Shader.h"
-#include "render/Uniform.h"
-#include "render/RPipeline.h"
-#include "render/RenderPass.h"
-#include "Window.h"
+
 #include <dawn/dawn_proc.h>
 #include <dawn/native/DawnNative.h>
 #include <dawn/webgpu_cpp.h>
-#include "RenderContex.h"
-#include "render/RenderBatch.h"
 
+#include "render/Renderer.h"
+#include "RContex.h"
 
 namespace rush
 {
@@ -68,7 +61,8 @@ namespace rush
         LOG_ERROR("Device log:  {}", message);
     }
 
-    std::unique_ptr<wgpu::ChainedStruct> SetupWindowAndGetSurfaceDescriptor(void* wndHandle, void* displayHandle) {
+    std::unique_ptr<wgpu::ChainedStruct> SetupWindowAndGetSurfaceDescriptor(void* wndHandle, void* displayHandle) 
+    {
 #ifdef RUSH_PLATFORM_WINDOWS
         std::unique_ptr<wgpu::SurfaceDescriptorFromWindowsHWND> desc =
             std::make_unique<wgpu::SurfaceDescriptorFromWindowsHWND>();
@@ -114,16 +108,16 @@ namespace rush
         if (instance == nullptr)
             instance = std::make_unique<dawn::native::Instance>();
 
-        m_Msaa = rendererDesc->msaa;
+        m_Msaa = rendererDesc->Msaa;
         m_Width = m_Window->GetWidth();
         m_Height = m_Window->GetHeight();
-        m_ClearColor = rendererDesc->clearColor;
-        m_Contex = CreateRef<RenderContex>();
+        m_ClearColor = rendererDesc->ClearColor;
+        m_Contex = CreateRef<RContex>();
 
         CreateAdapter(rendererDesc);
         InitWGPU(rendererDesc);
 
-        GetCaps();
+        GatherCaps();
 
         CreateDefaultDepthStencilView();
     }
@@ -133,11 +127,10 @@ namespace rush
 
     }
 
-
     void Renderer::CreateAdapter(const RendererDesc* rendererDesc)
     {
         wgpu::RequestAdapterOptions options = {};
-        options.backendType = g_WGPUBackendType[(int)rendererDesc->backend];
+        options.backendType = g_WGPUBackendType[(int)rendererDesc->Backend];
         auto adapters = instance->EnumerateAdapters(&options);
         LOG_INFO("Found {} adapters:", adapters.size());
         int index = 1;
@@ -191,12 +184,12 @@ namespace rush
     {
         std::vector<const char*> enableToggleNames;
         std::vector<const char*> disabledToggleNames;
-        for (const std::string& toggle : rendererDesc->enableToggles) 
+        for (const std::string& toggle : rendererDesc->EnableToggles) 
         {
             enableToggleNames.push_back(toggle.c_str());
         }
 
-        for (const std::string& toggle : rendererDesc->disableToggles) 
+        for (const std::string& toggle : rendererDesc->DisableToggles) 
         {
             disabledToggleNames.push_back(toggle.c_str());
         }
@@ -231,18 +224,17 @@ namespace rush
         procs.deviceSetLoggingCallback(device, DeviceLogCallback, nullptr);
 
         // create swapchain
-        wgpu::SwapChainDescriptor scDesc{
-            .usage = wgpu::TextureUsage::RenderAttachment,
-                .format = wgpu::TextureFormat::BGRA8Unorm,
-                .width = m_Width,
-                .height = m_Height,
-                .presentMode = rendererDesc->vsync ? wgpu::PresentMode::Fifo : wgpu::PresentMode::Mailbox,
-        };
+        wgpu::SwapChainDescriptor scDesc;
+        scDesc.usage = wgpu::TextureUsage::RenderAttachment;
+        scDesc.format = wgpu::TextureFormat::BGRA8Unorm;
+        scDesc.width = m_Width;
+        scDesc.height = m_Height;
+        scDesc.presentMode = rendererDesc->Vsync ? wgpu::PresentMode::Fifo : wgpu::PresentMode::Mailbox;
+        
         m_Contex->swapChain = m_Contex->device.CreateSwapChain(surface, &scDesc);
 
         // create queue
-        m_Contex->queue = CreateRef<wgpu::Queue>();
-        *m_Contex->queue = m_Contex->device.GetQueue();
+        m_Contex->queue = m_Contex->device.GetQueue();
     }
 
     void Renderer::CreateDefaultDepthStencilView()
@@ -260,7 +252,7 @@ namespace rush
         m_Contex->depthStencilView = depthStencilTexture.CreateView();
     }
 
-    void Renderer::GetCaps()
+    void Renderer::GatherCaps()
     {
         // limits
         LOG_INFO("\n---------------Limits-----------------");
@@ -306,46 +298,44 @@ namespace rush
         LOG_INFO("\n");
     }
 
-
-
-    Ref<Shader> Renderer::CreateShader(const char* code, ShaderStage type, const char* lable)
+    Ref<RShader> Renderer::CreateShader(const char* code, ShaderStage type, const char* lable/* = nullptr*/)
     {
-        return Shader::Construct(m_Contex, type, code, lable);
+        return RShader::Construct(m_Contex, type, code, lable);
     }
 
-    Ref<RVertexBuffer> Renderer::CreateVertexBuffer(uint32_t stride, uint64_t size, const char* lable)
+    Ref<RVertexBuffer> Renderer::CreateVertexBuffer(uint32_t stride, uint64_t size, const char* lable/* = nullptr*/)
     {
         return RVertexBuffer::Construct(m_Contex, stride, size, lable);
     }
 
-    Ref<RIndexBuffer> Renderer::CreateIndexBuffer(uint64_t count, bool use32bits, const char* lable)
+    Ref<RIndexBuffer> Renderer::CreateIndexBuffer(uint64_t count, bool use32bits, const char* lable/* = nullptr*/)
     {
         return RIndexBuffer::Construct(m_Contex, count, use32bits, lable);
     }
 
-    Ref<BindingLayout> Renderer::CreateBindingLayout(std::initializer_list<BindingLayoutHelper> entriesInitializer)
+    Ref<BindingLayout> Renderer::CreateBindingLayout(std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable/* = nullptr*/)
     {
-        return BindingLayout::Construct(m_Contex, entriesInitializer);
+        return BindingLayout::Construct(m_Contex, entriesInitializer, lable);
     }
 
-    Ref<RenderPipeline> Renderer::CreatePipeline(const PipelineDesc* pipeDesc, const char* lable)
+    Ref<RPipeline> Renderer::CreatePipeline(const PipelineDesc* pipeDesc, const char* lable/* = nullptr*/)
     {
-        return RenderPipeline::Construct(m_Contex, pipeDesc, lable);
+        return RPipeline::Construct(m_Contex, pipeDesc, lable);
     }
 
-    Ref<BindGroup> Renderer::CreateBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable)
+    Ref<RBindGroup> Renderer::CreateBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable/* = nullptr*/)
     {
-        return BindGroup::Construct(m_Contex, layout, entriesInitializer, lable);
+        return RBindGroup::Construct(m_Contex, layout, entriesInitializer, lable);
     }
 
-    Ref<UniformBuffer> Renderer::CreateUniformBuffer(uint64_t size, BufferUsage usage, const char* lable /*= nullptr*/)
+    Ref<RUniformBuffer> Renderer::CreateUniformBuffer(uint64_t size, BufferUsage usage, const char* lable /*= nullptr*/)
     {
-        return UniformBuffer::Construct(m_Contex, usage, size, lable);
+        return RUniformBuffer::Construct(m_Contex, usage, size, lable);
     }
 
-    Ref<RenderPass> Renderer::CreateRenderPass(const RenderPassDesc* desc)
+    Ref<RPass> Renderer::CreateRenderPass(const RenderPassDesc* desc, const char* lable/* = nullptr*/)
     {
-        return RenderPass::Construct(m_Contex, desc->lable, desc->width, desc->height, desc->color, desc->depthStencil, desc->clearColor, desc->clearDepth, desc->withDepth);
+        return RPass::Construct(m_Contex, desc->Width, desc->Height, desc->ColorFormat, desc->DepthStencilFormat, desc->ClearColor, desc->ClearDepth, desc->UseDepth, lable);
     }
 
     void Renderer::BeginDraw()
@@ -357,14 +347,16 @@ namespace rush
 
     }
 
-    void Renderer::DrawOfflinePass(Ref<RenderPass> renderPass, Ref<RenderContent> content)
+    void Renderer::DrawOfflinePass(Ref<RPass> renderPass, Ref<RContent> content)
     {
 
     }
 
-    void Renderer::DrawFinalPass(Ref<RenderContent> content)
+    void Renderer::DrawFinalPass(Ref<RContent> content)
     {
         wgpu::TextureView backbufferView = m_Contex->swapChain.GetCurrentTextureView();
+
+        wgpu::RenderPassDescriptor renderPassDesc = {};
 
         wgpu::RenderPassColorAttachment attachment = {};
         attachment.view = backbufferView;
@@ -372,22 +364,20 @@ namespace rush
         attachment.loadOp = wgpu::LoadOp::Clear;
         attachment.storeOp = wgpu::StoreOp::Store;
         attachment.clearValue = { m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a };
-
-        wgpu::RenderPassDescriptor renderPassDesc = {};
         renderPassDesc.colorAttachmentCount = 1;
         renderPassDesc.colorAttachments = &attachment;
 
-//         wgpu::RenderPassDepthStencilAttachment cDepthStencilAttachmentInfo = {};
-//         cDepthStencilAttachmentInfo.depthReadOnly = false;
-//         cDepthStencilAttachmentInfo.stencilReadOnly = false;
-//         cDepthStencilAttachmentInfo.depthClearValue = 1.0f;
-//         cDepthStencilAttachmentInfo.stencilClearValue = 0;
-//         cDepthStencilAttachmentInfo.depthLoadOp = wgpu::LoadOp::Clear;
-//         cDepthStencilAttachmentInfo.depthStoreOp = wgpu::StoreOp::Store;
-//         cDepthStencilAttachmentInfo.stencilLoadOp = wgpu::LoadOp::Clear;
-//         cDepthStencilAttachmentInfo.stencilStoreOp = wgpu::StoreOp::Store;
-//         cDepthStencilAttachmentInfo.view = m_Contex->depthStencilView;
-//         renderPassDesc.depthStencilAttachment = &cDepthStencilAttachmentInfo;
+        wgpu::RenderPassDepthStencilAttachment cDepthStencilAttachmentInfo = {};
+        cDepthStencilAttachmentInfo.depthReadOnly = false;
+        cDepthStencilAttachmentInfo.stencilReadOnly = false;
+        cDepthStencilAttachmentInfo.depthClearValue = 1.0f;
+        cDepthStencilAttachmentInfo.stencilClearValue = 0;
+        cDepthStencilAttachmentInfo.depthLoadOp = wgpu::LoadOp::Clear;
+        cDepthStencilAttachmentInfo.depthStoreOp = wgpu::StoreOp::Store;
+        cDepthStencilAttachmentInfo.stencilLoadOp = wgpu::LoadOp::Clear;
+        cDepthStencilAttachmentInfo.stencilStoreOp = wgpu::StoreOp::Store;
+        cDepthStencilAttachmentInfo.view = m_Contex->depthStencilView;
+        renderPassDesc.depthStencilAttachment = &cDepthStencilAttachmentInfo;
 
         wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
 
@@ -412,7 +402,7 @@ namespace rush
     void Renderer::EndDraw()
     {
         wgpu::CommandBuffer commands = m_Contex->encoder.Finish();
-        m_Contex->queue->Submit(1, &commands);
+        m_Contex->queue.Submit(1, &commands);
         m_Contex->swapChain.Present();
     }
 

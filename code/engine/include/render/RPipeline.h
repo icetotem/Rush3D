@@ -1,8 +1,9 @@
 #pragma once
 
 #include "core/Core.h"
-#include "render/RenderDefines.h"
-#include "render/Layout.h"
+#include "render/RDefines.h"
+#include "render/RLayout.h"
+#include "render/RShader.h"
 
 namespace rush
 {
@@ -17,15 +18,13 @@ namespace rush
         BlendFactor DstAlpha = BlendFactor::DstAlpha;
     };
 
-    class Shader;
-
     /// <summary>
     /// PipelineDesc
     /// </summary>
     struct PipelineDesc
     {
-        Ref<Shader> VS;
-        Ref<Shader> FS;
+        Ref<RShader> VS;
+        Ref<RShader> FS;
         Ref<BindingLayout> BindLayout;
         List<VertexLayout> VLayouts;
         PrimitiveType Primitive = PrimitiveType::TriangleList;
@@ -37,7 +36,7 @@ namespace rush
         uint32_t WriteMask = ColorWriteMask::Write_All;
         bool DepthTest = true;
         bool DepthWrite = true;
-        DepthCompareFunction DepthCompare = DepthCompareFunction::Less;
+        DepthCompareFunction DepthCompare = DepthCompareFunction::LessEqual;
         bool StencilTest = false;
         bool StencilWrite = false;
     };
@@ -47,19 +46,19 @@ namespace rush
     /// <summary>
     /// RPipeline
     /// </summary>
-    class RenderPipeline
+    class RPipeline
     {
     public:
-        ~RenderPipeline();
+        ~RPipeline();
 
     protected:
         friend class Renderer;
 
-        RenderPipeline(Ref<RenderContex> contex, const PipelineDesc* desc, const char* lable = nullptr);
+        RPipeline(Ref<RContex> contex, const PipelineDesc* desc, const char* lable);
 
-        static Ref<RenderPipeline> Construct(Ref<RenderContex> contex, const PipelineDesc* desc, const char* lable)
+        static Ref<RPipeline> Construct(Ref<RContex> contex, const PipelineDesc* desc, const char* lable)
         {
-            return std::shared_ptr<RenderPipeline>(new RenderPipeline(contex, desc, lable));
+            return std::shared_ptr<RPipeline>(new RPipeline(contex, desc, lable));
         }
 
         Ref<wgpu::RenderPipeline> m_Pipeline;

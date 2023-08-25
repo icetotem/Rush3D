@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/Core.h"
-#include "render/RenderDefines.h"
+#include "render/RDefines.h"
 
 namespace rush
 {
@@ -25,9 +25,9 @@ namespace rush
     protected:
         friend class Renderer;
 
-        RVertexBuffer(Ref<RenderContex> contex, uint32_t stride, uint64_t size, const char* lable);
+        RVertexBuffer(Ref<RContex> contex, uint32_t stride, uint64_t size, const char* lable);
 
-        static Ref<RVertexBuffer> Construct(Ref<RenderContex> contex, uint32_t stride, uint64_t size, const char* lable)
+        static Ref<RVertexBuffer> Construct(Ref<RContex> contex, uint32_t stride, uint64_t size, const char* lable)
         {
             return std::shared_ptr<RVertexBuffer>(new RVertexBuffer(contex, stride, size, lable));
         }
@@ -37,7 +37,7 @@ namespace rush
         uint64_t m_Size = 0;
 
         Ref<wgpu::Buffer> m_Buffer;
-        Ref<wgpu::Queue> m_Queue;
+        Ref<RContex> m_Contex;
     };
 
     class RIndexBuffer
@@ -56,9 +56,9 @@ namespace rush
     protected:
         friend class Renderer;
 
-        RIndexBuffer(Ref<RenderContex> contex, uint64_t count, bool use32bits, const char* lable);
+        RIndexBuffer(Ref<RContex> contex, uint64_t count, bool use32bits, const char* lable);
 
-        static Ref<RIndexBuffer> Construct(Ref<RenderContex> contex, uint64_t count, bool use32bits, const char* lable)
+        static Ref<RIndexBuffer> Construct(Ref<RContex> contex, uint64_t count, bool use32bits, const char* lable)
         {
             return std::shared_ptr<RIndexBuffer>(new RIndexBuffer(contex, count, use32bits, lable));
         }
@@ -68,6 +68,6 @@ namespace rush
         bool m_Use32Bits = 0;
 
         Ref<wgpu::Buffer> m_Buffer;
-        Ref<wgpu::Queue> m_Queue;
+        Ref<RContex> m_Contex;
     };
 }

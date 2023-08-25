@@ -1,7 +1,9 @@
 #include "stdafx.h"
+
+#include <dawn/webgpu_cpp.h>
+
 #include "render/RTexture.h"
-#include "dawn/webgpu_cpp.h"
-#include "RenderContex.h"
+#include "RContex.h"
 
 namespace rush
 {
@@ -59,8 +61,9 @@ namespace rush
         return imageCopyTexture;
     }
 
-    RTexture::RTexture(Ref<RenderContex> contex, uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth/* = 1*/, const char* lable/* = nullptr*/)
+    RTexture::RTexture(Ref<RContex> contex, uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth/* = 1*/, const char* lable/* = nullptr*/)
     {
+        m_Contex = contex;
         m_Width = width;
         m_Height = height;
         m_Depth = depth;
@@ -78,7 +81,6 @@ namespace rush
         descriptor.mipLevelCount = m_Mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
 
-        m_RenderContex = contex;
 
         m_Texture = CreateRef<wgpu::Texture>();
         *m_Texture = contex->device.CreateTexture(&descriptor);
@@ -96,7 +98,7 @@ namespace rush
     void RTexture::UpdateData(const void* data, uint64_t size)
     {
         wgpu::Buffer stagingBuffer = CreateBufferFromData(
-            m_RenderContex->device, data, size, wgpu::BufferUsage::CopySrc);
+            m_Contex->device, data, size, wgpu::BufferUsage::CopySrc);
 
         wgpu::ImageCopyBuffer imageCopyBuffer = CreateImageCopyBuffer(stagingBuffer, 0, size);
 
@@ -104,11 +106,11 @@ namespace rush
 
         wgpu::Extent3D copySize = { m_Width, m_Height, m_Depth };
 
-        wgpu::CommandEncoder encoder = m_RenderContex->device.CreateCommandEncoder();
+        wgpu::CommandEncoder encoder = m_Contex->device.CreateCommandEncoder();
         encoder.CopyBufferToTexture(&imageCopyBuffer, &imageCopyTexture, &copySize);
 
         wgpu::CommandBuffer copy = encoder.Finish();
-        m_RenderContex->queue->Submit(1, &copy);
+        m_Contex->queue.Submit(1, &copy);
     }
 
 }

@@ -1,8 +1,9 @@
 #include "stdafx.h"
+
+#include <dawn/webgpu_cpp.h>
+
 #include "render/RPipeline.h"
-#include "dawn/webgpu_cpp.h"
-#include "render/Shader.h"
-#include "RenderContex.h"
+#include "RContex.h"
 
 namespace rush
 {
@@ -19,7 +20,7 @@ namespace rush
     extern wgpu::CompareFunction g_WGPUCompareFunction[(int)DepthCompareFunction::Count];
 
 
-    RenderPipeline::RenderPipeline(Ref<RenderContex> contex, const PipelineDesc* desc, const char* lable /*= nullptr*/)
+    RPipeline::RPipeline(Ref<RContex> contex, const PipelineDesc* desc, const char* lable /*= nullptr*/)
     {
         m_Pipeline = CreateRef<wgpu::RenderPipeline>();
 
@@ -140,7 +141,7 @@ namespace rush
         *m_Pipeline = contex->device.CreateRenderPipeline(&descriptor);
     }
 
-    RenderPipeline::~RenderPipeline()
+    RPipeline::~RPipeline()
     {
 
     }

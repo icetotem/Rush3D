@@ -80,7 +80,7 @@ namespace rush
     {        
         m_Width = desc.Width;
         m_Height = desc.Height;
-        strcpy(m_Title, desc.Title);
+        m_Title = desc.Title;
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, desc.Resizable ? GLFW_TRUE : GLFW_FALSE);
@@ -104,7 +104,7 @@ namespace rush
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         }
 
-        m_Impl->handle = glfwCreateWindow(m_Width, m_Height, m_Title, nullptr, nullptr);
+        m_Impl->handle = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr);
         if (m_Impl->handle == nullptr)
         {
             LOG_ERROR("glfw create window");

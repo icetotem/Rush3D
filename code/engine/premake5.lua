@@ -4,10 +4,14 @@ DEP_DIR = "../../3rdparty"
 project "Rush3D_Engine"
 	kind "ConsoleApp"
 	language "C++"
-	cppdialect "C++20"
+	cppdialect "C++17"
 	exceptionhandling "Off"
 	rtti "Off"
-    defines { "__STDC_FORMAT_MACROS", "SPDLOG_NO_EXCEPTIONS" }
+
+    defines 
+	{ 
+		"__STDC_FORMAT_MACROS", "SPDLOG_NO_EXCEPTIONS" 
+	}
 
     debugdir "../../Bin/%{cfg.buildcfg}"
 
