@@ -9,6 +9,7 @@
 
 namespace rush
 {
+
     void PrintGLFWError(int code, const char* message)
     {
         LOG_ERROR("GLFW error: {} - {}", code, message);

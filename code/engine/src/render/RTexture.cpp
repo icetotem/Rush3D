@@ -74,7 +74,7 @@ namespace rush
         descriptor.size.height = m_Height;
         descriptor.size.depthOrArrayLayers = m_Depth;
         descriptor.sampleCount = 1;
-        descriptor.format =  wgpu::TextureFormat::RGBA8Unorm;
+        descriptor.format =  wgpu::TextureFormat::BGRA8Unorm;
         descriptor.mipLevelCount = m_Mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
 

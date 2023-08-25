@@ -244,6 +244,22 @@ namespace rush
         Count,
     };
 
+    enum class BufferUsage : uint32_t
+    {
+        None,
+        MapRead,
+        MapWrite,
+        CopySrc,
+        CopyDst,
+        Index,
+        Vertex,
+        Uniform,
+        Storage,
+        Indirect,
+        QueryResolve,
+        Count,
+    };
+
     enum class BufferBindingType
     {
         Undefined,

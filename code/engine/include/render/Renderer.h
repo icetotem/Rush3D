@@ -66,8 +66,8 @@ namespace rush
     {
         uint32_t width = 128;
         uint32_t height = 128;
-        TextureFormat color = TextureFormat::RGBA8Unorm;
-        TextureFormat depthStencil = TextureFormat::Depth24Plus;
+        TextureFormat color = TextureFormat::BGRA8Unorm;
+        TextureFormat depthStencil = TextureFormat::Depth24PlusStencil8;
         Vector4 clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
         float clearDepth = 1.0f;
         bool withDepth = true;
@@ -92,7 +92,7 @@ namespace rush
 
         Ref<BindGroup> CreateBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable = nullptr);
 
-        Ref<UniformBuffer> CreateUniformBuffer(uint64_t size, const char* lable = nullptr);
+        Ref<UniformBuffer> CreateUniformBuffer(uint64_t size, BufferUsage usage, const char* lable = nullptr);
 
         Ref<RenderPipeline> CreatePipeline(const PipelineDesc* pipeDesc, const char* lable = nullptr);
 

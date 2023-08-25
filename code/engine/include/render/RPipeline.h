@@ -32,11 +32,14 @@ namespace rush
         BlendState Blend;
         FrontFace Front = FrontFace::CCW;
         CullMode Cull = CullMode::Back;
-        TextureFormat ColorFormat = TextureFormat::RGBA8Unorm;
+        TextureFormat ColorFormat = TextureFormat::BGRA8Unorm;
         TextureFormat DepthFormat = TextureFormat::Depth24PlusStencil8;
         uint32_t WriteMask = ColorWriteMask::Write_All;
-        bool WriteDepth = true;
+        bool DepthTest = true;
+        bool DepthWrite = true;
         DepthCompareFunction DepthCompare = DepthCompareFunction::Less;
+        bool StencilTest = false;
+        bool StencilWrite = false;
     };
 
 

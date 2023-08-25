@@ -11,7 +11,7 @@ namespace rush
         m_Size = size;
         m_Stride = stride;
         m_Count = m_Size / m_Stride;
-
+        RUSH_ASSERT(m_Size % 4 == 0);
         m_Buffer = CreateRef<wgpu::Buffer>();
         wgpu::BufferDescriptor descriptor;
         descriptor.label = lable;
@@ -46,7 +46,7 @@ namespace rush
         m_Use32Bits = use32bits;
         m_Count = count;
         m_Size = m_Count * (use32bits ? sizeof(uint32_t) : sizeof(uint16_t));
-
+        RUSH_ASSERT(m_Size % 4 == 0);
         m_Buffer = CreateRef<wgpu::Buffer>();
         wgpu::BufferDescriptor descriptor;
         descriptor.label = lable;

@@ -7,6 +7,7 @@
 
 namespace rush
 {
+    extern wgpu::BufferUsage g_BufferUsage[(int)BufferUsage::Count];
 
     BindingInitializationHelper::BindingInitializationHelper(const BindingInitializationHelper&) =
         default;
@@ -85,13 +86,18 @@ namespace rush
 
     void UniformBuffer::UpdateData(const void* data, uint64_t size, uint64_t offset /*= 0*/)
     {
-
+        m_Queue->WriteBuffer(*m_Buffer, offset, data, size);
     }
 
-    UniformBuffer::UniformBuffer(Ref<RenderContex> contex, uint64_t size, const char* lable)
+    UniformBuffer::UniformBuffer(Ref<RenderContex> contex, BufferUsage usage, uint64_t size, const char* lable)
     {
+        m_Queue = contex->queue;
         m_Buffer = CreateRef<wgpu::Buffer>();
+        wgpu::BufferDescriptor descriptor;
+        descriptor.size = size;
 
+        descriptor.usage = g_BufferUsage[(int)usage] | wgpu::BufferUsage::CopyDst;
+        *m_Buffer = contex->device.CreateBuffer(&descriptor);
     }
 
 }

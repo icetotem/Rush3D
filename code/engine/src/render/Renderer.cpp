@@ -13,8 +13,10 @@
 #include "RenderContex.h"
 #include "render/RenderBatch.h"
 
+
 namespace rush
 {
+
     extern HMap<wgpu::FeatureName, std::string> g_Features;
     extern HMap<WGPUAdapterType, std::string> g_AdapterType;
     extern HMap<WGPUBackendType, std::string> g_BackendTypeName;
@@ -30,111 +32,6 @@ namespace rush
     extern wgpu::BackendType g_WGPUBackendType[(int)RenderBackend::Count];
 
     static std::unique_ptr<dawn::native::Instance> instance;
-
-    static class WebGpuInitializer
-    {
-    public:
-        WebGpuInitializer()
-        {
-            instance = std::make_unique<dawn::native::Instance>();
-        }
-
-    protected:
-    } g_WebGpuInitializer;
-
-    //////////////////////////////////////////////////////////////////////////
-
-
-    struct ComboRenderPassDescriptor : public wgpu::RenderPassDescriptor {
-    public:
-        ComboRenderPassDescriptor(const std::vector<wgpu::TextureView>& colorAttachmentInfo = {},
-            wgpu::TextureView depthStencil = wgpu::TextureView(), const Vector4& clearColor = Vector4(0.0f));
-        ~ComboRenderPassDescriptor();
-
-        ComboRenderPassDescriptor(const ComboRenderPassDescriptor& otherRenderPass);
-        const ComboRenderPassDescriptor& operator=(const ComboRenderPassDescriptor& otherRenderPass);
-
-        void UnsetDepthStencilLoadStoreOpsForFormat(wgpu::TextureFormat format);
-
-        std::array<wgpu::RenderPassColorAttachment, kMaxColorAttachments> cColorAttachments;
-        wgpu::RenderPassDepthStencilAttachment cDepthStencilAttachmentInfo = {};
-    };
-
-    ComboRenderPassDescriptor::ComboRenderPassDescriptor(
-        const std::vector<wgpu::TextureView>& colorAttachmentInfo,
-        wgpu::TextureView depthStencil, const Vector4& clearColor) {
-        for (uint32_t i = 0; i < kMaxColorAttachments; ++i) {
-            cColorAttachments[i].loadOp = wgpu::LoadOp::Clear;
-            cColorAttachments[i].storeOp = wgpu::StoreOp::Store;
-            cColorAttachments[i].clearValue = { clearColor.r, clearColor.g, clearColor.b, clearColor.a };
-        }
-
-        cDepthStencilAttachmentInfo.depthClearValue = 1.0f;
-        cDepthStencilAttachmentInfo.stencilClearValue = 0;
-        cDepthStencilAttachmentInfo.depthLoadOp = wgpu::LoadOp::Clear;
-        cDepthStencilAttachmentInfo.depthStoreOp = wgpu::StoreOp::Store;
-        cDepthStencilAttachmentInfo.stencilLoadOp = wgpu::LoadOp::Clear;
-        cDepthStencilAttachmentInfo.stencilStoreOp = wgpu::StoreOp::Store;
-
-        colorAttachmentCount = colorAttachmentInfo.size();
-        uint32_t colorAttachmentIndex = 0;
-        for (const wgpu::TextureView& colorAttachment : colorAttachmentInfo) {
-            if (colorAttachment.Get() != nullptr) {
-                cColorAttachments[colorAttachmentIndex].view = colorAttachment;
-            }
-            ++colorAttachmentIndex;
-        }
-        colorAttachments = cColorAttachments.data();
-
-        if (depthStencil.Get() != nullptr) {
-            cDepthStencilAttachmentInfo.view = depthStencil;
-            depthStencilAttachment = &cDepthStencilAttachmentInfo;
-        }
-        else {
-            depthStencilAttachment = nullptr;
-        }
-    }
-
-    ComboRenderPassDescriptor::~ComboRenderPassDescriptor() = default;
-
-    ComboRenderPassDescriptor::ComboRenderPassDescriptor(const ComboRenderPassDescriptor& other) {
-        *this = other;
-    }
-
-    const ComboRenderPassDescriptor& ComboRenderPassDescriptor::operator=(
-        const ComboRenderPassDescriptor& otherRenderPass) {
-        cDepthStencilAttachmentInfo = otherRenderPass.cDepthStencilAttachmentInfo;
-        cColorAttachments = otherRenderPass.cColorAttachments;
-        colorAttachmentCount = otherRenderPass.colorAttachmentCount;
-
-        colorAttachments = cColorAttachments.data();
-
-        if (otherRenderPass.depthStencilAttachment != nullptr) {
-            // Assign desc.depthStencilAttachment to this->depthStencilAttachmentInfo;
-            depthStencilAttachment = &cDepthStencilAttachmentInfo;
-        }
-        else {
-            depthStencilAttachment = nullptr;
-        }
-
-        return *this;
-    }
-    void ComboRenderPassDescriptor::UnsetDepthStencilLoadStoreOpsForFormat(wgpu::TextureFormat format) {
-        switch (format) {
-        case wgpu::TextureFormat::Depth24Plus:
-        case wgpu::TextureFormat::Depth32Float:
-        case wgpu::TextureFormat::Depth16Unorm:
-            cDepthStencilAttachmentInfo.stencilLoadOp = wgpu::LoadOp::Undefined;
-            cDepthStencilAttachmentInfo.stencilStoreOp = wgpu::StoreOp::Undefined;
-            break;
-        case wgpu::TextureFormat::Stencil8:
-            cDepthStencilAttachmentInfo.depthLoadOp = wgpu::LoadOp::Undefined;
-            cDepthStencilAttachmentInfo.depthStoreOp = wgpu::StoreOp::Undefined;
-            break;
-        default:
-            break;
-        }
-    }
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -214,6 +111,9 @@ namespace rush
     Renderer::Renderer(Ref<Window> window, const RendererDesc* rendererDesc)
         : m_Window(window)
     {
+        if (instance == nullptr)
+            instance = std::make_unique<dawn::native::Instance>();
+
         m_Msaa = rendererDesc->msaa;
         m_Width = m_Window->GetWidth();
         m_Height = m_Window->GetHeight();
@@ -330,15 +230,15 @@ namespace rush
         procs.deviceSetDeviceLostCallback(device, DeviceLostCallback, nullptr);
         procs.deviceSetLoggingCallback(device, DeviceLogCallback, nullptr);
 
-        // create swap chain
-        WGPUSwapChainDescriptor swapChainDesc = {};
-        swapChainDesc.usage = WGPUTextureUsage_RenderAttachment;
-        swapChainDesc.format = static_cast<WGPUTextureFormat>(wgpu::TextureFormat::BGRA8Unorm);
-        swapChainDesc.width = m_Width;
-        swapChainDesc.height = m_Height;
-        swapChainDesc.presentMode = WGPUPresentMode_Mailbox;
-        auto swapChain = procs.deviceCreateSwapChain(device, surface, &swapChainDesc);
-        m_Contex->swapChain = wgpu::SwapChain::Acquire(swapChain);
+        // create swapchain
+        wgpu::SwapChainDescriptor scDesc{
+            .usage = wgpu::TextureUsage::RenderAttachment,
+                .format = wgpu::TextureFormat::BGRA8Unorm,
+                .width = m_Width,
+                .height = m_Height,
+                .presentMode = rendererDesc->vsync ? wgpu::PresentMode::Fifo : wgpu::PresentMode::Mailbox,
+        };
+        m_Contex->swapChain = m_Contex->device.CreateSwapChain(surface, &scDesc);
 
         // create queue
         m_Contex->queue = CreateRef<wgpu::Queue>();
@@ -438,9 +338,9 @@ namespace rush
         return BindGroup::Construct(m_Contex, layout, entriesInitializer, lable);
     }
 
-    Ref<UniformBuffer> Renderer::CreateUniformBuffer(uint64_t size, const char* lable /*= nullptr*/)
+    Ref<UniformBuffer> Renderer::CreateUniformBuffer(uint64_t size, BufferUsage usage, const char* lable /*= nullptr*/)
     {
-        return UniformBuffer::Construct(m_Contex, size, lable);
+        return UniformBuffer::Construct(m_Contex, usage, size, lable);
     }
 
     Ref<RenderPass> Renderer::CreateRenderPass(const RenderPassDesc* desc)
@@ -465,7 +365,29 @@ namespace rush
     void Renderer::DrawFinalPass(Ref<RenderContent> content)
     {
         wgpu::TextureView backbufferView = m_Contex->swapChain.GetCurrentTextureView();
-        ComboRenderPassDescriptor renderPassDesc({ backbufferView }, m_Contex->depthStencilView, m_ClearColor);
+
+        wgpu::RenderPassColorAttachment attachment = {};
+        attachment.view = backbufferView;
+        attachment.resolveTarget = nullptr;
+        attachment.loadOp = wgpu::LoadOp::Clear;
+        attachment.storeOp = wgpu::StoreOp::Store;
+        attachment.clearValue = { m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a };
+
+        wgpu::RenderPassDescriptor renderPassDesc = {};
+        renderPassDesc.colorAttachmentCount = 1;
+        renderPassDesc.colorAttachments = &attachment;
+
+//         wgpu::RenderPassDepthStencilAttachment cDepthStencilAttachmentInfo = {};
+//         cDepthStencilAttachmentInfo.depthReadOnly = false;
+//         cDepthStencilAttachmentInfo.stencilReadOnly = false;
+//         cDepthStencilAttachmentInfo.depthClearValue = 1.0f;
+//         cDepthStencilAttachmentInfo.stencilClearValue = 0;
+//         cDepthStencilAttachmentInfo.depthLoadOp = wgpu::LoadOp::Clear;
+//         cDepthStencilAttachmentInfo.depthStoreOp = wgpu::StoreOp::Store;
+//         cDepthStencilAttachmentInfo.stencilLoadOp = wgpu::LoadOp::Clear;
+//         cDepthStencilAttachmentInfo.stencilStoreOp = wgpu::StoreOp::Store;
+//         cDepthStencilAttachmentInfo.view = m_Contex->depthStencilView;
+//         renderPassDesc.depthStencilAttachment = &cDepthStencilAttachmentInfo;
 
         wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
 

@@ -120,8 +120,9 @@ int main(int argc, char* argv[])
 
 
         PipelineDesc pipeDesc;
-
-		pipeDesc.ColorFormat = TextureFormat::RGBA8Unorm;
+        pipeDesc.DepthWrite = false;
+        pipeDesc.DepthTest = false;
+		pipeDesc.ColorFormat = TextureFormat::BGRA8Unorm;
 		pipeDesc.DepthFormat = TextureFormat::Depth24PlusStencil8;
 
         VertexAttribute vertAttrs[2];
@@ -152,6 +153,8 @@ int main(int argc, char* argv[])
 
 		pipeDesc.BindLayout = bindingLayout;
 
+		pipeDesc.Cull = CullMode::None;
+
         Ref<RenderPipeline> rpipe = renderer->CreatePipeline(&pipeDesc);
 
         // create the buffers (x, y)
@@ -163,13 +166,13 @@ int main(int argc, char* argv[])
 
         // create the buffers (r, g, b)
         float const vertData1[] = {
-            1.0f, 1.0f, 1.0f, // BL
-            1.0f, 1.0f, 1.0f, // BR
-            1.0f, 1.0f, 1.0f, // top
+            1.0f, 0.0f, 0.0f, // BL
+            0.0f, 1.0f, 0.0f, // BR
+            0.0f, 0.0f, 1.0f, // top
         };
 
         uint16_t const indxData[] = {
-            0, 1, 2
+            0, 1, 2, 4
         };
 
 
@@ -179,9 +182,10 @@ int main(int argc, char* argv[])
         Ref<RVertexBuffer> vb1 = renderer->CreateVertexBuffer(sizeof(float) * 3, sizeof(vertData1));
 		vb1->UpdateData(vertData1, sizeof(vertData1));
 
-        Ref<RIndexBuffer> ib = renderer->CreateIndexBuffer(3, false);
+        Ref<RIndexBuffer> ib = renderer->CreateIndexBuffer(4, false);
+		ib->UpdateData(indxData, sizeof(indxData));
 
-		uniformBuf = renderer->CreateUniformBuffer(sizeof(rotDeg));
+		uniformBuf = renderer->CreateUniformBuffer(sizeof(rotDeg), BufferUsage::Uniform);
 		uniformBuf->UpdateData(&rotDeg, sizeof(rotDeg));
 
 		bindGroup = renderer->CreateBindGroup(bindingLayout, {

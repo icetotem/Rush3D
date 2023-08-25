@@ -61,14 +61,15 @@ namespace rush
     protected:
         friend class Renderer;
 
-        UniformBuffer(Ref<RenderContex> contex, uint64_t size, const char* lable);
+        UniformBuffer(Ref<RenderContex> contex, BufferUsage usage, uint64_t size, const char* lable);
 
-        static Ref<UniformBuffer> Construct(Ref<RenderContex> contex, uint64_t size, const char* lable)
+        static Ref<UniformBuffer> Construct(Ref<RenderContex> contex, BufferUsage usage, uint64_t size, const char* lable)
         {
-            return std::shared_ptr<UniformBuffer>(new UniformBuffer(contex, size, lable));
+            return std::shared_ptr<UniformBuffer>(new UniformBuffer(contex, usage, size, lable));
         }
 
         Ref<wgpu::Buffer> m_Buffer;
+        Ref<wgpu::Queue> m_Queue;
     };
 
 }

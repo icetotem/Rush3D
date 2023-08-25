@@ -147,6 +147,21 @@ namespace rush
         wgpu::TextureDimension::e3D
     };
 
+    wgpu::BufferUsage g_BufferUsage[(int)BufferUsage::Count] =
+    {
+        wgpu::BufferUsage::None,
+        wgpu::BufferUsage::MapRead,
+        wgpu::BufferUsage::MapWrite,
+        wgpu::BufferUsage::CopySrc,
+        wgpu::BufferUsage::CopyDst,
+        wgpu::BufferUsage::Index,
+        wgpu::BufferUsage::Vertex,
+        wgpu::BufferUsage::Uniform,
+        wgpu::BufferUsage::Storage,
+        wgpu::BufferUsage::Indirect,
+        wgpu::BufferUsage::QueryResolve,
+    };
+
     wgpu::BufferBindingType g_BufferBindingType[(int)BufferBindingType::Count] =
     {
         wgpu::BufferBindingType::Undefined,
