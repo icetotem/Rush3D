@@ -13,7 +13,6 @@ namespace rush
         wgpu::SwapChain swapChain;
         wgpu::CommandEncoder encoder;
         wgpu::CommandBuffer commands;
-        wgpu::TextureView depthStencilView;
         wgpu::Queue queue;
     };
 

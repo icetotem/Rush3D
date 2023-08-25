@@ -15,17 +15,11 @@ namespace rush
         m_Stride = stride;
         m_Count = m_Size / m_Stride;
         RUSH_ASSERT(m_Size % 4 == 0);
-        m_Buffer = CreateRef<wgpu::Buffer>();
         wgpu::BufferDescriptor descriptor;
         descriptor.label = lable;
         descriptor.size = m_Size;
         descriptor.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        *m_Buffer = contex->device.CreateBuffer(&descriptor);
-    }
-
-    RVertexBuffer::~RVertexBuffer()
-    {
-        
+        m_Buffer = CreateRef<wgpu::Buffer>(contex->device.CreateBuffer(&descriptor));
     }
 
     void RVertexBuffer::UpdateData(const void* data, uint64_t size, uint64_t startVertex)
@@ -50,17 +44,11 @@ namespace rush
         m_Count = count;
         m_Size = m_Count * (use32bits ? sizeof(uint32_t) : sizeof(uint16_t));
         RUSH_ASSERT(m_Size % 4 == 0);
-        m_Buffer = CreateRef<wgpu::Buffer>();
         wgpu::BufferDescriptor descriptor;
         descriptor.label = lable;
         descriptor.size = m_Size;
         descriptor.usage = wgpu::BufferUsage::Index | wgpu::BufferUsage::CopyDst;
-        *m_Buffer = contex->device.CreateBuffer(&descriptor);
-    }
-
-    RIndexBuffer::~RIndexBuffer()
-    {
-
+        m_Buffer = CreateRef<wgpu::Buffer>(contex->device.CreateBuffer(&descriptor));
     }
 
     void RIndexBuffer::UpdateData(const void* data, uint64_t size, uint32_t startIndex /*= 0*/)

@@ -44,11 +44,6 @@ namespace rush
         m_Entry->texture.multisampled = textureMultisampled;
     }
 
-    BindingLayout::~BindingLayout()
-    {
-
-    }
-
     BindingLayout::BindingLayout(Ref<RContex> contex, std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable)
     {
         std::vector<wgpu::BindGroupLayoutEntry> entries;
@@ -61,8 +56,7 @@ namespace rush
         descriptor.entryCount = entries.size();
         descriptor.entries = entries.data();
         descriptor.label = lable;
-        m_Layout = CreateRef<wgpu::BindGroupLayout>();
-        *m_Layout = contex->device.CreateBindGroupLayout(&descriptor);
+        m_Layout = CreateRef<wgpu::BindGroupLayout>(contex->device.CreateBindGroupLayout(&descriptor));
     }
 
 }

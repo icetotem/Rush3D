@@ -12,7 +12,7 @@ namespace rush
     class RVertexBuffer
     {
     public:
-        ~RVertexBuffer();
+        ~RVertexBuffer() = default;
 
         void UpdateData(const void* data, uint64_t size, uint64_t startVertex = 0);
 
@@ -43,7 +43,7 @@ namespace rush
     class RIndexBuffer
     {
     public:
-        ~RIndexBuffer();
+        ~RIndexBuffer() = default;
 
         void UpdateData(const void* data, uint64_t size, uint32_t startIndex = 0);
 

@@ -82,17 +82,9 @@ namespace rush
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
 
 
-        m_Texture = CreateRef<wgpu::Texture>();
-        *m_Texture = contex->device.CreateTexture(&descriptor);
-        m_Sampler = CreateRef<wgpu::Sampler>();
-        *m_Sampler = contex->device.CreateSampler();
-        m_TextureView = CreateRef<wgpu::TextureView>();
-        *m_TextureView = m_Texture->CreateView();
-    }
-
-    RTexture::~RTexture()
-    {
-
+        m_Texture = CreateRef<wgpu::Texture>(contex->device.CreateTexture(&descriptor));
+        m_Sampler = CreateRef<wgpu::Sampler>(contex->device.CreateSampler());
+        m_TextureView = CreateRef<wgpu::TextureView>(m_Texture->CreateView());
     }
 
     void RTexture::UpdateData(const void* data, uint64_t size)

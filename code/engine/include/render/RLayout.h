@@ -49,7 +49,7 @@ namespace rush
     class BindingLayout
     {
     public:
-        ~BindingLayout();
+        ~BindingLayout() = default;
 
     private:
         friend class Renderer;

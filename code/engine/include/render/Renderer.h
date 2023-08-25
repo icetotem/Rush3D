@@ -71,8 +71,7 @@ namespace rush
         TextureFormat DepthStencilFormat = TextureFormat::Depth24PlusStencil8;
         Vector4 ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
         float ClearDepth = 1.0f;
-        bool UseDepth = true;
-        bool UseStencile = true;
+        bool WithDepthStencil = true;
     };
 
     /// <summary>
@@ -81,7 +80,7 @@ namespace rush
     class Renderer
     {
     public:
-        ~Renderer();
+        ~Renderer() = default;
 
         Ref<RShader> CreateShader(const char* code, ShaderStage type, const char* lable = nullptr);
 
@@ -101,7 +100,7 @@ namespace rush
 
         void BeginDraw();
 
-        void DrawOfflinePass(Ref<RPass> renderPass, Ref<RContent> content);
+        void DrawOffScreenPass(Ref<RPass> renderPass, Ref<RContent> content);
 
         void DrawFinalPass(Ref<RContent> content);
 
@@ -119,7 +118,6 @@ namespace rush
 
         void CreateAdapter(const RendererDesc* rendererDesc);
         void InitWGPU(const RendererDesc* rendererDesc);
-        void CreateDefaultDepthStencilView();
 
         void GatherCaps();
 

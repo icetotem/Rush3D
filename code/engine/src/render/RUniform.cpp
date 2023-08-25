@@ -28,7 +28,6 @@ namespace rush
     wgpu::BindGroupEntry GetAsBinding(const BindingInitializationHelper& helper)
     {
         wgpu::BindGroupEntry result = {};
-
         result.binding = helper.GetBinding();
         if (helper.GetTexture())
         {
@@ -41,7 +40,6 @@ namespace rush
 
         result.offset = helper.GetOffset();
         result.size = helper.GetSize();
-
         return result;
     }
 
@@ -60,7 +58,6 @@ namespace rush
         descriptor.layout = layout;
         descriptor.entryCount = checked_cast<uint32_t>(entries.size());
         descriptor.entries = entries.data();
-
         return device.CreateBindGroup(&descriptor);
     }
 
@@ -79,17 +76,10 @@ namespace rush
     RUniformBuffer::RUniformBuffer(Ref<RContex> contex, BufferUsage usage, uint64_t size, const char* lable)
     {
         m_Contex = contex;
-        m_Buffer = CreateRef<wgpu::Buffer>();
         wgpu::BufferDescriptor descriptor;
         descriptor.size = size;
-
         descriptor.usage = g_BufferUsage[(int)usage] | wgpu::BufferUsage::CopyDst;
-        *m_Buffer = contex->device.CreateBuffer(&descriptor);
-    }
-
-    RUniformBuffer::~RUniformBuffer()
-    {
-
+        m_Buffer = CreateRef<wgpu::Buffer>(contex->device.CreateBuffer(&descriptor));
     }
 
     void RUniformBuffer::UpdateData(const void* data, uint64_t size, uint64_t offset /*= 0*/)

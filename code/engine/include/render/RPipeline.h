@@ -49,7 +49,7 @@ namespace rush
     class RPipeline
     {
     public:
-        ~RPipeline();
+        ~RPipeline() = default;
 
     protected:
         friend class Renderer;

@@ -60,13 +60,14 @@ static char const triangle_frag_wgsl[] = R"(
 )";
 
 Ref<Renderer> g_Renderer = nullptr;
-Ref<RContent> content = CreateRef<RContent>();
+Ref<RContent> content1 = CreateRef<RContent>();
+Ref<RContent> content2 = CreateRef<RContent>();
 Ref<RPass> pass0;
 Ref<RPass> pass1;
 Ref<RBindGroup> bindGroup;
 Ref<RUniformBuffer> uniformBuf;
 
-static bool redraw2()
+static bool render()
 {
 	if (g_Renderer)
 	{
@@ -76,8 +77,8 @@ static bool redraw2()
 
 		uniformBuf->UpdateData(&rotDeg, sizeof(rotDeg));
 
-		g_Renderer->DrawOfflinePass(pass0, content);
-		g_Renderer->DrawFinalPass(content);
+		g_Renderer->DrawOffScreenPass(pass0, content2);
+		g_Renderer->DrawFinalPass(content1);
 
 		g_Renderer->EndDraw();
 	}
@@ -112,20 +113,23 @@ int main(int argc, char* argv[])
 		RenderPassDesc rpDesc;
 		rpDesc.Width = 1280;
 		rpDesc.Height = 900;		
-
+		rpDesc.WithDepthStencil = true;
+		rpDesc.ClearColor = Vector4(0.3f, 0.4f, 0.3f, 1.0f);
+		rpDesc.ClearDepth = 1.0f;
+        rpDesc.ColorFormat = TextureFormat::BGRA8Unorm;
+        rpDesc.DepthStencilFormat = TextureFormat::Depth24PlusStencil8;
 		pass0 = renderer->CreateRenderPass(&rpDesc);
 
+        Ref<RShader> vs = renderer->CreateShader(triangle_vert_wgsl, ShaderStage::Vertex, "vs_test");
+        Ref<RShader> fs = renderer->CreateShader(triangle_frag_wgsl, ShaderStage::Fragment, "fs_test");
 
-        Ref<RShader> vs = renderer->CreateShader(triangle_vert_wgsl, ShaderStage::Vertex);
-        Ref<RShader> fs = renderer->CreateShader(triangle_frag_wgsl, ShaderStage::Fragment);
 
-
-        PipelineDesc pipeDesc;
-        pipeDesc.DepthWrite = false;
-        pipeDesc.DepthTest = false;
-		pipeDesc.ColorFormat = TextureFormat::BGRA8Unorm;
-		pipeDesc.DepthFormat = TextureFormat::Depth24PlusStencil8;
-		pipeDesc.DepthCompare = DepthCompareFunction::LessEqual;
+        PipelineDesc pipeDesc1 = {};
+        pipeDesc1.DepthWrite = false;
+        pipeDesc1.DepthTest = false;
+		pipeDesc1.ColorFormat = TextureFormat::BGRA8Unorm;
+		pipeDesc1.DepthFormat = TextureFormat::Depth24PlusStencil8;
+		pipeDesc1.DepthCompare = DepthCompareFunction::LessEqual;
 
         VertexAttribute vertAttrs[2];
         vertAttrs[0].Format = VertexFormat::Float32x2;
@@ -135,29 +139,35 @@ int main(int argc, char* argv[])
         vertAttrs[1].Offset = 0;
         vertAttrs[1].ShaderLocation = 1;
 
-        auto& vLayout0 = pipeDesc.VLayouts.emplace_back();
+        auto& vLayout0 = pipeDesc1.VLayouts.emplace_back();
         vLayout0.Stride = sizeof(float) * 2;
         vLayout0.Attributes = &vertAttrs[0];
         vLayout0.AttributeCount = 1;
 
-        auto& vLayout1 = pipeDesc.VLayouts.emplace_back();
+        auto& vLayout1 = pipeDesc1.VLayouts.emplace_back();
         vLayout1.Stride = sizeof(float) * 3;
         vLayout1.Attributes = &vertAttrs[1];
         vLayout1.AttributeCount = 1;
 
-        pipeDesc.VS = vs;
-        pipeDesc.FS = fs;
-        pipeDesc.WriteMask = ColorWriteMask::Write_All;
+        pipeDesc1.VS = vs;
+        pipeDesc1.FS = fs;
+        pipeDesc1.WriteMask = ColorWriteMask::Write_All;
 
 		Ref<BindingLayout> bindingLayout = renderer->CreateBindingLayout({
 			{0, ShaderStage::Vertex, BufferBindingType::Uniform}
 		});
 
-		pipeDesc.BindLayout = bindingLayout;
+		pipeDesc1.BindLayout = bindingLayout;
+		pipeDesc1.Cull = CullMode::Back;
+		pipeDesc1.Primitive = PrimitiveType::TriangleList;
+		pipeDesc1.Front = FrontFace::CCW;
 
-		pipeDesc.Cull = CullMode::None;
+        Ref<RPipeline> rpipe1 = renderer->CreatePipeline(&pipeDesc1, "pipeline_1");
 
-        Ref<RPipeline> rpipe = renderer->CreatePipeline(&pipeDesc);
+        PipelineDesc pipeDesc2 = pipeDesc1;
+		pipeDesc2.DepthTest = true;
+        Ref<RPipeline> rpipe2 = renderer->CreatePipeline(&pipeDesc2, "pipeline_2");
+
 
         // create the buffers (x, y)
         float const vertData0[] = {
@@ -178,37 +188,45 @@ int main(int argc, char* argv[])
         };
 
 
-        Ref<RVertexBuffer> vb0 = renderer->CreateVertexBuffer(sizeof(float) * 2, sizeof(vertData0));
+        Ref<RVertexBuffer> vb0 = renderer->CreateVertexBuffer(sizeof(float) * 2, sizeof(vertData0), "vb0");
 		vb0->UpdateData(vertData0, sizeof(vertData0));
 
-        Ref<RVertexBuffer> vb1 = renderer->CreateVertexBuffer(sizeof(float) * 3, sizeof(vertData1));
+        Ref<RVertexBuffer> vb1 = renderer->CreateVertexBuffer(sizeof(float) * 3, sizeof(vertData1), "vb1");
 		vb1->UpdateData(vertData1, sizeof(vertData1));
 
-        Ref<RIndexBuffer> ib = renderer->CreateIndexBuffer(4, false);
+        Ref<RIndexBuffer> ib = renderer->CreateIndexBuffer(4, false, "ib0");
 		ib->UpdateData(indxData, sizeof(indxData));
 
-		uniformBuf = renderer->CreateUniformBuffer(sizeof(rotDeg), BufferUsage::Uniform);
+		uniformBuf = renderer->CreateUniformBuffer(sizeof(rotDeg), BufferUsage::Uniform, "uniforms0");
 		uniformBuf->UpdateData(&rotDeg, sizeof(rotDeg));
 
 		bindGroup = renderer->CreateBindGroup(bindingLayout, {
 			{0, uniformBuf}
-		});
+		}, "bindgroup0");
 
-		Ref<RBatch> batch = content->NewBatch();
-        batch->Pipeline = rpipe;
-        batch->VBList.push_back(vb0);
-        batch->VBList.push_back(vb1);
-        batch->IB = ib;
-		batch->Uniforms = bindGroup;
+		Ref<RBatch> batch1 = content1->NewBatch();
+        batch1->Pipeline = rpipe1;
+        batch1->VBList.push_back(vb0);
+        batch1->VBList.push_back(vb1);
+        batch1->IB = ib;
+		batch1->Uniforms = bindGroup;
+
+        Ref<RBatch> batch2 = content2->NewBatch();
+        batch2->Pipeline = rpipe2;
+        batch2->VBList.push_back(vb0);
+        batch2->VBList.push_back(vb1);
+        batch2->IB = ib;
+        batch2->Uniforms = bindGroup;
 
         while (window->ShouldClose())
         {
 			window->MessgeLoop();
-			redraw2();
+			render();
         }
 	}
 
-	content.reset();
+	content1.reset();
+	content2.reset();
 	bindGroup.reset();
 	uniformBuf.reset();
 	g_Renderer.reset();

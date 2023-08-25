@@ -24,7 +24,6 @@ namespace rush
     extern wgpu::TextureFormat g_WGPUTextureFormat[(int)TextureFormat::Count];
     extern wgpu::BackendType g_WGPUBackendType[(int)RenderBackend::Count];
 
-    static std::unique_ptr<dawn::native::Instance> instance;
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -101,12 +100,13 @@ namespace rush
     }
 
     //////////////////////////////////////////////////////////////////////////
+    static std::unique_ptr<dawn::native::Instance> g_DawnInstance;
 
     Renderer::Renderer(Ref<Window> window, const RendererDesc* rendererDesc)
         : m_Window(window)
     {
-        if (instance == nullptr)
-            instance = std::make_unique<dawn::native::Instance>();
+        if (g_DawnInstance == nullptr)
+            g_DawnInstance = std::make_unique<dawn::native::Instance>();
 
         m_Msaa = rendererDesc->Msaa;
         m_Width = m_Window->GetWidth();
@@ -116,22 +116,14 @@ namespace rush
 
         CreateAdapter(rendererDesc);
         InitWGPU(rendererDesc);
-
         GatherCaps();
-
-        CreateDefaultDepthStencilView();
-    }
-
-    Renderer::~Renderer()
-    {
-
     }
 
     void Renderer::CreateAdapter(const RendererDesc* rendererDesc)
     {
         wgpu::RequestAdapterOptions options = {};
         options.backendType = g_WGPUBackendType[(int)rendererDesc->Backend];
-        auto adapters = instance->EnumerateAdapters(&options);
+        auto adapters = g_DawnInstance->EnumerateAdapters(&options);
         LOG_INFO("Found {} adapters:", adapters.size());
         int index = 1;
         bool found = false;
@@ -182,6 +174,11 @@ namespace rush
 
     void Renderer::InitWGPU(const RendererDesc* rendererDesc)
     {
+        // get dawn procs
+        auto procs = dawn::native::GetProcs();
+        dawnProcSetProcs(&procs);
+
+        // setup toggles
         std::vector<const char*> enableToggleNames;
         std::vector<const char*> disabledToggleNames;
         for (const std::string& toggle : rendererDesc->EnableToggles) 
@@ -205,51 +202,31 @@ namespace rush
         // create device
         WGPUDeviceDescriptor deviceDesc = {};
         deviceDesc.nextInChain = reinterpret_cast<WGPUChainedStruct*>(&toggles);
-
         auto device = m_Contex->adapter.CreateDevice(&deviceDesc);
         m_Contex->device = wgpu::Device::Acquire(device);
+
+        // set device callbacks
+        procs.deviceSetUncapturedErrorCallback(device, PrintDeviceError, nullptr);
+        procs.deviceSetDeviceLostCallback(device, DeviceLostCallback, nullptr);
+        procs.deviceSetLoggingCallback(device, DeviceLogCallback, nullptr);
 
         // create surface
         auto surfaceChainedDesc = SetupWindowAndGetSurfaceDescriptor(m_Window->GetNativeHandle(), m_Window->GetDisplay());
         WGPUSurfaceDescriptor surfaceDesc;
         surfaceDesc.nextInChain = reinterpret_cast<WGPUChainedStruct*>(surfaceChainedDesc.get());
+        auto surface = procs.instanceCreateSurface(g_DawnInstance->Get(), &surfaceDesc);
 
-        auto procs = dawn::native::GetProcs();
-        auto surface = procs.instanceCreateSurface(instance->Get(), &surfaceDesc);
-
-        dawnProcSetProcs(&procs);
-
-        procs.deviceSetUncapturedErrorCallback(device, PrintDeviceError, nullptr);
-        procs.deviceSetDeviceLostCallback(device, DeviceLostCallback, nullptr);
-        procs.deviceSetLoggingCallback(device, DeviceLogCallback, nullptr);
-
-        // create swapchain
+        // create swap chain
         wgpu::SwapChainDescriptor scDesc;
         scDesc.usage = wgpu::TextureUsage::RenderAttachment;
         scDesc.format = wgpu::TextureFormat::BGRA8Unorm;
         scDesc.width = m_Width;
         scDesc.height = m_Height;
         scDesc.presentMode = rendererDesc->Vsync ? wgpu::PresentMode::Fifo : wgpu::PresentMode::Mailbox;
-        
         m_Contex->swapChain = m_Contex->device.CreateSwapChain(surface, &scDesc);
 
-        // create queue
+        // get cmd queue
         m_Contex->queue = m_Contex->device.GetQueue();
-    }
-
-    void Renderer::CreateDefaultDepthStencilView()
-    {
-        wgpu::TextureDescriptor descriptor;
-        descriptor.dimension = wgpu::TextureDimension::e2D;
-        descriptor.size.width = m_Width;
-        descriptor.size.height = m_Height;
-        descriptor.size.depthOrArrayLayers = 1;
-        descriptor.sampleCount = 1;
-        descriptor.format = wgpu::TextureFormat::Depth24PlusStencil8;
-        descriptor.mipLevelCount = 1;
-        descriptor.usage = wgpu::TextureUsage::RenderAttachment;
-        auto depthStencilTexture = m_Contex->device.CreateTexture(&descriptor);
-        m_Contex->depthStencilView = depthStencilTexture.CreateView();
     }
 
     void Renderer::GatherCaps()
@@ -335,52 +312,18 @@ namespace rush
 
     Ref<RPass> Renderer::CreateRenderPass(const RenderPassDesc* desc, const char* lable/* = nullptr*/)
     {
-        return RPass::Construct(m_Contex, desc->Width, desc->Height, desc->ColorFormat, desc->DepthStencilFormat, desc->ClearColor, desc->ClearDepth, desc->UseDepth, lable);
+        return RPass::Construct(m_Contex, desc->Width, desc->Height, m_Msaa, desc->ColorFormat, desc->DepthStencilFormat, desc->ClearColor, desc->ClearDepth, desc->WithDepthStencil, lable);
     }
 
     void Renderer::BeginDraw()
     {
-        // process events from api
-        dawn::native::InstanceProcessEvents(instance->Get());
-
+        dawn::native::InstanceProcessEvents(g_DawnInstance->Get());
         m_Contex->encoder = m_Contex->device.CreateCommandEncoder();
-
     }
 
-    void Renderer::DrawOfflinePass(Ref<RPass> renderPass, Ref<RContent> content)
+    void Renderer::DrawOffScreenPass(Ref<RPass> renderPass, Ref<RContent> content)
     {
-
-    }
-
-    void Renderer::DrawFinalPass(Ref<RContent> content)
-    {
-        wgpu::TextureView backbufferView = m_Contex->swapChain.GetCurrentTextureView();
-
-        wgpu::RenderPassDescriptor renderPassDesc = {};
-
-        wgpu::RenderPassColorAttachment attachment = {};
-        attachment.view = backbufferView;
-        attachment.resolveTarget = nullptr;
-        attachment.loadOp = wgpu::LoadOp::Clear;
-        attachment.storeOp = wgpu::StoreOp::Store;
-        attachment.clearValue = { m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a };
-        renderPassDesc.colorAttachmentCount = 1;
-        renderPassDesc.colorAttachments = &attachment;
-
-//         wgpu::RenderPassDepthStencilAttachment cDepthStencilAttachmentInfo = {};
-//         cDepthStencilAttachmentInfo.depthReadOnly = false;
-//         cDepthStencilAttachmentInfo.stencilReadOnly = false;
-//         cDepthStencilAttachmentInfo.depthClearValue = 1.0f;
-//         cDepthStencilAttachmentInfo.stencilClearValue = 0;
-//         cDepthStencilAttachmentInfo.depthLoadOp = wgpu::LoadOp::Clear;
-//         cDepthStencilAttachmentInfo.depthStoreOp = wgpu::StoreOp::Store;
-//         cDepthStencilAttachmentInfo.stencilLoadOp = wgpu::LoadOp::Clear;
-//         cDepthStencilAttachmentInfo.stencilStoreOp = wgpu::StoreOp::Store;
-//         cDepthStencilAttachmentInfo.view = m_Contex->depthStencilView;
-//         renderPassDesc.depthStencilAttachment = &cDepthStencilAttachmentInfo;
-
-        wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
-
+        wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(renderPass->m_RenderPassDesc.get());
         for (const auto batch : content->m_Batches)
         {
             pass.SetPipeline(*batch->Pipeline->m_Pipeline);
@@ -392,10 +335,39 @@ namespace rush
                 ++vbIdx;
             }
             pass.SetIndexBuffer(*batch->IB->m_Buffer, batch->IB->Is32Bits() ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16);
-
             pass.DrawIndexed(batch->IB->GetCount(), batch->InstanceCount, batch->FirstIndex, batch->FirstVertex);
         }
+        pass.End();
+    }
 
+    void Renderer::DrawFinalPass(Ref<RContent> content)
+    {
+        wgpu::TextureView backbufferView = m_Contex->swapChain.GetCurrentTextureView();
+        wgpu::RenderPassDescriptor renderPassDesc = {};
+        wgpu::RenderPassColorAttachment attachment = {};
+        attachment.view = backbufferView;
+        attachment.resolveTarget = nullptr;
+        attachment.loadOp = wgpu::LoadOp::Clear;
+        attachment.storeOp = wgpu::StoreOp::Store;
+        attachment.clearValue = { m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a };
+        renderPassDesc.colorAttachmentCount = 1;
+        renderPassDesc.colorAttachments = &attachment;
+        renderPassDesc.depthStencilAttachment = nullptr; // no need in this engine
+
+        wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
+        for (const auto batch : content->m_Batches)
+        {
+            pass.SetPipeline(*batch->Pipeline->m_Pipeline);
+            pass.SetBindGroup(0, *batch->Uniforms->m_BindGroup);
+            int vbIdx = 0;
+            for (auto vb : batch->VBList)
+            {
+                pass.SetVertexBuffer(vbIdx, *vb->m_Buffer);
+                ++vbIdx;
+            }
+            pass.SetIndexBuffer(*batch->IB->m_Buffer, batch->IB->Is32Bits() ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16);
+            pass.DrawIndexed(batch->IB->GetCount(), batch->InstanceCount, batch->FirstIndex, batch->FirstVertex);
+        }
         pass.End();
     }
 

@@ -373,8 +373,11 @@ namespace wgpu
     class BindGroup;
     class Queue;
     class ShaderModule;
-    struct BindGroupLayoutEntry;
     class BindGroupLayout;
+    struct BindGroupLayoutEntry;
+    struct RenderPassDescriptor;
+    struct RenderPassColorAttachment;
+    struct RenderPassDepthStencilAttachment;
 }
 
 

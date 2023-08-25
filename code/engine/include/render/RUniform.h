@@ -12,7 +12,7 @@ namespace rush
     class RUniformBuffer
     {
     public:
-        ~RUniformBuffer();
+        ~RUniformBuffer() = default;
 
         void UpdateData(const void* data, uint64_t size, uint64_t offset = 0);
 

@@ -12,7 +12,7 @@ namespace rush
     class RShader
     {
     public:
-        ~RShader();
+        ~RShader() = default;
 
         ShaderStage GetType() const { return m_ShaderType; }
 

@@ -22,8 +22,6 @@ namespace rush
 
     RPipeline::RPipeline(Ref<RContex> contex, const PipelineDesc* desc, const char* lable /*= nullptr*/)
     {
-        m_Pipeline = CreateRef<wgpu::RenderPipeline>();
-
         wgpu::PipelineLayoutDescriptor layoutDesc = {};
         if (desc->BindLayout != nullptr) 
         {
@@ -138,13 +136,7 @@ namespace rush
             multisample->alphaToCoverageEnabled = false;
         }
 
-        *m_Pipeline = contex->device.CreateRenderPipeline(&descriptor);
+        m_Pipeline = CreateRef<wgpu::RenderPipeline>(contex->device.CreateRenderPipeline(&descriptor));
     }
-
-    RPipeline::~RPipeline()
-    {
-
-    }
-
 
 }

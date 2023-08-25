@@ -23,7 +23,8 @@ namespace rush
     class RContent
     {
     public:
-        
+        ~RContent() = default;
+
         Ref<RBatch> NewBatch();
 
     private:

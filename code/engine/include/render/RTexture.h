@@ -10,7 +10,7 @@ namespace rush
     class RTexture
     {
     public:
-        ~RTexture();
+        ~RTexture() = default;
 
         void UpdateData(const void* data, uint64_t size);
 

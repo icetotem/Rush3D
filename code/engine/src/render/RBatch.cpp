@@ -5,8 +5,6 @@
 namespace rush
 {
 
-    
-
     Ref<RBatch> RContent::NewBatch()
     {
         auto batch = CreateRef<RBatch>();
