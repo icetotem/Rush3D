@@ -103,7 +103,9 @@ int main(int argc, char* argv[])
 		window->Show(true);
 
 		RendererDesc rendererDesc;
+		rendererDesc.Backend = RenderBackend::D3D12;
 		rendererDesc.Msaa = 1;
+
 		auto renderer = engine.CreateRenderer(window, &rendererDesc);
 		g_Renderer = renderer;
 

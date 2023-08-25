@@ -1,11 +1,18 @@
 #include "stdafx.h"
 #include "Window.h"
-#include <glfw/glfw3.h>
 
-#ifdef RUSH_PLATFORM_WINDOWS
+#if defined(RUSH_PLATFORM_WINDOWS) || defined(RUSH_PLATFORM_MAC) || defined(RUSH_PLATFORM_LINUX) // GLFW implementation
+
+#if defined(RUSH_PLATFORM_WINDOWS)
 #define GLFW_EXPOSE_NATIVE_WIN32
+#elif defined(RUSH_PLATFORM_MAC)
+#define GLFW_EXPOSE_NATIVE_COCOA
+#elif defined(RUSH_PLATFORM_LINUX)
+#define GLFW_EXPOSE_NATIVE_X11
 #endif
-#include "glfw/include/GLFW/glfw3native.h"
+
+#include <glfw/glfw3.h>
+#include <glfw/include/GLFW/glfw3native.h>
 
 namespace rush
 {
@@ -140,3 +147,7 @@ namespace rush
     }
 
 }
+
+#else // defined(RUSH_PLATFORM_WINDOWS) || defined(RUSH_PLATFORM_MAC) || defined(RUSH_PLATFORM_LINUX)
+#error not yet implemented
+#endif // platform defines

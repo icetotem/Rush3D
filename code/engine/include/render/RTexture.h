@@ -29,7 +29,7 @@ namespace rush
             return std::shared_ptr<RTexture>(new RTexture(contex, width, height, format, mips, depth, lable));
         }
 
-        TextureFormat m_Format = TextureFormat::BGRA8Unorm;
+        TextureFormat m_Format = TextureFormat::RGBA8Unorm;
         TextureDimension m_Dim = TextureDimension::Texture2D;
         uint32_t m_Width = 1;
         uint32_t m_Height = 1;
