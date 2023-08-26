@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
 
 		RendererDesc rendererDesc;
 		rendererDesc.Backend = RenderBackend::D3D12;
-		rendererDesc.Msaa = 1;
+		rendererDesc.Msaa = 4;
 
 		auto renderer = engine.CreateRenderer(window, &rendererDesc);
 		g_Renderer = renderer;
@@ -122,7 +122,6 @@ int main(int argc, char* argv[])
 
         Ref<RShader> vs = renderer->CreateShader(triangle_vert_wgsl, ShaderStage::Vertex, "vs_test");
         Ref<RShader> fs = renderer->CreateShader(triangle_frag_wgsl, ShaderStage::Fragment, "fs_test");
-
 
         PipelineDesc pipeDesc1 = {};
         pipeDesc1.DepthWrite = false;

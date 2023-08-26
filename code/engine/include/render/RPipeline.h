@@ -39,6 +39,7 @@ namespace rush
         DepthCompareFunction DepthCompare = DepthCompareFunction::LessEqual;
         bool StencilTest = false;
         bool StencilWrite = false;
+        uint32_t Msaa = 1;
     };
 
 

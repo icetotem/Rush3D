@@ -72,6 +72,15 @@ namespace rush
         Vector4 ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
         float ClearDepth = 1.0f;
         bool WithDepthStencil = true;
+        uint32_t Msaa = 1;
+    };
+
+    struct ScreenQuad
+    {
+        Ref<RVertexBuffer> VB;
+        Ref<RBindGroup> BindGroup;
+        Ref<RUniformBuffer> Uniforms;
+        Ref<RPipeline> Pipeline;
     };
 
     /// <summary>
@@ -121,6 +130,7 @@ namespace rush
 
         void GatherCaps();
 
+        void CreateQuad();
 
     protected:
         Ref<RContex> m_Contex;
@@ -131,6 +141,7 @@ namespace rush
         uint32_t m_Msaa;
         Vector4 m_ClearColor;
         Ref<Window> m_Window;
+        ScreenQuad m_ScreenQuad;
     };
 
 

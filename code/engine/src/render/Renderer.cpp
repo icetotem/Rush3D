@@ -275,6 +275,98 @@ namespace rush
         LOG_INFO("\n");
     }
 
+    void Renderer::CreateQuad()
+    {
+        const char screen_quad_vs[] = R"(
+	        struct VertexIn {
+		        @location(0) aPos : vec2<f32>,
+		        @location(1) aCol : vec3<f32>
+	        }
+	        struct VertexOut {
+		        @location(0) vCol : vec3<f32>,
+		        @builtin(position) Position : vec4<f32>
+	        }
+	        struct Rotation {
+		        @location(0) degs : f32
+	        }
+	        @group(0) @binding(0) var<uniform> uRot : Rotation;
+	        @vertex
+	        fn main(input : VertexIn) -> VertexOut {
+		        var rads : f32 = radians(uRot.degs);
+		        var cosA : f32 = cos(rads);
+		        var sinA : f32 = sin(rads);
+		        var rot : mat3x3<f32> = mat3x3<f32>(
+			        vec3<f32>( cosA, sinA, 0.0),
+			        vec3<f32>(-sinA, cosA, 0.0),
+			        vec3<f32>( 0.0,  0.0,  1.0));
+		        var output : VertexOut;
+		        output.Position = vec4<f32>(rot * vec3<f32>(input.aPos, 1.0), 1.0);
+		        output.vCol = input.aCol;
+		        return output;
+	        }
+        )";
+
+        const char screen_quad_fs[] = R"(
+	        @fragment
+	        fn main(@location(0) vCol : vec3<f32>) -> @location(0) vec4<f32> {
+		        return vec4<f32>(vCol, 1.0);
+	        }
+        )";
+
+        Ref<RShader> vs = CreateShader(screen_quad_vs, ShaderStage::Vertex, "screen_quad_vs");
+        Ref<RShader> fs = CreateShader(screen_quad_fs, ShaderStage::Fragment, "screen_quad_fs");
+
+        float const verts[] = 
+        {
+            -1.f, -1.f, // BL
+             1.f, -1.f, // BR
+             1.f,  1.f, // TR
+            -1.f,  1.f, // TL
+        };
+
+        m_ScreenQuad.VB = CreateVertexBuffer(sizeof(float) * 2, sizeof(verts), "screen_quad_vb");
+        m_ScreenQuad.VB->UpdateData(verts, sizeof(verts));
+
+        PipelineDesc pipeDesc = {};
+        pipeDesc.DepthWrite = false;
+        pipeDesc.DepthTest = false;
+        pipeDesc.ColorFormat = TextureFormat::BGRA8Unorm;
+        pipeDesc.DepthFormat = TextureFormat::Depth24PlusStencil8;
+        pipeDesc.DepthCompare = DepthCompareFunction::LessEqual;
+        pipeDesc.Msaa = 1;
+
+        VertexAttribute vertAttrs[2];
+        vertAttrs[0].Format = VertexFormat::Float32x2;
+        vertAttrs[0].Offset = 0;
+        vertAttrs[0].ShaderLocation = 0;
+
+        auto& vLayout = pipeDesc.VLayouts.emplace_back();
+        vLayout.Stride = sizeof(float) * 2;
+        vLayout.Attributes = &vertAttrs[0];
+        vLayout.AttributeCount = 1;
+
+        pipeDesc.VS = vs;
+        pipeDesc.FS = fs;
+        pipeDesc.WriteMask = ColorWriteMask::Write_All;
+
+        Ref<BindingLayout> bindingLayout = CreateBindingLayout({
+            {0, ShaderStage::Vertex, BufferBindingType::Uniform}
+        });
+
+        pipeDesc.BindLayout = bindingLayout;
+        pipeDesc.Cull = CullMode::Back;
+        pipeDesc.Primitive = PrimitiveType::TriangleList;
+        pipeDesc.Front = FrontFace::CCW;
+
+        m_ScreenQuad.Pipeline = CreatePipeline(&pipeDesc, "screen_quad_pipeline");
+
+//         m_ScreenQuad.Uniforms = CreateUniformBuffer(sizeof(rotDeg), BufferUsage::Uniform, "screen_quad_unifroms");
+//         m_ScreenQuad.Uniforms->UpdateData(&rotDeg, sizeof(rotDeg));
+// 
+//         m_ScreenQuad.BindGroup = CreateBindGroup(bindingLayout, {{0, m_ScreenQuad.Uniforms} }, "screen_quad_bindgroup");
+
+    }
+
     Ref<RShader> Renderer::CreateShader(const char* code, ShaderStage type, const char* lable/* = nullptr*/)
     {
         return RShader::Construct(m_Contex, type, code, lable);
@@ -312,7 +404,7 @@ namespace rush
 
     Ref<RPass> Renderer::CreateRenderPass(const RenderPassDesc* desc, const char* lable/* = nullptr*/)
     {
-        return RPass::Construct(m_Contex, desc->Width, desc->Height, m_Msaa, desc->ColorFormat, desc->DepthStencilFormat, desc->ClearColor, desc->ClearDepth, desc->WithDepthStencil, lable);
+        return RPass::Construct(m_Contex, desc->Width, desc->Height, desc->Msaa, desc->ColorFormat, desc->DepthStencilFormat, desc->ClearColor, desc->ClearDepth, desc->WithDepthStencil, lable);
     }
 
     void Renderer::BeginDraw()
@@ -354,21 +446,21 @@ namespace rush
         renderPassDesc.colorAttachments = &attachment;
         renderPassDesc.depthStencilAttachment = nullptr; // no need in this engine
 
-        wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
-        for (const auto batch : content->m_Batches)
-        {
-            pass.SetPipeline(*batch->Pipeline->m_Pipeline);
-            pass.SetBindGroup(0, *batch->Uniforms->m_BindGroup);
-            int vbIdx = 0;
-            for (auto vb : batch->VBList)
-            {
-                pass.SetVertexBuffer(vbIdx, *vb->m_Buffer);
-                ++vbIdx;
-            }
-            pass.SetIndexBuffer(*batch->IB->m_Buffer, batch->IB->Is32Bits() ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16);
-            pass.DrawIndexed(batch->IB->GetCount(), batch->InstanceCount, batch->FirstIndex, batch->FirstVertex);
-        }
-        pass.End();
+//         wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
+//         for (const auto batch : content->m_Batches)
+//         {
+//             pass.SetPipeline(*batch->Pipeline->m_Pipeline);
+//             pass.SetBindGroup(0, *batch->Uniforms->m_BindGroup);
+//             int vbIdx = 0;
+//             for (auto vb : batch->VBList)
+//             {
+//                 pass.SetVertexBuffer(vbIdx, *vb->m_Buffer);
+//                 ++vbIdx;
+//             }
+//             pass.SetIndexBuffer(*batch->IB->m_Buffer, batch->IB->Is32Bits() ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16);
+//             pass.DrawIndexed(batch->IB->GetCount(), batch->InstanceCount, batch->FirstIndex, batch->FirstVertex);
+//         }
+//         pass.End();
     }
 
     void Renderer::EndDraw()

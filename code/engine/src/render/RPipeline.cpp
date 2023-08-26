@@ -128,10 +128,10 @@ namespace rush
             descriptor.depthStencil = nullptr;
         }
 
-        // Set the defaults for the multisample state
+        // Set the multisample state
         {
             wgpu::MultisampleState* multisample = &descriptor.multisample;
-            multisample->count = 1;
+            multisample->count = desc->Msaa;
             multisample->mask = 0xFFFFFFFF;
             multisample->alphaToCoverageEnabled = false;
         }
