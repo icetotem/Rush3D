@@ -81,7 +81,6 @@ namespace rush
         descriptor.mipLevelCount = m_Mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
 
-
         m_Texture = CreateRef<wgpu::Texture>(contex->device.CreateTexture(&descriptor));
         m_Sampler = CreateRef<wgpu::Sampler>(contex->device.CreateSampler());
         m_TextureView = CreateRef<wgpu::TextureView>(m_Texture->CreateView());

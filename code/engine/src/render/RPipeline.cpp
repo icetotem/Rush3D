@@ -108,7 +108,10 @@ namespace rush
             descriptor.depthStencil = &cDepthStencil;
             cDepthStencil.format = g_WGPUTextureFormat[(int)desc->DepthFormat];
             cDepthStencil.depthWriteEnabled = desc->DepthWrite;
-            cDepthStencil.depthCompare = g_WGPUCompareFunction[(int)desc->DepthCompare];
+            if (desc->DepthTest)
+                cDepthStencil.depthCompare = g_WGPUCompareFunction[(int)desc->DepthCompare];
+            else
+                cDepthStencil.depthCompare = wgpu::CompareFunction::Always;
             cDepthStencil.depthBias = 0;
             cDepthStencil.depthBiasSlopeScale = 0.0;
             cDepthStencil.depthBiasClamp = 0.0;

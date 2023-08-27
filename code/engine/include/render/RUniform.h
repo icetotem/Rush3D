@@ -71,6 +71,8 @@ namespace rush
     public:
         ~RBindGroup();
 
+        Ref<BindingLayout> GetBindingLayout() const { return m_BindLayout; }
+
     protected:
         friend class Renderer;
 
@@ -81,6 +83,7 @@ namespace rush
             return std::shared_ptr<RBindGroup>(new RBindGroup(contex, layout, entriesInitializer, lable));
         }
 
+        Ref<BindingLayout> m_BindLayout;
         Ref<wgpu::BindGroup> m_BindGroup;
     };
 

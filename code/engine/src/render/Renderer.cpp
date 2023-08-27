@@ -275,57 +275,55 @@ namespace rush
         LOG_INFO("\n");
     }
 
-    void Renderer::CreateQuad()
+    Ref<RScreenQuad> Renderer::CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup)
     {
-        const char screen_quad_vs[] = R"(
-	        struct VertexIn {
-		        @location(0) aPos : vec2<f32>,
-		        @location(1) aCol : vec3<f32>
-	        }
-	        struct VertexOut {
-		        @location(0) vCol : vec3<f32>,
-		        @builtin(position) Position : vec4<f32>
-	        }
-	        struct Rotation {
-		        @location(0) degs : f32
-	        }
-	        @group(0) @binding(0) var<uniform> uRot : Rotation;
-	        @vertex
-	        fn main(input : VertexIn) -> VertexOut {
-		        var rads : f32 = radians(uRot.degs);
-		        var cosA : f32 = cos(rads);
-		        var sinA : f32 = sin(rads);
-		        var rot : mat3x3<f32> = mat3x3<f32>(
-			        vec3<f32>( cosA, sinA, 0.0),
-			        vec3<f32>(-sinA, cosA, 0.0),
-			        vec3<f32>( 0.0,  0.0,  1.0));
-		        var output : VertexOut;
-		        output.Position = vec4<f32>(rot * vec3<f32>(input.aPos, 1.0), 1.0);
-		        output.vCol = input.aCol;
-		        return output;
-	        }
-        )";
+        Ref<RScreenQuad> sQuad = CreateRef<RScreenQuad>();
 
-        const char screen_quad_fs[] = R"(
-	        @fragment
-	        fn main(@location(0) vCol : vec3<f32>) -> @location(0) vec4<f32> {
-		        return vec4<f32>(vCol, 1.0);
-	        }
-        )";
+//         const char screen_quad_fs[] = R"(
+//             @group(0) @binding(0) var mySampler : sampler;
+//             @group(0) @binding(1) var myTexture : texture_2d<f32>;
+//             @fragment 
+//             fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4f {
+//                 return textureSample(myTexture, mySampler, vUV);
+//             }
+//         )";
+//         fs = CreateShader(screen_quad_fs, ShaderStage::Fragment, "screen_quad_fs");
 
-        Ref<RShader> vs = CreateShader(screen_quad_vs, ShaderStage::Vertex, "screen_quad_vs");
-        Ref<RShader> fs = CreateShader(screen_quad_fs, ShaderStage::Fragment, "screen_quad_fs");
-
-        float const verts[] = 
+        if (m_QuadVS == nullptr)
         {
-            -1.f, -1.f, // BL
-             1.f, -1.f, // BR
-             1.f,  1.f, // TR
-            -1.f,  1.f, // TL
-        };
+            const char screen_quad_vs[] = R"(
+	            struct VertexIn {
+		            @location(0) aPos : vec2<f32>
+	            }
+	            struct VertexOut {
+		            @location(0) vUV  : vec2<f32>,
+		            @builtin(position) Position : vec4<f32>
+	            }
+	            @vertex
+	            fn main(input : VertexIn) -> VertexOut {
+		            var output : VertexOut;
+		            output.Position = vec4<f32>(input.aPos, 1.0, 1.0);
+                    var uv = (input.aPos + 1.0) * 0.5;
+		            output.vUV = vec2<f32>(uv.x, 1.0 - uv.y);
+		            return output;
+	            }
+            )";
+            m_QuadVS = CreateShader(screen_quad_vs, ShaderStage::Vertex, "screen_quad_vs");
+        }
 
-        m_ScreenQuad.VB = CreateVertexBuffer(sizeof(float) * 2, sizeof(verts), "screen_quad_vb");
-        m_ScreenQuad.VB->UpdateData(verts, sizeof(verts));
+        if (m_QuadVB == nullptr)
+        {
+            float const verts[] =
+            {
+                -1.f,  1.f, // TL
+                -1.f, -1.f, // BL
+                 1.f,  1.f, // TR
+                 1.f, -1.f, // BR
+            };
+
+            m_QuadVB = CreateVertexBuffer(sizeof(float) * 2, sizeof(verts), "screen_quad_vb");
+            m_QuadVB->UpdateData(verts, sizeof(verts));
+        }
 
         PipelineDesc pipeDesc = {};
         pipeDesc.DepthWrite = false;
@@ -345,26 +343,28 @@ namespace rush
         vLayout.Attributes = &vertAttrs[0];
         vLayout.AttributeCount = 1;
 
-        pipeDesc.VS = vs;
+        pipeDesc.VS = m_QuadVS;
         pipeDesc.FS = fs;
         pipeDesc.WriteMask = ColorWriteMask::Write_All;
 
-        Ref<BindingLayout> bindingLayout = CreateBindingLayout({
-            {0, ShaderStage::Vertex, BufferBindingType::Uniform}
-        });
+//         Ref<BindingLayout> bindingLayout = CreateBindingLayout({
+//             {0, ShaderStage::Fragment, SamplerBindingType::Filtering},
+//             {1, ShaderStage::Fragment, TextureSampleType::Float}
+//         });
 
-        pipeDesc.BindLayout = bindingLayout;
-        pipeDesc.Cull = CullMode::Back;
-        pipeDesc.Primitive = PrimitiveType::TriangleList;
+        pipeDesc.BindLayout = bindGroup->GetBindingLayout();
+        pipeDesc.Primitive = PrimitiveType::TriangleStrip;
         pipeDesc.Front = FrontFace::CCW;
+        pipeDesc.Cull = CullMode::Back;
 
-        m_ScreenQuad.Pipeline = CreatePipeline(&pipeDesc, "screen_quad_pipeline");
+        sQuad->Pipeline = CreatePipeline(&pipeDesc, "screen_quad_pipeline");
+        sQuad->BindGroup = bindGroup;
 
-//         m_ScreenQuad.Uniforms = CreateUniformBuffer(sizeof(rotDeg), BufferUsage::Uniform, "screen_quad_unifroms");
-//         m_ScreenQuad.Uniforms->UpdateData(&rotDeg, sizeof(rotDeg));
-// 
-//         m_ScreenQuad.BindGroup = CreateBindGroup(bindingLayout, {{0, m_ScreenQuad.Uniforms} }, "screen_quad_bindgroup");
+        //m_ScreenQuad.Uniforms = CreateUniformBuffer(sizeof(rotDeg), BufferUsage::Uniform, "screen_quad_unifroms");
+        //m_ScreenQuad.Uniforms->UpdateData(&rotDeg, sizeof(rotDeg));
 
+        //m_FinalScreenQuad.BindGroup = CreateBindGroup(bindingLayout, { {0, sampler}, {1, m_ScreenQuad.} }, "screen_quad_bindgroup");
+        return sQuad;
     }
 
     Ref<RShader> Renderer::CreateShader(const char* code, ShaderStage type, const char* lable/* = nullptr*/)
@@ -432,7 +432,7 @@ namespace rush
         pass.End();
     }
 
-    void Renderer::DrawFinalPass(Ref<RContent> content)
+    void Renderer::DrawScreenQuad(Ref<RScreenQuad> sQuad)
     {
         wgpu::TextureView backbufferView = m_Contex->swapChain.GetCurrentTextureView();
         wgpu::RenderPassDescriptor renderPassDesc = {};
@@ -444,23 +444,14 @@ namespace rush
         attachment.clearValue = { m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a };
         renderPassDesc.colorAttachmentCount = 1;
         renderPassDesc.colorAttachments = &attachment;
-        renderPassDesc.depthStencilAttachment = nullptr; // no need in this engine
+        renderPassDesc.depthStencilAttachment = nullptr;
 
-//         wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
-//         for (const auto batch : content->m_Batches)
-//         {
-//             pass.SetPipeline(*batch->Pipeline->m_Pipeline);
-//             pass.SetBindGroup(0, *batch->Uniforms->m_BindGroup);
-//             int vbIdx = 0;
-//             for (auto vb : batch->VBList)
-//             {
-//                 pass.SetVertexBuffer(vbIdx, *vb->m_Buffer);
-//                 ++vbIdx;
-//             }
-//             pass.SetIndexBuffer(*batch->IB->m_Buffer, batch->IB->Is32Bits() ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16);
-//             pass.DrawIndexed(batch->IB->GetCount(), batch->InstanceCount, batch->FirstIndex, batch->FirstVertex);
-//         }
-//         pass.End();
+        wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
+        pass.SetPipeline(*sQuad->Pipeline->m_Pipeline);
+        pass.SetBindGroup(0, *sQuad->BindGroup->m_BindGroup);
+        pass.SetVertexBuffer(0, *m_QuadVB->m_Buffer);
+        pass.Draw(4);
+        pass.End();
     }
 
     void Renderer::EndDraw()

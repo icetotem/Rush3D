@@ -21,6 +21,7 @@ namespace rush
 
     protected:
         friend class Renderer;
+        friend class RPass;
 
         RTexture(Ref<RContex> contex, uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth, const char* lable);
 

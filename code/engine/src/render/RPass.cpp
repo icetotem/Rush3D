@@ -16,6 +16,7 @@ namespace rush
         m_FrameBufferWidth = width;
         m_FrameBufferHeight = height;
 
+
         wgpu::TextureDescriptor colorTexDesc;
         colorTexDesc.dimension = wgpu::TextureDimension::e2D;
         colorTexDesc.size.width = m_FrameBufferWidth;
@@ -25,25 +26,14 @@ namespace rush
         colorTexDesc.format = g_WGPUTextureFormat[(int)colorFormat];
         colorTexDesc.mipLevelCount = 1;
         colorTexDesc.usage = wgpu::TextureUsage::RenderAttachment;
-        m_ColorTexture = CreateRef<wgpu::Texture>(renderContex->device.CreateTexture(&colorTexDesc));
-        //auto m_ColorView = CreateRef<wgpu::TextureView>(m_ColorTexture->CreateView());
-
-        wgpu::TextureDescriptor depthStencilTexDesc;
-        depthStencilTexDesc.dimension = wgpu::TextureDimension::e2D;
-        depthStencilTexDesc.size.width = m_FrameBufferWidth;
-        depthStencilTexDesc.size.height = m_FrameBufferHeight;
-        depthStencilTexDesc.size.depthOrArrayLayers = 1;
-        depthStencilTexDesc.sampleCount = msaa;
-        depthStencilTexDesc.format = g_WGPUTextureFormat[(int)depthStencilFormat];
-        depthStencilTexDesc.mipLevelCount = 1;
-        depthStencilTexDesc.usage = wgpu::TextureUsage::RenderAttachment;
-        m_DepthStencilTexture = CreateRef<wgpu::Texture>(renderContex->device.CreateTexture(&depthStencilTexDesc));
-        //auto m_DepthStencilView = CreateRef<wgpu::TextureView>(m_DepthStencilTexture->CreateView());
+        m_ColorTexture = RTexture::Construct(renderContex, m_FrameBufferWidth, m_FrameBufferHeight, colorFormat, 1, 1, lable);
+        m_ColorTexture->m_Texture = CreateRef<wgpu::Texture>(renderContex->device.CreateTexture(&colorTexDesc));
+        m_ColorTexture->m_TextureView = CreateRef<wgpu::TextureView>(m_ColorTexture->m_Texture->CreateView());
+        m_ColorTexture->m_Sampler = CreateRef<wgpu::Sampler>(renderContex->device.CreateSampler());
 
         m_RenderPassDesc = CreateRef<wgpu::RenderPassDescriptor>();
-
         m_ColorAttachment = CreateRef<wgpu::RenderPassColorAttachment>();
-        m_ColorAttachment->view = m_ColorTexture->CreateView();
+        m_ColorAttachment->view = *m_ColorTexture->m_TextureView;
         m_ColorAttachment->resolveTarget = nullptr;
         m_ColorAttachment->loadOp = wgpu::LoadOp::Clear;
         m_ColorAttachment->storeOp = wgpu::StoreOp::Store;
@@ -53,7 +43,23 @@ namespace rush
 
         if (withDepth)
         {
+            wgpu::TextureDescriptor depthStencilTexDesc;
+            depthStencilTexDesc.dimension = wgpu::TextureDimension::e2D;
+            depthStencilTexDesc.size.width = m_FrameBufferWidth;
+            depthStencilTexDesc.size.height = m_FrameBufferHeight;
+            depthStencilTexDesc.size.depthOrArrayLayers = 1;
+            depthStencilTexDesc.sampleCount = msaa;
+            depthStencilTexDesc.format = g_WGPUTextureFormat[(int)depthStencilFormat];
+            depthStencilTexDesc.mipLevelCount = 1;
+            depthStencilTexDesc.usage = wgpu::TextureUsage::RenderAttachment;
+
+            m_DepthStencilTexture = RTexture::Construct(renderContex, m_FrameBufferWidth, m_FrameBufferHeight, depthStencilFormat, 1, 1, lable);
+            m_DepthStencilTexture->m_Texture = CreateRef<wgpu::Texture>(renderContex->device.CreateTexture(&depthStencilTexDesc));
+            m_DepthStencilTexture->m_TextureView = CreateRef<wgpu::TextureView>(m_DepthStencilTexture->m_Texture->CreateView());
+            m_DepthStencilTexture->m_Sampler = CreateRef<wgpu::Sampler>(renderContex->device.CreateSampler());
+
             m_DepthStencilAttachment = CreateRef<wgpu::RenderPassDepthStencilAttachment>();
+            m_DepthStencilAttachment->view = *m_DepthStencilTexture->m_TextureView;
             m_DepthStencilAttachment->depthReadOnly = false;
             m_DepthStencilAttachment->stencilReadOnly = false;
             m_DepthStencilAttachment->depthClearValue = 1.0f;
@@ -62,7 +68,6 @@ namespace rush
             m_DepthStencilAttachment->depthStoreOp = wgpu::StoreOp::Store;
             m_DepthStencilAttachment->stencilLoadOp = wgpu::LoadOp::Clear;
             m_DepthStencilAttachment->stencilStoreOp = wgpu::StoreOp::Store;
-            m_DepthStencilAttachment->view = m_DepthStencilTexture->CreateView();
             m_RenderPassDesc->depthStencilAttachment = m_DepthStencilAttachment.get();
         }
     }

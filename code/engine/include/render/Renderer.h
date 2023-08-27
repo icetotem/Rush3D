@@ -10,6 +10,7 @@
 #include "render/RBatch.h"
 #include "Window.h"
 
+
 namespace rush
 {
 
@@ -75,12 +76,10 @@ namespace rush
         uint32_t Msaa = 1;
     };
 
-    struct ScreenQuad
+    struct RScreenQuad
     {
-        Ref<RVertexBuffer> VB;
-        Ref<RBindGroup> BindGroup;
-        Ref<RUniformBuffer> Uniforms;
         Ref<RPipeline> Pipeline;
+        Ref<RBindGroup> BindGroup;
     };
 
     /// <summary>
@@ -107,11 +106,13 @@ namespace rush
 
         Ref<RPass> CreateRenderPass(const RenderPassDesc* desc, const char* lable = nullptr);
 
+        Ref<RScreenQuad> CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup);
+
         void BeginDraw();
 
         void DrawOffScreenPass(Ref<RPass> renderPass, Ref<RContent> content);
 
-        void DrawFinalPass(Ref<RContent> content);
+        void DrawScreenQuad(Ref<RScreenQuad> sQuad);
 
         void EndDraw();
 
@@ -130,7 +131,6 @@ namespace rush
 
         void GatherCaps();
 
-        void CreateQuad();
 
     protected:
         Ref<RContex> m_Contex;
@@ -141,7 +141,9 @@ namespace rush
         uint32_t m_Msaa;
         Vector4 m_ClearColor;
         Ref<Window> m_Window;
-        ScreenQuad m_ScreenQuad;
+
+        Ref<RShader> m_QuadVS;
+        Ref<RVertexBuffer> m_QuadVB;
     };
 
 

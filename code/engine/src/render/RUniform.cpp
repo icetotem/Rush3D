@@ -25,22 +25,29 @@ namespace rush
         this->m_Size = size;
     }
 
-    wgpu::BindGroupEntry GetAsBinding(const BindingInitializationHelper& helper)
+    void AddBinding(const BindingInitializationHelper& helper, std::vector<wgpu::BindGroupEntry>& entries)
     {
-        wgpu::BindGroupEntry result = {};
-        result.binding = helper.GetBinding();
         if (helper.GetTexture())
         {
-            result.sampler = *helper.GetTexture()->GetSampler();
-            result.textureView = *helper.GetTexture()->GetTextureView();
+            wgpu::BindGroupEntry result1 = {};
+            result1.binding = helper.GetBinding();
+            result1.sampler = *helper.GetTexture()->GetSampler();
+            entries.push_back(result1);
+
+            wgpu::BindGroupEntry result2 = {};
+            result2.binding = helper.GetBinding() + 1;
+            result2.textureView = *helper.GetTexture()->GetTextureView();
+            entries.push_back(result2);
         }
-
-        if (helper.GetBuffer())
+        else if (helper.GetBuffer())
+        {
+            wgpu::BindGroupEntry result = {};
+            result.binding = helper.GetBinding();
             result.buffer = *helper.GetBuffer()->GetBuffer();
-
-        result.offset = helper.GetOffset();
-        result.size = helper.GetSize();
-        return result;
+            result.offset = helper.GetOffset();
+            result.size = helper.GetSize();
+            entries.push_back(result);
+        }
     }
 
     static wgpu::BindGroup MakeBindGroup(
@@ -51,7 +58,7 @@ namespace rush
         std::vector<wgpu::BindGroupEntry> entries;
         for (const BindingInitializationHelper& helper : entriesInitializer) 
         {
-            entries.push_back(GetAsBinding(helper));
+            AddBinding(helper, entries);
         }
 
         wgpu::BindGroupDescriptor descriptor;
@@ -63,8 +70,8 @@ namespace rush
 
     RBindGroup::RBindGroup(Ref<RContex> contex, Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable)
     {
-        m_BindGroup = CreateRef<wgpu::BindGroup>();
-        *m_BindGroup = MakeBindGroup(contex->device, *layout->m_Layout, entriesInitializer);
+        m_BindGroup = CreateRef<wgpu::BindGroup>(MakeBindGroup(contex->device, *layout->m_Layout, entriesInitializer));
+        m_BindLayout = layout;
     }
 
     RBindGroup::~RBindGroup()
