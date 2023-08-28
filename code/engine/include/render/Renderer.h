@@ -16,16 +16,15 @@ namespace rush
 
     struct RendererDesc
     {
-        RenderBackend Backend = RenderBackend::D3D12;
-        bool Vsync = true;
-        uint32_t Msaa = 4;
-        bool Ssao = false;
-        bool Bloom = false;
-        bool Hdr = false;
-        bool Gamma = false;
-        std::vector<std::string> EnableToggles;
-        std::vector<std::string> DisableToggles;
-        Vector4 ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+        RenderBackend backend = RenderBackend::D3D12;
+        bool vsync = true;
+        bool ssao = false;
+        bool bloom = false;
+        bool hdr = false;
+        bool gamma = false;
+        std::vector<std::string> enableToggles;
+        std::vector<std::string> disableToggles;
+        Vector4 clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
     };
 
     struct RenderCaps
@@ -66,20 +65,19 @@ namespace rush
 
     struct RenderPassDesc
     {
-        uint32_t Width = 128;
-        uint32_t Height = 128;
-        TextureFormat ColorFormat = TextureFormat::BGRA8Unorm;
-        TextureFormat DepthStencilFormat = TextureFormat::Depth24PlusStencil8;
-        Vector4 ClearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
-        float ClearDepth = 1.0f;
-        bool WithDepthStencil = true;
-        uint32_t Msaa = 1;
+        uint32_t width = 128;
+        uint32_t height = 128;
+        TextureFormat colorFormat = TextureFormat::BGRA8Unorm;
+        TextureFormat depthStencilFormat = TextureFormat::Depth24PlusStencil8;
+        Vector4 clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+        float clearDepth = 1.0f;
+        bool useDepthStencil = true;
     };
 
     struct RScreenQuad
     {
-        Ref<RPipeline> Pipeline;
-        Ref<RBindGroup> BindGroup;
+        Ref<RPipeline> pipeline;
+        Ref<RBindGroup> bindGroup;
     };
 
     /// <summary>
@@ -104,6 +102,8 @@ namespace rush
 
         Ref<RPipeline> CreatePipeline(const PipelineDesc* pipeDesc, const char* lable = nullptr);
 
+        Ref<RSampler> CreateSampler(const char* lable = nullptr);
+
         Ref<RPass> CreateRenderPass(const RenderPassDesc* desc, const char* lable = nullptr);
 
         Ref<RScreenQuad> CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup);
@@ -111,8 +111,8 @@ namespace rush
         void BeginDraw();
 
         void DrawOffScreenPass(Ref<RPass> renderPass, Ref<RContent> content);
-
-        void DrawScreenQuad(Ref<RScreenQuad> sQuad);
+        void DrawOffScreenQuad(Ref<RPass> renderPass, Ref<RScreenQuad> sQuad);
+        void DrawFinalScreenQuad(Ref<RScreenQuad> sQuad);
 
         void EndDraw();
 
@@ -138,7 +138,6 @@ namespace rush
         RenderCaps m_Caps;
         uint32_t m_Width;
         uint32_t m_Height;
-        uint32_t m_Msaa;
         Vector4 m_ClearColor;
         Ref<Window> m_Window;
 

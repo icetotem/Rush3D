@@ -62,9 +62,11 @@ static char const triangle_frag_wgsl[] = R"(
 Ref<Renderer> g_Renderer = nullptr;
 Ref<RContent> content0 = CreateRef<RContent>();
 Ref<RPass> pass0;
+Ref<RPass> pass1;
 Ref<RBindGroup> bindGroup;
 Ref<RUniformBuffer> uniformBuf;
-Ref<RScreenQuad> sQuad;
+Ref<RScreenQuad> sQuad1;
+Ref<RScreenQuad> sQuadFinal;
 
 static bool render()
 {
@@ -76,8 +78,9 @@ static bool render()
 
 		uniformBuf->UpdateData(&rotDeg, sizeof(rotDeg));
 
-		g_Renderer->DrawOffScreenPass(pass0, content0);
-		g_Renderer->DrawScreenQuad(sQuad);
+        g_Renderer->DrawOffScreenPass(pass0, content0);
+        g_Renderer->DrawOffScreenQuad(pass1, sQuad1);
+		g_Renderer->DrawFinalScreenQuad(sQuadFinal);
 
 		g_Renderer->EndDraw();
 	}
@@ -95,7 +98,6 @@ int main(int argc, char* argv[])
     wndDesc.Height = 900;
     wndDesc.OnTop = false;
     wndDesc.Visible = false;
-
 	auto window = engine.CreateRenderWindow(wndDesc);
 	
 	if (window)
@@ -103,86 +105,124 @@ int main(int argc, char* argv[])
 		window->Show(true);
 
 		RendererDesc rendererDesc;
-		rendererDesc.Backend = RenderBackend::D3D12;
-		rendererDesc.Msaa = 4;
+		rendererDesc.backend = RenderBackend::D3D12;
+		rendererDesc.clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
 
 		auto renderer = engine.CreateRenderer(window, &rendererDesc);
 		g_Renderer = renderer;
 
 		RenderPassDesc rpDesc;
-		rpDesc.Width = 1280;
-		rpDesc.Height = 900;		
-		rpDesc.WithDepthStencil = true;
-		rpDesc.ClearColor = Vector4(0.3f, 0.4f, 0.3f, 1.0f);
-		rpDesc.ClearDepth = 1.0f;
-        rpDesc.ColorFormat = TextureFormat::BGRA8Unorm;
-        rpDesc.DepthStencilFormat = TextureFormat::Depth24PlusStencil8;
-		rpDesc.Msaa = 4;
-		pass0 = renderer->CreateRenderPass(&rpDesc);
+		rpDesc.width = 1280;
+		rpDesc.height = 900;		
+		rpDesc.useDepthStencil = true;
+		rpDesc.clearDepth = 1.0f;
+        rpDesc.colorFormat = TextureFormat::BGRA8Unorm;
+        rpDesc.depthStencilFormat = TextureFormat::Depth24PlusStencil8;
 
-		// create screen quad
-        const char fs_code[] = R"(
-            @group(0) @binding(0) var mySampler : sampler;
-            @group(0) @binding(1) var myTexture : texture_2d<f32>;
-            @fragment 
-            fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4f {
-                return textureSample(myTexture, mySampler, vUV);
-            }
-        )";
-        auto sColorFS = renderer->CreateShader(fs_code, ShaderStage::Fragment, "screen_quad_fs");
+        rpDesc.useDepthStencil = true;
+        rpDesc.clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+        pass0 = renderer->CreateRenderPass(&rpDesc);
 
-        Ref<BindingLayout> bl2 = g_Renderer->CreateBindingLayout({
-            {0, ShaderStage::Fragment, SamplerBindingType::Filtering},
-            {1, ShaderStage::Fragment, TextureSampleType::Float}
+        rpDesc.useDepthStencil = false;
+        rpDesc.clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+        pass1 = renderer->CreateRenderPass(&rpDesc);
+
+        // create screen quad
+        {
+            // create screen quad
+            const char fs_code[] = R"(
+				@group(0) @binding(0) var mySampler : sampler;
+				@group(0) @binding(1) var myTexture : texture_2d<f32>;
+				@fragment 
+				fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4f {
+					return textureSample(myTexture, mySampler, vUV);
+					//return vec4<f32>(1);
+				}
+			)";
+            auto sColorFS = renderer->CreateShader(fs_code, ShaderStage::Fragment, "screen_quad_fs");
+
+            Ref<BindingLayout> bl = g_Renderer->CreateBindingLayout({
+                { 0, ShaderStage::Fragment, SamplerBindingType::Filtering },
+                { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D}
             });
 
-        auto quadBindGroup = g_Renderer->CreateBindGroup(bl2, {
-            {0, pass0->GetColorTexture()}},
-            "screen_quad_bindgroup");
+            auto sampler = renderer->CreateSampler();
 
-        sQuad = renderer->CreateScreenQuad(sColorFS, quadBindGroup);
+            auto quadBindGroup = g_Renderer->CreateBindGroup(bl, {
+                { 0, sampler },
+                { 1, pass0->GetColorTexture() }
+                }, "screen_quad_bindgroup");
+
+            sQuad1 = renderer->CreateScreenQuad(sColorFS, quadBindGroup);
+        }
+
+		{
+			const char fs_code[] = R"(
+				@group(0) @binding(0) var mySampler : sampler;
+				@group(0) @binding(1) var myTexture : texture_2d<f32>;
+				@fragment 
+				fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4f {
+					return textureSample(myTexture, mySampler, vUV);
+				}
+			)";
+			auto sColorFS = renderer->CreateShader(fs_code, ShaderStage::Fragment, "screen_quad_fs");
+			auto sampler = renderer->CreateSampler();
+
+            Ref<BindingLayout> bl = g_Renderer->CreateBindingLayout({
+                { 0, ShaderStage::Fragment, SamplerBindingType::Filtering },
+                { 1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D}
+            });
+
+			auto quadBindGroup = g_Renderer->CreateBindGroup(bl, {
+				{ 0, sampler },
+				{ 1, pass1->GetColorTexture() }
+			}, "screen_quad_bindgroup");
+
+			sQuadFinal = renderer->CreateScreenQuad(sColorFS, quadBindGroup);
+		}
+
+
 
         Ref<RShader> vs = renderer->CreateShader(triangle_vert_wgsl, ShaderStage::Vertex, "vs_test");
         Ref<RShader> fs = renderer->CreateShader(triangle_frag_wgsl, ShaderStage::Fragment, "fs_test");
 
         PipelineDesc pipeDesc = {};
-		pipeDesc.Msaa = 4;
-        pipeDesc.DepthWrite = true;
-        pipeDesc.DepthTest = false;
-		pipeDesc.ColorFormat = TextureFormat::BGRA8Unorm;
-		pipeDesc.DepthFormat = TextureFormat::Depth24PlusStencil8;
-		pipeDesc.DepthCompare = DepthCompareFunction::LessEqual;
+        pipeDesc.depthWrite = true;
+        pipeDesc.depthTest = false;
+		pipeDesc.colorFormat = TextureFormat::BGRA8Unorm;
+		pipeDesc.depthStencilFormat = TextureFormat::Depth24PlusStencil8;
+		pipeDesc.depthCompare = DepthCompareFunction::LessEqual;
 
         VertexAttribute vertAttrs[2];
-        vertAttrs[0].Format = VertexFormat::Float32x2;
-        vertAttrs[0].Offset = 0;
-        vertAttrs[0].ShaderLocation = 0;
-        vertAttrs[1].Format = VertexFormat::Float32x3;
-        vertAttrs[1].Offset = 0;
-        vertAttrs[1].ShaderLocation = 1;
+        vertAttrs[0].format = VertexFormat::Float32x2;
+        vertAttrs[0].offset = 0;
+        vertAttrs[0].shaderLocation = 0;
+        vertAttrs[1].format = VertexFormat::Float32x3;
+        vertAttrs[1].offset = 0;
+        vertAttrs[1].shaderLocation = 1;
 
-        auto& vLayout0 = pipeDesc.VLayouts.emplace_back();
-        vLayout0.Stride = sizeof(float) * 2;
-        vLayout0.Attributes = &vertAttrs[0];
-        vLayout0.AttributeCount = 1;
+        auto& vLayout0 = pipeDesc.vertexLayouts.emplace_back();
+        vLayout0.stride = sizeof(float) * 2;
+        vLayout0.attributes = &vertAttrs[0];
+        vLayout0.attributeCount = 1;
 
-        auto& vLayout1 = pipeDesc.VLayouts.emplace_back();
-        vLayout1.Stride = sizeof(float) * 3;
-        vLayout1.Attributes = &vertAttrs[1];
-        vLayout1.AttributeCount = 1;
+        auto& vLayout1 = pipeDesc.vertexLayouts.emplace_back();
+        vLayout1.stride = sizeof(float) * 3;
+        vLayout1.attributes = &vertAttrs[1];
+        vLayout1.attributeCount = 1;
 
-        pipeDesc.VS = vs;
-        pipeDesc.FS = fs;
-        pipeDesc.WriteMask = ColorWriteMask::Write_All;
+        pipeDesc.vs = vs;
+        pipeDesc.fs = fs;
+        pipeDesc.writeMask = ColorWriteMask::Write_All;
 
 		Ref<BindingLayout> bindingLayout = renderer->CreateBindingLayout({
 			{0, ShaderStage::Vertex, BufferBindingType::Uniform}
 		});
 
-		pipeDesc.BindLayout = bindingLayout;
-		pipeDesc.Primitive = PrimitiveType::TriangleList;
-		pipeDesc.Front = FrontFace::CCW;
-        pipeDesc.Cull = CullMode::Back;
+		pipeDesc.bindLayout = bindingLayout;
+		pipeDesc.primitiveType = PrimitiveType::TriangleList;
+		pipeDesc.frontFace = FrontFace::CCW;
+        pipeDesc.cullModel = CullMode::Back;
 
         Ref<RPipeline> rpipe1 = renderer->CreatePipeline(&pipeDesc, "pipeline_1");
 
@@ -195,9 +235,9 @@ int main(int argc, char* argv[])
 
         // create the buffers (r, g, b)
         float const vertData1[] = {
-            1.0f, 0.0f, 0.0f, // BL
-            0.0f, 1.0f, 0.0f, // BR
-            0.0f, 0.0f, 1.0f, // top
+            0.5f, 0.5f, 0.5f, // BL
+            0.5f, 0.5f, 0.5f, // BR
+            0.5f, 0.5f, 0.5f, // top
         };
 
         uint16_t const indxData[] = {
@@ -222,11 +262,11 @@ int main(int argc, char* argv[])
 		}, "bindgroup0");
 
 		Ref<RBatch> batch0 = content0->NewBatch();
-        batch0->Pipeline = rpipe1;
-        batch0->VBList.push_back(vb0);
-        batch0->VBList.push_back(vb1);
-        batch0->IB = ib;
-		batch0->Uniforms = bindGroup;
+        batch0->pipeline = rpipe1;
+        batch0->vertexBufferList.push_back(vb0);
+        batch0->vertexBufferList.push_back(vb1);
+        batch0->indexBuffer = ib;
+		batch0->uniforms = bindGroup;
 
         while (window->ShouldClose())
         {
@@ -235,6 +275,10 @@ int main(int argc, char* argv[])
         }
 	}
 
+	pass0.reset();
+	pass1.reset();
+	sQuad1.reset();
+	sQuadFinal.reset();
 	content0.reset();
 	bindGroup.reset();
 	uniformBuf.reset();

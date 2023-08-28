@@ -8,16 +8,16 @@ namespace rush
 
     struct VertexAttribute
     {
-        VertexFormat Format = VertexFormat::Float32;
-        uint64_t Offset = 0;
-        uint32_t ShaderLocation = 0;
+        VertexFormat format = VertexFormat::Float32;
+        uint64_t offset = 0;
+        uint32_t shaderLocation = 0;
     };
 
     struct VertexLayout
     {
-        uint64_t Stride = 0;
-        uint32_t AttributeCount = 0;
-        VertexAttribute* Attributes = nullptr;
+        uint64_t stride = 0;
+        uint32_t attributeCount = 0;
+        VertexAttribute* attributes = nullptr;
     };
 
     class BindingLayoutHelper
@@ -37,8 +37,7 @@ namespace rush
             uint32_t entryBinding,
             ShaderStage entryVisibility,
             TextureSampleType textureSampleType,
-            TextureViewDimension viewDimension = TextureViewDimension::e2D,
-            bool textureMultisampled = false);
+            TextureViewDimension viewDimension);
 
         Ref<wgpu::BindGroupLayoutEntry> GetEntry() const { return m_Entry; }
 

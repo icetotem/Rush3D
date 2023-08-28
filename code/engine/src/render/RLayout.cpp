@@ -34,14 +34,13 @@ namespace rush
         m_Entry->sampler.type = g_SamplerBindingType[(int)samplerType];
     }
 
-    BindingLayoutHelper::BindingLayoutHelper(uint32_t entryBinding, ShaderStage entryVisibility, TextureSampleType textureSampleType, TextureViewDimension viewDimension /*= TextureViewDimension::e2D*/, bool textureMultisampled /*= false*/)
+    BindingLayoutHelper::BindingLayoutHelper(uint32_t entryBinding, ShaderStage entryVisibility, TextureSampleType textureSampleType, TextureViewDimension viewDimension /*= TextureViewDimension::e2D*/)
     {
         m_Entry = CreateRef<wgpu::BindGroupLayoutEntry>();
         m_Entry->binding = entryBinding;
         m_Entry->visibility = g_WGPUShaderStage[(int)entryVisibility];
         m_Entry->texture.sampleType = g_TextureSampleType[(int)textureSampleType];
         m_Entry->texture.viewDimension = g_TextureViewDimension[(int)viewDimension];
-        m_Entry->texture.multisampled = textureMultisampled;
     }
 
     BindingLayout::BindingLayout(Ref<RContex> contex, std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable)

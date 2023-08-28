@@ -10,12 +10,12 @@ namespace rush
 
     struct BlendState
     {
-        BlendOperation OpColor = BlendOperation::Add;
-        BlendFactor SrcColor = BlendFactor::SrcColor;
-        BlendFactor DstColor = BlendFactor::DstColor;
-        BlendOperation OpAlpha = BlendOperation::Add;
-        BlendFactor SrcAlpha = BlendFactor::SrcAlpha;
-        BlendFactor DstAlpha = BlendFactor::DstAlpha;
+        BlendOperation opColor = BlendOperation::Add;
+        BlendFactor srcColor = BlendFactor::SrcColor;
+        BlendFactor dstColor = BlendFactor::DstColor;
+        BlendOperation opAlpha = BlendOperation::Add;
+        BlendFactor srcAlpha = BlendFactor::SrcAlpha;
+        BlendFactor dstAlpha = BlendFactor::DstAlpha;
     };
 
     /// <summary>
@@ -23,23 +23,22 @@ namespace rush
     /// </summary>
     struct PipelineDesc
     {
-        Ref<RShader> VS;
-        Ref<RShader> FS;
-        Ref<BindingLayout> BindLayout;
-        List<VertexLayout> VLayouts;
-        PrimitiveType Primitive = PrimitiveType::TriangleList;
-        BlendState Blend;
-        FrontFace Front = FrontFace::CCW;
-        CullMode Cull = CullMode::Back;
-        TextureFormat ColorFormat = TextureFormat::BGRA8Unorm;
-        TextureFormat DepthFormat = TextureFormat::Depth24PlusStencil8;
-        uint32_t WriteMask = ColorWriteMask::Write_All;
-        bool DepthTest = true;
-        bool DepthWrite = true;
-        DepthCompareFunction DepthCompare = DepthCompareFunction::LessEqual;
-        bool StencilTest = false;
-        bool StencilWrite = false;
-        uint32_t Msaa = 1;
+        Ref<RShader> vs;
+        Ref<RShader> fs;
+        Ref<BindingLayout> bindLayout;
+        List<VertexLayout> vertexLayouts;
+        PrimitiveType primitiveType = PrimitiveType::TriangleList;
+        BlendState blendStates;
+        FrontFace frontFace = FrontFace::CCW;
+        CullMode cullModel = CullMode::Back;
+        TextureFormat colorFormat = TextureFormat::BGRA8Unorm;
+        TextureFormat depthStencilFormat = TextureFormat::Depth24PlusStencil8;
+        uint32_t writeMask = ColorWriteMask::Write_All;
+        bool depthTest = true;
+        bool depthWrite = true;
+        DepthCompareFunction depthCompare = DepthCompareFunction::LessEqual;
+        bool stencilTest = false;
+        bool stencilWrite = false;
     };
 
 

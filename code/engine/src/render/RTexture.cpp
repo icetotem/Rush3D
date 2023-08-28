@@ -9,6 +9,15 @@ namespace rush
 {
     extern wgpu::TextureFormat g_WGPUTextureFormat[(int)TextureFormat::Count];
 
+    RSampler::RSampler(Ref<RContex> contex, const char* lable)
+    {
+        wgpu::SamplerDescriptor desc = {};
+        desc.label = lable;
+        m_Sampler = CreateRef<wgpu::Sampler>(contex->device.CreateSampler(&desc));
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+
     static wgpu::Buffer CreateBufferFromData(const wgpu::Device& device,
         const void* data,
         uint64_t size,
@@ -80,10 +89,7 @@ namespace rush
         descriptor.format =  wgpu::TextureFormat::BGRA8Unorm;
         descriptor.mipLevelCount = m_Mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
-
         m_Texture = CreateRef<wgpu::Texture>(contex->device.CreateTexture(&descriptor));
-        m_Sampler = CreateRef<wgpu::Sampler>(contex->device.CreateSampler());
-        m_TextureView = CreateRef<wgpu::TextureView>(m_Texture->CreateView());
     }
 
     void RTexture::UpdateData(const void* data, uint64_t size)
@@ -104,4 +110,4 @@ namespace rush
         m_Contex->queue.Submit(1, &copy);
     }
 
-}
+    }

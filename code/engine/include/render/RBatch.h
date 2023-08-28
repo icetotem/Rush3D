@@ -11,13 +11,13 @@ namespace rush
 
     struct RBatch
     {
-        Ref<RPipeline> Pipeline;
-        Ref<RBindGroup> Uniforms;
-        List<Ref<RVertexBuffer>> VBList;
-        Ref<RIndexBuffer> IB;
-        uint32_t InstanceCount = 1;
-        uint32_t FirstIndex = 0;
-        uint32_t FirstVertex = 0;
+        Ref<RPipeline> pipeline;
+        Ref<RBindGroup> uniforms;
+        List<Ref<RVertexBuffer>> vertexBufferList;
+        Ref<RIndexBuffer> indexBuffer;
+        uint32_t instanceCount = 1;
+        uint32_t firstIndex = 0;
+        uint32_t firstVertex = 0;
     };
 
     class RContent

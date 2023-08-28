@@ -108,10 +108,9 @@ namespace rush
         if (g_DawnInstance == nullptr)
             g_DawnInstance = std::make_unique<dawn::native::Instance>();
 
-        m_Msaa = rendererDesc->Msaa;
         m_Width = m_Window->GetWidth();
         m_Height = m_Window->GetHeight();
-        m_ClearColor = rendererDesc->ClearColor;
+        m_ClearColor = rendererDesc->clearColor;
         m_Contex = CreateRef<RContex>();
 
         CreateAdapter(rendererDesc);
@@ -122,7 +121,7 @@ namespace rush
     void Renderer::CreateAdapter(const RendererDesc* rendererDesc)
     {
         wgpu::RequestAdapterOptions options = {};
-        options.backendType = g_WGPUBackendType[(int)rendererDesc->Backend];
+        options.backendType = g_WGPUBackendType[(int)rendererDesc->backend];
         auto adapters = g_DawnInstance->EnumerateAdapters(&options);
         LOG_INFO("Found {} adapters:", adapters.size());
         int index = 1;
@@ -181,12 +180,12 @@ namespace rush
         // setup toggles
         std::vector<const char*> enableToggleNames;
         std::vector<const char*> disabledToggleNames;
-        for (const std::string& toggle : rendererDesc->EnableToggles) 
+        for (const std::string& toggle : rendererDesc->enableToggles) 
         {
             enableToggleNames.push_back(toggle.c_str());
         }
 
-        for (const std::string& toggle : rendererDesc->DisableToggles) 
+        for (const std::string& toggle : rendererDesc->disableToggles) 
         {
             disabledToggleNames.push_back(toggle.c_str());
         }
@@ -222,7 +221,7 @@ namespace rush
         scDesc.format = wgpu::TextureFormat::BGRA8Unorm;
         scDesc.width = m_Width;
         scDesc.height = m_Height;
-        scDesc.presentMode = rendererDesc->Vsync ? wgpu::PresentMode::Fifo : wgpu::PresentMode::Mailbox;
+        scDesc.presentMode = rendererDesc->vsync ? wgpu::PresentMode::Fifo : wgpu::PresentMode::Mailbox;
         m_Contex->swapChain = m_Contex->device.CreateSwapChain(surface, &scDesc);
 
         // get cmd queue
@@ -278,17 +277,6 @@ namespace rush
     Ref<RScreenQuad> Renderer::CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup)
     {
         Ref<RScreenQuad> sQuad = CreateRef<RScreenQuad>();
-
-//         const char screen_quad_fs[] = R"(
-//             @group(0) @binding(0) var mySampler : sampler;
-//             @group(0) @binding(1) var myTexture : texture_2d<f32>;
-//             @fragment 
-//             fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4f {
-//                 return textureSample(myTexture, mySampler, vUV);
-//             }
-//         )";
-//         fs = CreateShader(screen_quad_fs, ShaderStage::Fragment, "screen_quad_fs");
-
         if (m_QuadVS == nullptr)
         {
             const char screen_quad_vs[] = R"(
@@ -311,7 +299,7 @@ namespace rush
             m_QuadVS = CreateShader(screen_quad_vs, ShaderStage::Vertex, "screen_quad_vs");
         }
 
-        if (m_QuadVB == nullptr)
+        if (m_QuadVB == nullptr) 
         {
             float const verts[] =
             {
@@ -326,44 +314,32 @@ namespace rush
         }
 
         PipelineDesc pipeDesc = {};
-        pipeDesc.DepthWrite = false;
-        pipeDesc.DepthTest = false;
-        pipeDesc.ColorFormat = TextureFormat::BGRA8Unorm;
-        pipeDesc.DepthFormat = TextureFormat::Depth24PlusStencil8;
-        pipeDesc.DepthCompare = DepthCompareFunction::LessEqual;
-        pipeDesc.Msaa = 1;
+        pipeDesc.depthWrite = false;
+        pipeDesc.depthTest = false;
+        pipeDesc.colorFormat = TextureFormat::BGRA8Unorm;
 
         VertexAttribute vertAttrs[2];
-        vertAttrs[0].Format = VertexFormat::Float32x2;
-        vertAttrs[0].Offset = 0;
-        vertAttrs[0].ShaderLocation = 0;
+        vertAttrs[0].format = VertexFormat::Float32x2;
+        vertAttrs[0].offset = 0;
+        vertAttrs[0].shaderLocation = 0;
 
-        auto& vLayout = pipeDesc.VLayouts.emplace_back();
-        vLayout.Stride = sizeof(float) * 2;
-        vLayout.Attributes = &vertAttrs[0];
-        vLayout.AttributeCount = 1;
+        auto& vLayout = pipeDesc.vertexLayouts.emplace_back();
+        vLayout.stride = sizeof(float) * 2;
+        vLayout.attributes = &vertAttrs[0];
+        vLayout.attributeCount = 1;
 
-        pipeDesc.VS = m_QuadVS;
-        pipeDesc.FS = fs;
-        pipeDesc.WriteMask = ColorWriteMask::Write_All;
+        pipeDesc.vs = m_QuadVS;
+        pipeDesc.fs = fs;
+        pipeDesc.writeMask = ColorWriteMask::Write_All;
 
-//         Ref<BindingLayout> bindingLayout = CreateBindingLayout({
-//             {0, ShaderStage::Fragment, SamplerBindingType::Filtering},
-//             {1, ShaderStage::Fragment, TextureSampleType::Float}
-//         });
 
-        pipeDesc.BindLayout = bindGroup->GetBindingLayout();
-        pipeDesc.Primitive = PrimitiveType::TriangleStrip;
-        pipeDesc.Front = FrontFace::CCW;
-        pipeDesc.Cull = CullMode::Back;
+        pipeDesc.bindLayout = bindGroup->GetBindingLayout();
+        pipeDesc.primitiveType = PrimitiveType::TriangleStrip;
+        pipeDesc.frontFace = FrontFace::CCW;
+        pipeDesc.cullModel = CullMode::Back;
 
-        sQuad->Pipeline = CreatePipeline(&pipeDesc, "screen_quad_pipeline");
-        sQuad->BindGroup = bindGroup;
-
-        //m_ScreenQuad.Uniforms = CreateUniformBuffer(sizeof(rotDeg), BufferUsage::Uniform, "screen_quad_unifroms");
-        //m_ScreenQuad.Uniforms->UpdateData(&rotDeg, sizeof(rotDeg));
-
-        //m_FinalScreenQuad.BindGroup = CreateBindGroup(bindingLayout, { {0, sampler}, {1, m_ScreenQuad.} }, "screen_quad_bindgroup");
+        sQuad->pipeline = CreatePipeline(&pipeDesc, "screen_quad_pipeline");
+        sQuad->bindGroup = bindGroup;
         return sQuad;
     }
 
@@ -392,6 +368,11 @@ namespace rush
         return RPipeline::Construct(m_Contex, pipeDesc, lable);
     }
 
+    Ref<RSampler> Renderer::CreateSampler(const char* lable /*= nullptr*/)
+    {
+        return RSampler::Construct(m_Contex, lable);
+    }
+
     Ref<RBindGroup> Renderer::CreateBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable/* = nullptr*/)
     {
         return RBindGroup::Construct(m_Contex, layout, entriesInitializer, lable);
@@ -404,7 +385,7 @@ namespace rush
 
     Ref<RPass> Renderer::CreateRenderPass(const RenderPassDesc* desc, const char* lable/* = nullptr*/)
     {
-        return RPass::Construct(m_Contex, desc->Width, desc->Height, desc->Msaa, desc->ColorFormat, desc->DepthStencilFormat, desc->ClearColor, desc->ClearDepth, desc->WithDepthStencil, lable);
+        return RPass::Construct(m_Contex, desc->width, desc->height, desc->colorFormat, desc->depthStencilFormat, desc->clearColor, desc->clearDepth, desc->useDepthStencil, lable);
     }
 
     void Renderer::BeginDraw()
@@ -418,21 +399,31 @@ namespace rush
         wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(renderPass->m_RenderPassDesc.get());
         for (const auto batch : content->m_Batches)
         {
-            pass.SetPipeline(*batch->Pipeline->m_Pipeline);
-            pass.SetBindGroup(0, *batch->Uniforms->m_BindGroup);
+            pass.SetPipeline(*batch->pipeline->m_Pipeline);
+            pass.SetBindGroup(0, *batch->uniforms->m_BindGroup);
             int vbIdx = 0;
-            for (auto vb : batch->VBList)
+            for (auto vb : batch->vertexBufferList)
             {
                 pass.SetVertexBuffer(vbIdx, *vb->m_Buffer);
                 ++vbIdx;
             }
-            pass.SetIndexBuffer(*batch->IB->m_Buffer, batch->IB->Is32Bits() ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16);
-            pass.DrawIndexed(batch->IB->GetCount(), batch->InstanceCount, batch->FirstIndex, batch->FirstVertex);
+            pass.SetIndexBuffer(*batch->indexBuffer->m_Buffer, batch->indexBuffer->Is32Bits() ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16);
+            pass.DrawIndexed(batch->indexBuffer->GetCount(), batch->instanceCount, batch->firstIndex, batch->firstVertex);
         }
         pass.End();
     }
 
-    void Renderer::DrawScreenQuad(Ref<RScreenQuad> sQuad)
+    void Renderer::DrawOffScreenQuad(Ref<RPass> renderPass, Ref<RScreenQuad> sQuad)
+    {
+        wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(renderPass->m_RenderPassDesc.get());
+        pass.SetPipeline(*sQuad->pipeline->m_Pipeline);
+        pass.SetBindGroup(0, *sQuad->bindGroup->m_BindGroup);
+        pass.SetVertexBuffer(0, *m_QuadVB->m_Buffer);
+        pass.Draw(4);
+        pass.End();
+    }
+
+    void Renderer::DrawFinalScreenQuad(Ref<RScreenQuad> sQuad)
     {
         wgpu::TextureView backbufferView = m_Contex->swapChain.GetCurrentTextureView();
         wgpu::RenderPassDescriptor renderPassDesc = {};
@@ -447,8 +438,8 @@ namespace rush
         renderPassDesc.depthStencilAttachment = nullptr;
 
         wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
-        pass.SetPipeline(*sQuad->Pipeline->m_Pipeline);
-        pass.SetBindGroup(0, *sQuad->BindGroup->m_BindGroup);
+        pass.SetPipeline(*sQuad->pipeline->m_Pipeline);
+        pass.SetBindGroup(0, *sQuad->bindGroup->m_BindGroup);
         pass.SetVertexBuffer(0, *m_QuadVB->m_Buffer);
         pass.Draw(4);
         pass.End();

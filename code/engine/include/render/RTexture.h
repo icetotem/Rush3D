@@ -7,6 +7,28 @@
 namespace rush
 {
 
+    class RSampler
+    {
+    public:
+        friend class Renderer;
+        friend class RPass;
+
+        Ref<wgpu::Sampler> GetSampler() const { return m_Sampler; }
+
+    private:
+        RSampler(Ref<RContex> contex, const char* lable);
+
+        static Ref<RSampler> Construct(Ref<RContex> contex, const char* lable)
+        {
+            return std::shared_ptr<RSampler>(new RSampler(contex, lable));
+        }
+
+    private:
+        Ref<wgpu::Sampler> m_Sampler;
+    };
+
+    //////////////////////////////////////////////////////////////////////////
+
     class RTexture
     {
     public:
@@ -14,12 +36,10 @@ namespace rush
 
         void UpdateData(const void* data, uint64_t size);
 
-        Ref<wgpu::TextureView> GetTextureView() const { return m_TextureView; }
-
-        Ref<wgpu::Sampler> GetSampler() const { return m_Sampler; }
+        Ref<wgpu::Texture> GetTexture() const { return m_Texture; }
 
 
-    protected:
+    private:
         friend class Renderer;
         friend class RPass;
 
@@ -37,8 +57,6 @@ namespace rush
         uint32_t m_Depth = 1;
         uint32_t m_Mips = 1;
         Ref<wgpu::Texture> m_Texture;
-        Ref<wgpu::TextureView> m_TextureView;
-        Ref<wgpu::Sampler> m_Sampler;
         Ref<RContex> m_Contex;
     };
 

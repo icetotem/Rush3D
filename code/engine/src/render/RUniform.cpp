@@ -17,6 +17,12 @@ namespace rush
         this->m_Texture = texture;
     }
 
+    BindingInitializationHelper::BindingInitializationHelper(uint32_t binding, Ref<RSampler> sampler)
+    {
+        this->m_Binding = binding;
+        this->m_Sampler = sampler;
+    }
+
     BindingInitializationHelper::BindingInitializationHelper(uint32_t binding, Ref<RUniformBuffer> buffer, uint64_t offset /*= 0*/, uint64_t size /*= kWholeSize*/)
     {
         this->m_Binding = binding;
@@ -27,22 +33,20 @@ namespace rush
 
     void AddBinding(const BindingInitializationHelper& helper, std::vector<wgpu::BindGroupEntry>& entries)
     {
-        if (helper.GetTexture())
+        wgpu::BindGroupEntry result = {};
+        result.binding = helper.GetBinding();
+        if (helper.GetSampler())
         {
-            wgpu::BindGroupEntry result1 = {};
-            result1.binding = helper.GetBinding();
-            result1.sampler = *helper.GetTexture()->GetSampler();
-            entries.push_back(result1);
-
-            wgpu::BindGroupEntry result2 = {};
-            result2.binding = helper.GetBinding() + 1;
-            result2.textureView = *helper.GetTexture()->GetTextureView();
-            entries.push_back(result2);
+            result.sampler = *helper.GetSampler()->GetSampler();
+            entries.push_back(result);
+        }
+        else if (helper.GetTexture())
+        {
+            result.textureView = helper.GetTexture()->GetTexture()->CreateView();
+            entries.push_back(result);
         }
         else if (helper.GetBuffer())
         {
-            wgpu::BindGroupEntry result = {};
-            result.binding = helper.GetBinding();
             result.buffer = *helper.GetBuffer()->GetBuffer();
             result.offset = helper.GetOffset();
             result.size = helper.GetSize();

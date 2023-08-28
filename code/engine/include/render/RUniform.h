@@ -39,6 +39,8 @@ namespace rush
     public:
         BindingInitializationHelper(uint32_t binding, Ref<RTexture> texture);
 
+        BindingInitializationHelper(uint32_t binding, Ref<RSampler> sampler);
+
         BindingInitializationHelper(uint32_t binding,
             Ref<RUniformBuffer> buffer,
             uint64_t offset = 0,
@@ -49,6 +51,7 @@ namespace rush
 
         uint32_t GetBinding() const { return m_Binding; }
         Ref<RTexture> GetTexture() const { return m_Texture; }
+        Ref<RSampler> GetSampler() const { return m_Sampler; }
         Ref<RUniformBuffer> GetBuffer() const { return m_Buffer; }
         uint64_t GetSize() const { return m_Size; }
         uint64_t GetOffset() const { return m_Offset; }
@@ -58,6 +61,7 @@ namespace rush
 
         uint32_t m_Binding;
         Ref<RTexture> m_Texture;
+        Ref<RSampler> m_Sampler;
         Ref<RUniformBuffer> m_Buffer;
         uint64_t m_Offset = 0;
         uint64_t m_Size = 0;
