@@ -85,28 +85,28 @@ namespace rush
 
     bool Window::Create(const WindowDesc& desc)
     {        
-        m_Width = desc.Width;
-        m_Height = desc.Height;
-        m_Title = desc.Title;
+        m_Width = desc.width;
+        m_Height = desc.height;
+        m_Title = desc.title;
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, desc.Resizable ? GLFW_TRUE : GLFW_FALSE);
-        glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, desc.Transparent ? GLFW_TRUE : GLFW_FALSE);
-        glfwWindowHint(GLFW_DECORATED, desc.Frameless ? GLFW_FALSE : GLFW_TRUE);
-        glfwWindowHint(GLFW_FLOATING, desc.OnTop ? GLFW_TRUE : GLFW_FALSE);
-        glfwWindowHint(GLFW_VISIBLE, desc.Visible ? GLFW_TRUE : GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, desc.resizable ? GLFW_TRUE : GLFW_FALSE);
+        glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, desc.transparent ? GLFW_TRUE : GLFW_FALSE);
+        glfwWindowHint(GLFW_DECORATED, desc.frameless ? GLFW_FALSE : GLFW_TRUE);
+        glfwWindowHint(GLFW_FLOATING, desc.alwaysTop ? GLFW_TRUE : GLFW_FALSE);
+        glfwWindowHint(GLFW_VISIBLE, desc.visible ? GLFW_TRUE : GLFW_FALSE);
 
-        if (desc.PosX >= 0)
+        if (desc.posX >= 0)
         {
-            glfwWindowHint(GLFW_POSITION_X, desc.PosX);
+            glfwWindowHint(GLFW_POSITION_X, desc.posX);
         }
 
-        if (desc.PosY >= 0)
+        if (desc.posY >= 0)
         {
-            glfwWindowHint(GLFW_POSITION_Y, desc.PosY);
+            glfwWindowHint(GLFW_POSITION_Y, desc.posY);
         }
 
-        if (desc.Mode == WindowMode::Maximized)
+        if (desc.windowMode == WindowMode::Maximized)
         {
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         }

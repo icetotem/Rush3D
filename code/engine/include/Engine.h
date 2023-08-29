@@ -20,6 +20,10 @@ namespace rush
 
         Ref<Scene> CreateScene(const StringView& name);
 
+        void Update();
+
+    private:    
+        HMap<StringView, Ref<Scene>> m_Scenes;
     };
 
 }

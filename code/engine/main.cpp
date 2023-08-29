@@ -94,11 +94,11 @@ int main(int argc, char* argv[])
 	Engine engine;
 	
     WindowDesc wndDesc;
-    wndDesc.Title = "RushDmeo";
-    wndDesc.Width = 1280;
-    wndDesc.Height = 900;
-    wndDesc.OnTop = false;
-    wndDesc.Visible = false;
+    wndDesc.title = "RushDmeo";
+    wndDesc.width = 1280;
+    wndDesc.height = 900;
+    wndDesc.alwaysTop = false;
+    wndDesc.visible = false;
 	auto window = engine.CreateRenderWindow(wndDesc);
 	
 	if (window)
@@ -270,10 +270,14 @@ int main(int argc, char* argv[])
         batch0->indexBuffer = ib;
 		batch0->uniforms = bindGroup;
 
+		auto scene = engine.CreateScene("Scene1");
+
         while (window->ShouldClose())
         {
-			window->MessgeLoop();
-			render();
+            window->MessgeLoop();
+
+            engine.Update();
+            render();
         }
 	}
 

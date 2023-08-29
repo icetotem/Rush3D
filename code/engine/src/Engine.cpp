@@ -28,7 +28,14 @@ namespace rush
 
     Ref<Scene> Engine::CreateScene(const StringView& name)
     {
-        return nullptr;
+        auto scene = CreateRef<Scene>();
+        m_Scenes.insert({name, scene});
+        return scene;
+    }
+
+    void Engine::Update()
+    {
+        
     }
 
 }

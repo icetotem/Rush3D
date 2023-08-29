@@ -13,17 +13,17 @@ namespace rush
 
     struct WindowDesc
     {
-        String Title = "Rush3D";
-        uint32_t Width = 1024;
-        uint32_t Height = 768;
-        int PosX = -1;
-        int PosY = -1;
-        WindowMode Mode = WindowMode::Windowed;
-        bool Transparent = false;
-        bool Frameless = false;
-        bool Resizable = true;
-        bool OnTop = true;
-        bool Visible = true;
+        String title = "Rush3D";
+        uint32_t width = 1024;
+        uint32_t height = 768;
+        int posX = -1;
+        int posY = -1;
+        WindowMode windowMode = WindowMode::Windowed;
+        bool transparent = false;
+        bool frameless = false;
+        bool resizable = true;
+        bool alwaysTop = true;
+        bool visible = true;
     };
 
     typedef void* WindowHandle;
