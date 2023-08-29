@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef Timer_h__
+#define Timer_h__
 
 namespace rush
 {
@@ -57,3 +57,4 @@ namespace rush
 
 }
 
+#endif // Timer_h__

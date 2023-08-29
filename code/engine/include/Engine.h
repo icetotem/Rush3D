@@ -1,4 +1,5 @@
-#pragma once
+#ifndef Engine_h__
+#define Engine_h__
 
 #include "core/Common.h"
 #include "render/Renderer.h"
@@ -22,3 +23,5 @@ namespace rush
     };
 
 }
+
+#endif // Engine_h__

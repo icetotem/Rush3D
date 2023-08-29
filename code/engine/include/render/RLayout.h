@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RLayout_h__
+#define RLayout_h__
 
 #include "core/Core.h"
 #include "render/RDefines.h"
@@ -67,3 +68,4 @@ namespace rush
 
 }
 
+#endif // RLayout_h__

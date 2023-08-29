@@ -1,4 +1,5 @@
-#pragma once
+#ifndef Frustum_h__
+#define Frustum_h__
 
 #include "Core/MathUtils.h"
 
@@ -36,3 +37,5 @@ namespace rush
 
 	};
 }
+
+#endif // Frustum_h__

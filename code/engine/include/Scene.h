@@ -1,4 +1,6 @@
-#pragma once
+#ifndef Scene_h__
+#define Scene_h__
+
 #include "core/Common.h"
 #include "core/ecs.h"
 
@@ -38,3 +40,5 @@ namespace rush
     };
 
 }
+
+#endif // Scene_h__

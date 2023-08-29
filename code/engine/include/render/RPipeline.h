@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RPipeline_h__
+#define RPipeline_h__
 
 #include "core/Core.h"
 #include "render/RDefines.h"
@@ -66,3 +67,5 @@ namespace rush
     };
 
 }
+
+#endif // RPipeline_h__

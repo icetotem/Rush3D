@@ -1,4 +1,5 @@
-#pragma once
+#ifndef Window_h__
+#define Window_h__
 
 namespace rush
 {
@@ -74,3 +75,4 @@ namespace rush
 
 }
 
+#endif // Window_h__

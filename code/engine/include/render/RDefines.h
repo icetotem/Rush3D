@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RDefines_h__
+#define RDefines_h__
 
 namespace rush
 {
@@ -395,3 +396,5 @@ namespace wgpu
     wgpu##Type##Release(Name);                                                 \
     Name = NULL;                                                               \
   }
+
+#endif // RDefines_h__

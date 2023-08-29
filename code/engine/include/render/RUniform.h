@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RUniform_h__
+#define RUniform_h__
 
 #include "core/Core.h"
 #include "render/RDefines.h"
@@ -91,7 +92,6 @@ namespace rush
         Ref<wgpu::BindGroup> m_BindGroup;
     };
 
-
-
-
 }
+
+#endif // RUniform_h__

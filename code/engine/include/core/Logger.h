@@ -1,4 +1,5 @@
-#pragma once
+#ifndef Logger_h__
+#define Logger_h__
 
 #include "spdlog/spdlog.h"
 
@@ -33,3 +34,5 @@ namespace rush
 	#define LOG_ERROR(...) ::rush::Logger::GetLogger()->error(__VA_ARGS__)
 	#define LOG_CRITICAL(...) ::rush::Logger::GetLogger()->critical(__VA_ARGS__);
 #endif
+
+#endif // Logger_h__

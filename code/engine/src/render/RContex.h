@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RContex_h__
+#define RContex_h__
 
 #include <dawn/webgpu_cpp.h>
 #include <dawn/native/DawnNative.h>
@@ -16,5 +17,6 @@ namespace rush
         wgpu::Queue queue;
     };
 
-
 }
+
+#endif // RContex_h__

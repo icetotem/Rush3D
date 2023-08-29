@@ -1,4 +1,5 @@
-#pragma once
+#ifndef Renderer_h__
+#define Renderer_h__
 
 #include "core/Core.h"
 #include "render/RDefines.h"
@@ -146,5 +147,6 @@ namespace rush
         Ref<RVertexBuffer> m_QuadVB;
     };
 
-
 }
+
+#endif // Renderer_h__

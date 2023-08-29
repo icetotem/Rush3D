@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef Common_h__
+#define Common_h__
 
 #ifdef _DEBUG
     #define RUSH_DEBUG
@@ -616,5 +616,6 @@ namespace rush
         int y2;
     };
 
+} // namespace rush
 
-}
+#endif // Common_h__

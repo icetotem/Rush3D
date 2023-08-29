@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RBuffer_h__
+#define RBuffer_h__
 
 #include "core/Core.h"
 #include "render/RDefines.h"
@@ -71,3 +72,5 @@ namespace rush
         Ref<RContex> m_Contex;
     };
 }
+
+#endif // RBuffer_h__

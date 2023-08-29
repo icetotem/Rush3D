@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RPass_h__
+#define RPass_h__
 
 #include "render/RDefines.h"
 #include "render/RTexture.h"
@@ -38,3 +39,4 @@ namespace rush
 
 }
 
+#endif // RPass_h__

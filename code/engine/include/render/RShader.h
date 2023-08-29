@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RShader_h__
+#define RShader_h__
 
 #include "core/Core.h"
 #include "render/RDefines.h"
@@ -32,3 +33,5 @@ namespace rush
     };
 
 }
+
+#endif // RShader_h__

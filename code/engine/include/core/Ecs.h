@@ -1,4 +1,5 @@
-#pragma once
+#ifndef Ecs_h__
+#define Ecs_h__
 
 #include "entt/single_include/entt/entt.hpp"
 
@@ -11,3 +12,5 @@ namespace rush
     extern entt::registry g_Registry;
 
 }
+
+#endif // Ecs_h__

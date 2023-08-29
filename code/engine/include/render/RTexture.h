@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RTexture_h__
+#define RTexture_h__
 
 #include "core/Core.h"
 #include "render/RDefines.h"
@@ -61,3 +62,5 @@ namespace rush
     };
 
 }
+
+#endif // RTexture_h__

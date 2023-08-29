@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MathUtils_h__
+#define MathUtils_h__
 
 #include "Core/Common.h"
 #include "glm/glm.hpp"
@@ -965,5 +966,6 @@ namespace rush
         return Vector3(temp * sqrtf(1.0f - zz * zz), zz);
     }
 
+} // namespace rush
 
-}
+#endif // MathUtils_h__
