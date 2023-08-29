@@ -80,7 +80,8 @@ static bool render()
 
         g_Renderer->DrawOffScreenPass(pass0, content0);
         g_Renderer->DrawOffScreenQuad(pass1, sQuad1);
-		g_Renderer->DrawFinalScreenQuad(sQuadFinal);
+        g_Renderer->DrawFinalScreenQuad(sQuadFinal);
+//        g_Renderer->DrawFinalPass(content0);
 
 		g_Renderer->EndDraw();
 	}
@@ -106,7 +107,7 @@ int main(int argc, char* argv[])
 
 		RendererDesc rendererDesc;
 		rendererDesc.backend = RenderBackend::D3D12;
-		rendererDesc.clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+		rendererDesc.clearColor = Vector4(0.0f, 0.0f, 0.2f, 1.0f);
 
 		auto renderer = engine.CreateRenderer(window, &rendererDesc);
 		g_Renderer = renderer;
@@ -120,12 +121,12 @@ int main(int argc, char* argv[])
         rpDesc.depthStencilFormat = TextureFormat::Depth24PlusStencil8;
 
         rpDesc.useDepthStencil = true;
-        rpDesc.clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
-        pass0 = renderer->CreateRenderPass(&rpDesc);
+        rpDesc.clearColor = Vector4(0.0f, 0.2f, 0.0f, 1.0f);
+        pass0 = renderer->CreateRenderPass(rpDesc);
 
         rpDesc.useDepthStencil = false;
-        rpDesc.clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
-        pass1 = renderer->CreateRenderPass(&rpDesc);
+        rpDesc.clearColor = Vector4(0.2f, 0.0f, 0.0f, 1.0f);
+        pass1 = renderer->CreateRenderPass(rpDesc);
 
         // create screen quad
         {
@@ -135,8 +136,8 @@ int main(int argc, char* argv[])
 				@group(0) @binding(1) var myTexture : texture_2d<f32>;
 				@fragment 
 				fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4f {
-					return textureSample(myTexture, mySampler, vUV);
-					//return vec4<f32>(1);
+					//return vec4<f32>(0.99, 0.99, 0.99, 1.0);
+					return textureSample(myTexture, mySampler, vUV) * 1.2;
 				}
 			)";
             auto sColorFS = renderer->CreateShader(fs_code, ShaderStage::Fragment, "screen_quad_fs");
@@ -162,7 +163,8 @@ int main(int argc, char* argv[])
 				@group(0) @binding(1) var myTexture : texture_2d<f32>;
 				@fragment 
 				fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4f {
-					return textureSample(myTexture, mySampler, vUV);
+					//return vec4<f32>(0.5, 0.5, 0.5, 1.0);
+					return textureSample(myTexture, mySampler, vUV) * 1.2;
 				}
 			)";
 			auto sColorFS = renderer->CreateShader(fs_code, ShaderStage::Fragment, "screen_quad_fs");
@@ -224,7 +226,7 @@ int main(int argc, char* argv[])
 		pipeDesc.frontFace = FrontFace::CCW;
         pipeDesc.cullModel = CullMode::Back;
 
-        Ref<RPipeline> rpipe1 = renderer->CreatePipeline(&pipeDesc, "pipeline_1");
+        Ref<RPipeline> rpipe1 = renderer->CreatePipeline(pipeDesc, "pipeline_1");
 
         // create the buffers (x, y)
         float const vertData0[] = {
@@ -235,9 +237,9 @@ int main(int argc, char* argv[])
 
         // create the buffers (r, g, b)
         float const vertData1[] = {
-            0.5f, 0.5f, 0.5f, // BL
-            0.5f, 0.5f, 0.5f, // BR
-            0.5f, 0.5f, 0.5f, // top
+            0.7f, 0.7f, 0.7f, // BL
+            0.7f, 0.7f, 0.7f, // BR
+            0.7f, 0.7f, 0.7f, // top
         };
 
         uint16_t const indxData[] = {

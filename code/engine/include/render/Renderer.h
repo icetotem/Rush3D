@@ -100,11 +100,11 @@ namespace rush
 
         Ref<RUniformBuffer> CreateUniformBuffer(uint64_t size, BufferUsage usage, const char* lable = nullptr);
 
-        Ref<RPipeline> CreatePipeline(const PipelineDesc* pipeDesc, const char* lable = nullptr);
+        Ref<RPipeline> CreatePipeline(const PipelineDesc& pipeDesc, const char* lable = nullptr);
 
         Ref<RSampler> CreateSampler(const char* lable = nullptr);
 
-        Ref<RPass> CreateRenderPass(const RenderPassDesc* desc, const char* lable = nullptr);
+        Ref<RPass> CreateRenderPass(const RenderPassDesc& desc, const char* lable = nullptr);
 
         Ref<RScreenQuad> CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup);
 
@@ -113,6 +113,7 @@ namespace rush
         void DrawOffScreenPass(Ref<RPass> renderPass, Ref<RContent> content);
         void DrawOffScreenQuad(Ref<RPass> renderPass, Ref<RScreenQuad> sQuad);
         void DrawFinalScreenQuad(Ref<RScreenQuad> sQuad);
+        void DrawFinalPass(Ref<RContent> content);
 
         void EndDraw();
 

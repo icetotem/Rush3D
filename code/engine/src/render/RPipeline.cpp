@@ -20,13 +20,13 @@ namespace rush
     extern wgpu::CompareFunction g_WGPUCompareFunction[(int)DepthCompareFunction::Count];
 
 
-    RPipeline::RPipeline(Ref<RContex> contex, const PipelineDesc* desc, const char* lable /*= nullptr*/)
+    RPipeline::RPipeline(Ref<RContex> contex, const PipelineDesc& desc, const char* lable /*= nullptr*/)
     {
         wgpu::PipelineLayoutDescriptor layoutDesc = {};
-        if (desc->bindLayout != nullptr) 
+        if (desc.bindLayout != nullptr) 
         {
             layoutDesc.bindGroupLayoutCount = 1;
-            layoutDesc.bindGroupLayouts = desc->bindLayout->m_Layout.get();
+            layoutDesc.bindGroupLayouts = desc.bindLayout->m_Layout.get();
         }
         else 
         {
@@ -43,12 +43,12 @@ namespace rush
         std::array<wgpu::VertexAttribute, kMaxVertexAttributes> cAttributes;
         {
             wgpu::VertexState* vertex = &descriptor.vertex;
-            vertex->module = *desc->vs->m_Module;
+            vertex->module = *desc.vs->m_Module;
             vertex->entryPoint = "main";
 
             int i = 0;
             int attr = 0;
-            for (const auto& layout : desc->vertexLayouts)
+            for (const auto& layout : desc.vertexLayouts)
             {
                 cBuffers[i].stepMode = wgpu::VertexStepMode::Vertex;
                 cBuffers[i].arrayStride = layout.stride;
@@ -65,7 +65,7 @@ namespace rush
                 }
             }
 
-            vertex->bufferCount = desc->vertexLayouts.size();
+            vertex->bufferCount = desc.vertexLayouts.size();
             vertex->buffers = &cBuffers[0];
         }
 
@@ -74,42 +74,45 @@ namespace rush
         wgpu::ColorTargetState cTargets = {};
         wgpu::BlendState cBlendState = {};
         {
-            cFragment.module = *desc->fs->m_Module;
+            cFragment.module = *desc.fs->m_Module;
             cFragment.entryPoint = "main";
             cFragment.targetCount = 1;
             descriptor.fragment = &cFragment;         
 
             cFragment.targets = &cTargets;
-            cTargets.format = g_WGPUTextureFormat[(int)desc->colorFormat];
-            cTargets.blend = &cBlendState;
-            cTargets.writeMask = (wgpu::ColorWriteMask)desc->writeMask;
+            cTargets.format = g_WGPUTextureFormat[(int)desc.colorFormat];
+            cTargets.writeMask = (wgpu::ColorWriteMask)desc.writeMask;
 
-            cBlendState.color.srcFactor = g_WGPUBlendFactor[(int)desc->blendStates.srcColor];
-            cBlendState.color.dstFactor = g_WGPUBlendFactor[(int)desc->blendStates.dstColor];
-            cBlendState.color.operation = g_WGPUBlendOperation[(int)desc->blendStates.opColor];
-            cBlendState.alpha.srcFactor = g_WGPUBlendFactor[(int)desc->blendStates.srcAlpha];
-            cBlendState.alpha.dstFactor = g_WGPUBlendFactor[(int)desc->blendStates.dstAlpha];
-            cBlendState.alpha.operation = g_WGPUBlendOperation[(int)desc->blendStates.opAlpha];
+            if (desc.useBlend)
+            {
+                cTargets.blend = &cBlendState;
+                cBlendState.color.srcFactor = g_WGPUBlendFactor[(int)desc.blendStates.srcColor];
+                cBlendState.color.dstFactor = g_WGPUBlendFactor[(int)desc.blendStates.dstColor];
+                cBlendState.color.operation = g_WGPUBlendOperation[(int)desc.blendStates.opColor];
+                cBlendState.alpha.srcFactor = g_WGPUBlendFactor[(int)desc.blendStates.srcAlpha];
+                cBlendState.alpha.dstFactor = g_WGPUBlendFactor[(int)desc.blendStates.dstAlpha];
+                cBlendState.alpha.operation = g_WGPUBlendOperation[(int)desc.blendStates.opAlpha];
+            }
         }
 
         // Set the defaults for the primitive state
         {
             wgpu::PrimitiveState* primitive = &descriptor.primitive;
-            primitive->topology = g_WGPUPrimitiveTopology[(int)desc->primitiveType];
-            primitive->frontFace = g_WGPUFrontFace[(int)desc->frontFace];
-            primitive->cullMode = g_WGPUCullMode[(int)desc->cullModel];
+            primitive->topology = g_WGPUPrimitiveTopology[(int)desc.primitiveType];
+            primitive->frontFace = g_WGPUFrontFace[(int)desc.frontFace];
+            primitive->cullMode = g_WGPUCullMode[(int)desc.cullModel];
             primitive->stripIndexFormat = wgpu::IndexFormat::Undefined;
         }
 
         // Set the defaults for the depth-stencil state
         wgpu::DepthStencilState cDepthStencil = {};
-        if (desc->depthTest || desc->depthWrite || desc->stencilTest || desc->stencilWrite)
+        if (desc.depthTest || desc.depthWrite || desc.stencilTest || desc.stencilWrite)
         {
             descriptor.depthStencil = &cDepthStencil;
-            cDepthStencil.format = g_WGPUTextureFormat[(int)desc->depthStencilFormat];
-            cDepthStencil.depthWriteEnabled = desc->depthWrite;
-            if (desc->depthTest)
-                cDepthStencil.depthCompare = g_WGPUCompareFunction[(int)desc->depthCompare];
+            cDepthStencil.format = g_WGPUTextureFormat[(int)desc.depthStencilFormat];
+            cDepthStencil.depthWriteEnabled = desc.depthWrite;
+            if (desc.depthTest)
+                cDepthStencil.depthCompare = g_WGPUCompareFunction[(int)desc.depthCompare];
             else
                 cDepthStencil.depthCompare = wgpu::CompareFunction::Always;
             cDepthStencil.depthBias = 0;

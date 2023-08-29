@@ -332,13 +332,12 @@ namespace rush
         pipeDesc.fs = fs;
         pipeDesc.writeMask = ColorWriteMask::Write_All;
 
-
         pipeDesc.bindLayout = bindGroup->GetBindingLayout();
         pipeDesc.primitiveType = PrimitiveType::TriangleStrip;
         pipeDesc.frontFace = FrontFace::CCW;
         pipeDesc.cullModel = CullMode::Back;
 
-        sQuad->pipeline = CreatePipeline(&pipeDesc, "screen_quad_pipeline");
+        sQuad->pipeline = CreatePipeline(pipeDesc, "screen_quad_pipeline");
         sQuad->bindGroup = bindGroup;
         return sQuad;
     }
@@ -363,7 +362,7 @@ namespace rush
         return BindingLayout::Construct(m_Contex, entriesInitializer, lable);
     }
 
-    Ref<RPipeline> Renderer::CreatePipeline(const PipelineDesc* pipeDesc, const char* lable/* = nullptr*/)
+    Ref<RPipeline> Renderer::CreatePipeline(const PipelineDesc& pipeDesc, const char* lable/* = nullptr*/)
     {
         return RPipeline::Construct(m_Contex, pipeDesc, lable);
     }
@@ -383,9 +382,9 @@ namespace rush
         return RUniformBuffer::Construct(m_Contex, usage, size, lable);
     }
 
-    Ref<RPass> Renderer::CreateRenderPass(const RenderPassDesc* desc, const char* lable/* = nullptr*/)
+    Ref<RPass> Renderer::CreateRenderPass(const RenderPassDesc& desc, const char* lable/* = nullptr*/)
     {
-        return RPass::Construct(m_Contex, desc->width, desc->height, desc->colorFormat, desc->depthStencilFormat, desc->clearColor, desc->clearDepth, desc->useDepthStencil, lable);
+        return RPass::Construct(m_Contex, desc.width, desc.height, desc.colorFormat, desc.depthStencilFormat, desc.clearColor, desc.clearDepth, desc.useDepthStencil, lable);
     }
 
     void Renderer::BeginDraw()
@@ -442,6 +441,37 @@ namespace rush
         pass.SetBindGroup(0, *sQuad->bindGroup->m_BindGroup);
         pass.SetVertexBuffer(0, *m_QuadVB->m_Buffer);
         pass.Draw(4);
+        pass.End();
+    }
+
+    void Renderer::DrawFinalPass(Ref<RContent> content)
+    {
+        wgpu::TextureView backbufferView = m_Contex->swapChain.GetCurrentTextureView();
+        wgpu::RenderPassDescriptor renderPassDesc = {};
+        wgpu::RenderPassColorAttachment attachment = {};
+        attachment.view = backbufferView;
+        attachment.resolveTarget = nullptr;
+        attachment.loadOp = wgpu::LoadOp::Clear;
+        attachment.storeOp = wgpu::StoreOp::Store;
+        attachment.clearValue = { m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a };
+        renderPassDesc.colorAttachmentCount = 1;
+        renderPassDesc.colorAttachments = &attachment;
+        renderPassDesc.depthStencilAttachment = nullptr;
+
+        wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(&renderPassDesc);
+        for (const auto batch : content->m_Batches)
+        {
+            pass.SetPipeline(*batch->pipeline->m_Pipeline);
+            pass.SetBindGroup(0, *batch->uniforms->m_BindGroup);
+            int vbIdx = 0;
+            for (auto vb : batch->vertexBufferList)
+            {
+                pass.SetVertexBuffer(vbIdx, *vb->m_Buffer);
+                ++vbIdx;
+            }
+            pass.SetIndexBuffer(*batch->indexBuffer->m_Buffer, batch->indexBuffer->Is32Bits() ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16);
+            pass.DrawIndexed(batch->indexBuffer->GetCount(), batch->instanceCount, batch->firstIndex, batch->firstVertex);
+        }
         pass.End();
     }
 
