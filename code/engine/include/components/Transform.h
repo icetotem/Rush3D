@@ -14,10 +14,6 @@ namespace rush
     class Transform : public Component
     {
     public:
-        REGISTER_COMPONENT_TYPE(Transform)
-
-
-
         Transform();
 
         void OnDestroy() override;

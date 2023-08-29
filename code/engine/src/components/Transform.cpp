@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Core/Transform.h"
 
-namespace Anvil
+namespace rush
 {
     
     REGISTER_COMPONENT_FACTORY(Transform)
