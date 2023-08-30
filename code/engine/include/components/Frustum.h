@@ -2,6 +2,7 @@
 #define Frustum_h__
 
 #include "Core/MathUtils.h"
+#include "components/EcsSystem.h"
 
 namespace rush
 {
@@ -18,11 +19,11 @@ namespace rush
 		FS_Plane_Max
 	};
 
-	class Frustum
+
+	class Frustum : public Component
 	{
 	public:
-		Frustum();
-		~Frustum();
+		Frustum(Entity owner);
 
 		bool CullPoint(const Vector3& point) const;
 
@@ -32,9 +33,10 @@ namespace rush
 
 		const Plane& GetPlane(FrustumSide side) { return m_Planes[side]; }
 
-	private:
-		Plane m_Planes[FS_Plane_Max];
+		void SetPlane(FrustumSide side, const Plane& plane) { m_Planes[side] = plane; }
 
+    private:
+		Plane m_Planes[FS_Plane_Max];
 	};
 }
 

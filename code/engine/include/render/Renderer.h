@@ -89,6 +89,9 @@ namespace rush
     public:
         ~Renderer() = default;
 
+        uint32_t GetWidth() const { return m_Width; }
+        uint32_t GetHeight() const { return m_Height; }
+
         Ref<RShader> CreateShader(const char* code, ShaderStage type, const char* lable = nullptr);
 
         Ref<RVertexBuffer> CreateVertexBuffer(uint32_t stride, uint64_t size, const char* lable = nullptr);
@@ -109,7 +112,7 @@ namespace rush
 
         Ref<RScreenQuad> CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup);
 
-        void BeginDraw();
+        void BeginDraw(const Vector4& viewport);
 
         void DrawOffScreenPass(Ref<RPass> renderPass, Ref<RContent> content);
         void DrawOffScreenQuad(Ref<RPass> renderPass, Ref<RScreenQuad> sQuad);
@@ -136,7 +139,7 @@ namespace rush
 
     protected:
         Ref<RContex> m_Contex;
-
+        Vector4 m_Viewport = { 0.0f, 0.0f, 1.0f, 1.0f };
         RenderCaps m_Caps;
         uint32_t m_Width;
         uint32_t m_Height;
@@ -146,6 +149,51 @@ namespace rush
         Ref<RShader> m_QuadVS;
         Ref<RVertexBuffer> m_QuadVB;
     };
+
+    inline Ref<RShader> Renderer::CreateShader(const char* code, ShaderStage type, const char* lable/* = nullptr*/)
+    {
+        return RShader::Construct(m_Contex, type, code, lable);
+    }
+
+    inline Ref<RVertexBuffer> Renderer::CreateVertexBuffer(uint32_t stride, uint64_t size, const char* lable/* = nullptr*/)
+    {
+        return RVertexBuffer::Construct(m_Contex, stride, size, lable);
+    }
+
+    inline Ref<RIndexBuffer> Renderer::CreateIndexBuffer(uint64_t count, bool use32bits, const char* lable/* = nullptr*/)
+    {
+        return RIndexBuffer::Construct(m_Contex, count, use32bits, lable);
+    }
+
+    inline Ref<BindingLayout> Renderer::CreateBindingLayout(std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable/* = nullptr*/)
+    {
+        return BindingLayout::Construct(m_Contex, entriesInitializer, lable);
+    }
+
+    inline Ref<RPipeline> Renderer::CreatePipeline(const PipelineDesc& pipeDesc, const char* lable/* = nullptr*/)
+    {
+        return RPipeline::Construct(m_Contex, pipeDesc, lable);
+    }
+
+    inline Ref<RSampler> Renderer::CreateSampler(const char* lable /*= nullptr*/)
+    {
+        return RSampler::Construct(m_Contex, lable);
+    }
+
+    inline Ref<RBindGroup> Renderer::CreateBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable/* = nullptr*/)
+    {
+        return RBindGroup::Construct(m_Contex, layout, entriesInitializer, lable);
+    }
+
+    inline Ref<RUniformBuffer> Renderer::CreateUniformBuffer(uint64_t size, BufferUsage usage, const char* lable /*= nullptr*/)
+    {
+        return RUniformBuffer::Construct(m_Contex, usage, size, lable);
+    }
+
+    inline Ref<RPass> Renderer::CreateRenderPass(const RenderPassDesc& desc, const char* lable/* = nullptr*/)
+    {
+        return RPass::Construct(m_Contex, desc.width, desc.height, desc.colorFormat, desc.depthStencilFormat, desc.clearColor, desc.clearDepth, desc.useDepthStencil, lable);
+    }
 
 }
 

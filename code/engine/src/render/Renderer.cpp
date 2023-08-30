@@ -342,53 +342,9 @@ namespace rush
         return sQuad;
     }
 
-    Ref<RShader> Renderer::CreateShader(const char* code, ShaderStage type, const char* lable/* = nullptr*/)
+    void Renderer::BeginDraw(const Vector4& viewport)
     {
-        return RShader::Construct(m_Contex, type, code, lable);
-    }
-
-    Ref<RVertexBuffer> Renderer::CreateVertexBuffer(uint32_t stride, uint64_t size, const char* lable/* = nullptr*/)
-    {
-        return RVertexBuffer::Construct(m_Contex, stride, size, lable);
-    }
-
-    Ref<RIndexBuffer> Renderer::CreateIndexBuffer(uint64_t count, bool use32bits, const char* lable/* = nullptr*/)
-    {
-        return RIndexBuffer::Construct(m_Contex, count, use32bits, lable);
-    }
-
-    Ref<BindingLayout> Renderer::CreateBindingLayout(std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable/* = nullptr*/)
-    {
-        return BindingLayout::Construct(m_Contex, entriesInitializer, lable);
-    }
-
-    Ref<RPipeline> Renderer::CreatePipeline(const PipelineDesc& pipeDesc, const char* lable/* = nullptr*/)
-    {
-        return RPipeline::Construct(m_Contex, pipeDesc, lable);
-    }
-
-    Ref<RSampler> Renderer::CreateSampler(const char* lable /*= nullptr*/)
-    {
-        return RSampler::Construct(m_Contex, lable);
-    }
-
-    Ref<RBindGroup> Renderer::CreateBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable/* = nullptr*/)
-    {
-        return RBindGroup::Construct(m_Contex, layout, entriesInitializer, lable);
-    }
-
-    Ref<RUniformBuffer> Renderer::CreateUniformBuffer(uint64_t size, BufferUsage usage, const char* lable /*= nullptr*/)
-    {
-        return RUniformBuffer::Construct(m_Contex, usage, size, lable);
-    }
-
-    Ref<RPass> Renderer::CreateRenderPass(const RenderPassDesc& desc, const char* lable/* = nullptr*/)
-    {
-        return RPass::Construct(m_Contex, desc.width, desc.height, desc.colorFormat, desc.depthStencilFormat, desc.clearColor, desc.clearDepth, desc.useDepthStencil, lable);
-    }
-
-    void Renderer::BeginDraw()
-    {
+        m_Viewport = viewport;
         dawn::native::InstanceProcessEvents(g_DawnInstance->Get());
         m_Contex->encoder = m_Contex->device.CreateCommandEncoder();
     }
@@ -396,18 +352,19 @@ namespace rush
     void Renderer::DrawOffScreenPass(Ref<RPass> renderPass, Ref<RContent> content)
     {
         wgpu::RenderPassEncoder pass = m_Contex->encoder.BeginRenderPass(renderPass->m_RenderPassDesc.get());
+        pass.SetScissorRect(m_Viewport.x * m_Width, m_Viewport.y * m_Height, (m_Viewport.z - m_Viewport.x) * m_Width, (m_Viewport.w - m_Viewport.y) * m_Height);
         for (const auto batch : content->m_Batches)
         {
             pass.SetPipeline(*batch->pipeline->m_Pipeline);
             pass.SetBindGroup(0, *batch->uniforms->m_BindGroup);
             int vbIdx = 0;
-            for (auto vb : batch->vertexBufferList)
+            for (auto vb : batch->vertexBuffers)
             {
                 pass.SetVertexBuffer(vbIdx, *vb->m_Buffer);
                 ++vbIdx;
             }
             pass.SetIndexBuffer(*batch->indexBuffer->m_Buffer, batch->indexBuffer->Is32Bits() ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16);
-            pass.DrawIndexed(batch->indexBuffer->GetCount(), batch->instanceCount, batch->firstIndex, batch->firstVertex);
+            pass.DrawIndexed(batch->indexBuffer->GetCount(), batch->instanceCount, 0, 0);
         }
         pass.End();
     }
@@ -464,13 +421,13 @@ namespace rush
             pass.SetPipeline(*batch->pipeline->m_Pipeline);
             pass.SetBindGroup(0, *batch->uniforms->m_BindGroup);
             int vbIdx = 0;
-            for (auto vb : batch->vertexBufferList)
+            for (auto vb : batch->vertexBuffers)
             {
                 pass.SetVertexBuffer(vbIdx, *vb->m_Buffer);
                 ++vbIdx;
             }
             pass.SetIndexBuffer(*batch->indexBuffer->m_Buffer, batch->indexBuffer->Is32Bits() ? wgpu::IndexFormat::Uint32 : wgpu::IndexFormat::Uint16);
-            pass.DrawIndexed(batch->indexBuffer->GetCount(), batch->instanceCount, batch->firstIndex, batch->firstVertex);
+            pass.DrawIndexed(batch->indexBuffer->GetCount(), batch->instanceCount, 0, 0);
         }
         pass.End();
     }

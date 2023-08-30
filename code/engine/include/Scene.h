@@ -1,6 +1,7 @@
 #ifndef Scene_h__
 #define Scene_h__
 
+#include "components/EcsSystem.h"
 
 namespace rush
 {
@@ -20,6 +21,26 @@ namespace rush
         void Unload();
 
     protected:
+    };
+
+    class InFrustumFlag : public Component
+    {
+    public:
+        InFrustumFlag(Entity owner) : Component(owner) {}
+    
+        Entity m_ByCamera;    
+    };
+
+    class SceneManager
+    {
+    public:
+        SceneManager();
+        ~SceneManager();
+
+        void Update();
+
+    protected:
+        void Cull();
     };
 
 }

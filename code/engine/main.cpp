@@ -74,7 +74,7 @@ static bool render()
 {
 	if (g_Renderer)
 	{
-		g_Renderer->BeginDraw();
+		g_Renderer->BeginDraw(Vector4(0.5, 0.5, 1, 1));
 
 		rotDeg += 0.1f;
 
@@ -267,12 +267,10 @@ int main(int argc, char* argv[])
 
 		Ref<RBatch> batch0 = content0->NewBatch();
         batch0->pipeline = rpipe1;
-        batch0->vertexBufferList.push_back(vb0);
-        batch0->vertexBufferList.push_back(vb1);
+        batch0->vertexBuffers.push_back(vb0);
+        batch0->vertexBuffers.push_back(vb1);
         batch0->indexBuffer = ib;
 		batch0->uniforms = bindGroup;
-
-		auto scene = engine.CreateScene("Scene1");
 
 		// test ecs
 
@@ -281,7 +279,10 @@ int main(int argc, char* argv[])
 		auto trans = ent0.Add<Transform>();
 		trans->SetPosition(0, 0, 0);
 
-		ent0.Remove<Transform>();
+		//ent0.Remove<Transform>();
+		trans = ent0.Get<Transform>();
+        trans->SetPosition(0, 0, 0);
+        ent0.Destroy();
 
         while (window->ShouldClose())
         {

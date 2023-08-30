@@ -25,6 +25,7 @@ namespace rush
         static Entity Create();
         static Entity Create(const StringView& name);
         static Entity Find(const StringView& name);
+        static Entity Find(EntityID entityID);
         static void ClearRecycle();
 
         void Destroy();
@@ -42,6 +43,8 @@ namespace rush
         bool Has() const;
 
         bool Valid() const;
+
+        bool IsPendingDestroy() const;
 
         void SetEnable(bool enable);
         bool GetEnalbe() const;
@@ -74,6 +77,9 @@ namespace rush
         virtual void OnInit() {}
         virtual void OnDestroy() {}
 
+        template<typename ComponentType>
+        ComponentType* Get() const;
+
     protected:
         Component(Entity owner);
         Component() = default;
@@ -81,13 +87,15 @@ namespace rush
         bool m_Enable = true;
     };
 
-    class EntityContainer
+    class EcsSystem
     {
+    public:
+        static entt::registry registry;
+    private:
         friend class Entity;
         friend class Component;
         struct EntityDisable {};
         struct PendingDestroy {};
-        static entt::registry registry;
         static HMap<String, EntityID> entitiesNameMap;
         static HMap<EntityID, String> entitiesIDMap;
     };
@@ -100,80 +108,92 @@ namespace rush
         RUSH_ASSERT(m_Owner.Valid());
     }
 
+    template<typename ComponentType>
+    ComponentType* Component::Get() const
+    {
+        return m_Owner.Get<ComponentType>();
+    }
+
     inline void Entity::Destroy()
     {
         if (Valid())
         {
-            EntityContainer::registry.emplace_or_replace<EntityContainer::PendingDestroy>(m_EntityID);
+            EcsSystem::registry.emplace_or_replace<EcsSystem::PendingDestroy>(m_EntityID);
         }
     }
 
     inline bool Entity::Valid() const
     {
-        return EntityContainer::registry.valid(m_EntityID);
+        return EcsSystem::registry.valid(m_EntityID);
     }
 
     template<typename ComponentType>
     ComponentType* Entity::Add()
     {
         RUSH_ASSERT(!Has<ComponentType>());
-        return &EntityContainer::registry.emplace<ComponentType>(m_EntityID, *this);
+        ComponentType* ret = &EcsSystem::registry.emplace<ComponentType>(m_EntityID, *this);
+        ret->OnInit();
+        return ret;
     }
 
     template<typename ComponentType>
     ComponentType* Entity::Get() const
     {
-        return &EntityContainer::registry.get<ComponentType>(m_EntityID);
+        RUSH_ASSERT(Has<ComponentType>());
+        return &EcsSystem::registry.get<ComponentType>(m_EntityID);
     }
 
     template<typename ComponentType>
     void Entity::Remove()
     {
         if (Has<ComponentType>())
-            EntityContainer::registry.remove<ComponentType>(m_EntityID);
+        {
+            Get<Component>()->OnDestroy();
+            EcsSystem::registry.remove<ComponentType>(m_EntityID);
+        }
     }
 
     template<typename ComponentType>
     bool Entity::Has() const
     {
-        return EntityContainer::registry.any_of<ComponentType>(m_EntityID);
+        return EcsSystem::registry.any_of<ComponentType>(m_EntityID);
     }
 
     inline void Entity::SetEnable(bool enable)
     {
-        if (enable && Has<EntityContainer::EntityDisable>())
+        if (enable && Has<EcsSystem::EntityDisable>())
         {
-            EntityContainer::registry.remove<EntityContainer::EntityDisable>(m_EntityID);
+            EcsSystem::registry.remove<EcsSystem::EntityDisable>(m_EntityID);
         }
-        else if (!enable && !Has<EntityContainer::EntityDisable>())
+        else if (!enable && !Has<EcsSystem::EntityDisable>())
         {
-            EntityContainer::registry.emplace<EntityContainer::EntityDisable>(m_EntityID);
+            EcsSystem::registry.emplace<EcsSystem::EntityDisable>(m_EntityID);
         }
     }
 
     inline bool Entity::GetEnalbe() const
     {
-        return !Has<EntityContainer::EntityDisable>();
+        return !Has<EcsSystem::EntityDisable>();
     }
 
     inline Entity Entity::Create()
     {
-        auto id = EntityContainer::registry.create();
+        auto id = EcsSystem::registry.create();
         return Entity(id);
     }
 
     inline Entity Entity::Create(const StringView& name)
     {
-        auto id = EntityContainer::registry.create();
-        EntityContainer::entitiesNameMap[String(name)] = id;
-        EntityContainer::entitiesIDMap[id] = String(name);
+        auto id = EcsSystem::registry.create();
+        EcsSystem::entitiesNameMap[String(name)] = id;
+        EcsSystem::entitiesIDMap[id] = String(name);
         return Entity(id);
     }
 
     inline Entity Entity::Find(const StringView& name)
     {
-        auto iter = EntityContainer::entitiesNameMap.find(String(name));
-        if (iter != EntityContainer::entitiesNameMap.end())
+        auto iter = EcsSystem::entitiesNameMap.find(String(name));
+        if (iter != EcsSystem::entitiesNameMap.end())
         {
             return Entity(iter->second);
         }
@@ -183,19 +203,29 @@ namespace rush
         }
     }
 
+    inline Entity Entity::Find(EntityID entityID)
+    {
+        return Entity(entityID);
+    }
+
     inline void Entity::ClearRecycle()
     {
-        auto view = EntityContainer::registry.view<EntityContainer::PendingDestroy>();
+        auto view = EcsSystem::registry.view<EcsSystem::PendingDestroy>();
         for (auto entity : view)
         {
-            EntityContainer::registry.destroy(entity);
-            auto iter = EntityContainer::entitiesIDMap.find(entity);
-            if (iter != EntityContainer::entitiesIDMap.end())
+            EcsSystem::registry.destroy(entity);
+            auto iter = EcsSystem::entitiesIDMap.find(entity);
+            if (iter != EcsSystem::entitiesIDMap.end())
             {
-                EntityContainer::entitiesIDMap.erase(entity);
-                EntityContainer::entitiesNameMap.erase(iter->second);
+                EcsSystem::entitiesIDMap.erase(entity);
+                EcsSystem::entitiesNameMap.erase(iter->second);
             }
         }
+    }
+
+    inline bool Entity::IsPendingDestroy() const
+    {
+        return Has<EcsSystem::PendingDestroy>();
     }
 
 }

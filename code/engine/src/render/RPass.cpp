@@ -16,7 +16,6 @@ namespace rush
         m_FrameBufferWidth = width;
         m_FrameBufferHeight = height;
 
-
         wgpu::TextureDescriptor colorTexDesc;
         colorTexDesc.dimension = wgpu::TextureDimension::e2D;
         colorTexDesc.size.width = m_FrameBufferWidth;

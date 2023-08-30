@@ -1,17 +1,13 @@
 #include "stdafx.h"
-#include "Frustum.h"
+#include "components/Frustum.h"
 
 namespace rush
 {
 
-	Frustum::Frustum()
-	{
-	}
-
-	Frustum::~Frustum()
-	{
-
-	}
+    Frustum::Frustum(Entity owner)
+        : Component(owner)
+    {
+    }
 
 	bool Frustum::CullPoint(const Vector3& point) const
 	{

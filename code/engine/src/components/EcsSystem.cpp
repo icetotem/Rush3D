@@ -4,8 +4,8 @@
 namespace rush
 {
 
-    entt::registry EntityContainer::registry;
-    HMap<String, EntityID> EntityContainer::entitiesNameMap;
-    HMap<EntityID, String> EntityContainer::entitiesIDMap;
+    entt::registry EcsSystem::registry;
+    HMap<String, EntityID> EcsSystem::entitiesNameMap;
+    HMap<EntityID, String> EcsSystem::entitiesIDMap;
 
 }

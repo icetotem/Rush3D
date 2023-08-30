@@ -13,11 +13,9 @@ struct RBatch
 {
     Ref<RPipeline> pipeline;
     Ref<RBindGroup> uniforms;
-    List<Ref<RVertexBuffer>> vertexBufferList;
+    List<Ref<RVertexBuffer>> vertexBuffers;
     Ref<RIndexBuffer> indexBuffer;
     uint32_t instanceCount = 1;
-    uint32_t firstIndex = 0;
-    uint32_t firstVertex = 0;
 };
 
 class RContent

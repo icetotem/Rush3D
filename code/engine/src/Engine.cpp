@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include "render/Renderer.h"
 #include "version.h"
+#include "components/EcsSystem.h"
 
 namespace rush
 {
@@ -26,16 +27,12 @@ namespace rush
         return renderer;
     }
 
-    Ref<Scene> Engine::CreateScene(const StringView& name)
-    {
-        auto scene = CreateRef<Scene>();
-        m_Scenes.insert({name, scene});
-        return scene;
-    }
-
     void Engine::Update()
     {
-        
+        m_SceneManager.Update();
+        m_RenderManager.Update();
+
+        Entity::ClearRecycle();
     }
 
 }

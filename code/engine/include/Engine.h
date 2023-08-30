@@ -5,6 +5,7 @@
 #include "render/Renderer.h"
 #include "Window.h"
 #include "Scene.h"
+#include "RenderManager.h"
 
 namespace rush
 {
@@ -12,18 +13,19 @@ namespace rush
     class Engine : public Singleton<Engine>
     {
     public:
+        SceneManager m_SceneManager;
+        RenderManager m_RenderManager;
+
+    public:
         Engine();
 
         Ref<Window> CreateRenderWindow(const WindowDesc& desc);
 
         Ref<Renderer> CreateRenderer(Ref<Window> window, const RendererDesc* rendererDesc);
 
-        Ref<Scene> CreateScene(const StringView& name);
-
         void Update();
 
     private:    
-        HMap<StringView, Ref<Scene>> m_Scenes;
     };
 
 }
