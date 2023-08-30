@@ -9,6 +9,8 @@
 #include "render/RUniform.h"
 #include "render/RPipeline.h"
 #include "render/RBatch.h"
+#include "components/EcsSystem.h"
+#include "components/Transform.h"
 
 using namespace rush;
 
@@ -271,6 +273,15 @@ int main(int argc, char* argv[])
 		batch0->uniforms = bindGroup;
 
 		auto scene = engine.CreateScene("Scene1");
+
+		// test ecs
+
+		// create the entity
+		auto ent0 = Entity::Create();
+		auto trans = ent0.Add<Transform>();
+		trans->SetPosition(0, 0, 0);
+
+		ent0.Remove<Transform>();
 
         while (window->ShouldClose())
         {

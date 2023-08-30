@@ -14,22 +14,22 @@ namespace rush
     class Transform : public Component
     {
     public:
-        Transform();
+        Transform(Entity owner);
 
         void OnDestroy() override;
 
-        void SetParent(Ref<Entity> parent);
+        void SetParent(Entity parent);
 
         void DetachChildren();
 
-        Ref<Entity> GetParent() const
+        Entity GetParent() const
         { 
             return m_Parent;
         }
 
-        Ref<Entity> GetChild(int index);
+        Entity GetChild(int index);
         int GetChildCount() const;
-        bool IsChildOf(Ref<Entity> parent);
+        bool IsChildOf(Entity parent);
 
         Vector3 TransformDirection(float x, float y, float z);
         Vector3 TransformDirection(const Vector3& direction);
@@ -71,6 +71,8 @@ namespace rush
         const Quat& GetLocalRotation() const { return m_LocalRotation; }
 
         void SetLocalScale(const Vector3& scale);
+        void SetLocalScale(float scale);
+        void SetLocalScale(float x, float y, float z);
         const Vector3& GetLocalScale() const { return m_LocalScale; }
 
         // +x
@@ -127,12 +129,9 @@ namespace rush
             const Vector3& RelPos, const Quat& RelRot, const Vector3& RelScale,
             Vector3& OutPos, Quat& OutRot, Vector3& OutScale);
 
-        void Serialize(Json& json) override;
-        void Deserialize(const Json& json) override;
-
     protected:
-        void AddChild(Ref<Entity> child);
-        void RemoveChild(Ref<Entity> child);
+        void AddChild(Entity child);
+        void RemoveChild(Entity child);
         void MakeDirty();
         void UpdateLocal();
         void UpdateWorld();
@@ -143,8 +142,8 @@ namespace rush
         void CheckUpdateTree() const;
 
     protected:
-        Ref<Entity> m_Parent;
-        std::vector<Ref<Entity>> m_Children;
+        Entity m_Parent;
+        std::vector<Entity> m_Children;
 
         Vector3 m_Position;
         Quat m_Rotation;

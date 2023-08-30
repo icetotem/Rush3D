@@ -1,12 +1,11 @@
 #include "stdafx.h"
-#include "Core/Transform.h"
+#include "components/Transform.h"
 
 namespace rush
 {
     
-    REGISTER_COMPONENT_FACTORY(Transform)
-
-    Transform::Transform()
+    Transform::Transform(Entity owner)
+        : Component(owner)
     {
         m_Position = Vector3(0);
         m_Rotation = glm::identity<Quat>();
@@ -21,12 +20,11 @@ namespace rush
         m_Left = xAxis;
         m_IsDirty = false;
         m_WorldMatrix = glm::identity<Matrix4>();
-        m_Parent = nullptr;
     }
 
     void Transform::OnDestroy()
     {
-        SetParent(nullptr);
+        SetParent(Entity());
     }
 
     void Transform::Reset()
@@ -34,16 +32,6 @@ namespace rush
         SetLocalPosition(Vector3(0));
         SetLocalRotation(glm::identity<Quat>());
         SetLocalScale(Vector3(1));
-    }
-
-    void Transform::Serialize(Json& json)
-    {
-
-    }
-
-    void Transform::Deserialize(const Json& json)
-    {
-
     }
 
 

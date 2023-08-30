@@ -26,7 +26,7 @@ namespace rush
 
     inline void Transform::UpdateLocal()
     {
-        if (m_Parent == nullptr)
+        if (!m_Parent.Valid())
         {
             m_LocalRotation = m_Rotation;
             m_LocalScale = m_Scale;
@@ -35,7 +35,7 @@ namespace rush
         }
         else
         {
-            auto trans = m_Parent->GetComponent<Transform>();
+            auto trans = m_Parent.Get<Transform>();
             GetRelative(m_Position, m_Rotation, m_Scale, trans->m_Position, trans->m_Rotation, trans->m_Scale, m_LocalPosition, m_LocalRotation, m_LocalScale);
             m_LocalEulerAngles = quatToEuler(m_LocalRotation);
         }
@@ -43,7 +43,7 @@ namespace rush
 
     inline void Transform::UpdateWorld()
     {
-        if (m_Parent == nullptr)
+        if (!m_Parent.Valid())
         {
             m_Rotation = m_LocalRotation;
             m_EulerAngles = m_LocalEulerAngles;
@@ -52,7 +52,7 @@ namespace rush
         }
         else
         {
-            auto trans = m_Parent->GetComponent<Transform>();
+            auto trans = m_Parent.Get<Transform>();
             DoTransform(trans->m_Position, trans->m_Rotation, trans->m_Scale, m_LocalPosition, m_LocalRotation, m_LocalScale, m_Position, m_Rotation, m_Scale);
             m_EulerAngles = quatToEuler(m_Rotation);
         }
@@ -61,18 +61,18 @@ namespace rush
         UpdateWorldMatrix();
     }
 
-    inline void Transform::SetParent(Ref<Entity> parent)
+    inline void Transform::SetParent(Entity parent)
     {
         if (m_Parent == parent)
             return;
 
-        if (m_Parent != nullptr)
-            m_Parent->GetComponent<Transform>()->RemoveChild(GetOwner());
+        if (!m_Parent.Valid())
+            m_Parent.Get<Transform>()->RemoveChild(GetOwner());
 
-        if (parent != nullptr)
+        if (!parent.Valid())
         {
-            parent->GetComponent<Transform>()->AddChild(GetOwner());
-            parent->GetComponent<Transform>()->CheckUpdateTree();
+            parent.Get<Transform>()->AddChild(GetOwner());
+            parent.Get<Transform>()->CheckUpdateTree();
         }
 
         m_Parent = parent;
@@ -84,7 +84,7 @@ namespace rush
     {
         for (auto child : m_Children)
         {
-            child->GetComponent<Transform>()->SetParent(nullptr);
+            child.Get<Transform>()->SetParent(Entity());
         }
     }
 
@@ -100,11 +100,11 @@ namespace rush
         m_WorldMatrix = matrix4FromTRS(m_Position, m_Rotation, m_Scale);
     }
 
-    inline Ref<Entity> Transform::GetChild(int index)
+    inline Entity Transform::GetChild(int index)
     {
         if (index >= 0 && index < GetChildCount())
             return m_Children[index];
-        return nullptr;
+        return Entity();
     }
 
     inline int Transform::GetChildCount() const
@@ -162,14 +162,14 @@ namespace rush
         return Vector3(v.x, v.y, v.z);
     }
 
-    inline bool Transform::IsChildOf(Ref<Entity> parent)
+    inline bool Transform::IsChildOf(Entity parent)
     {
-        if (parent == nullptr || m_Parent == nullptr)
+        if (!parent.Valid() || !m_Parent.Valid())
             return false;
         else if (parent == m_Parent)
             return true;
         else
-            return m_Parent->GetComponent<Transform>()->IsChildOf(parent);
+            return m_Parent.Get<Transform>()->IsChildOf(parent);
     }
 
     inline void Transform::LookAt(Transform* target, Vector3 worldUp /*= yAxis*/)
@@ -353,9 +353,9 @@ namespace rush
 
     inline void Transform::SetLocalPosition(const Vector3& position)
     {
-        if (m_Parent != nullptr)
+        if (!m_Parent.Valid())
         {
-            m_Parent->GetComponent<Transform>()->CheckUpdateTree();
+            m_Parent.Get<Transform>()->CheckUpdateTree();
         }
 
         m_LocalPosition = position;
@@ -364,14 +364,14 @@ namespace rush
 
     inline void Transform::SetLocalPosition(float x, float y, float z)
     {
-        SetLocalEulerAngles(Vector3(x, y, z));
+        SetLocalPosition(Vector3(x, y, z));
     }
 
     inline void Transform::SetLocalEulerAngles(const Vector3& euler)
     {
-        if (m_Parent != nullptr)
+        if (!m_Parent.Valid())
         {
-            m_Parent->GetComponent<Transform>()->CheckUpdateTree();
+            m_Parent.Get<Transform>()->CheckUpdateTree();
         }
 
         m_LocalEulerAngles = euler;
@@ -381,14 +381,14 @@ namespace rush
 
     inline void Transform::SetLocalEulerAngles(float pitch, float yaw, float roll)
     {
-        SetLocalRotation(Vector3(pitch, yaw, roll));
+        SetLocalEulerAngles(Vector3(pitch, yaw, roll));
     }
 
     inline void Transform::SetLocalRotation(const Quat& quat)
     {
-        if (m_Parent != nullptr)
+        if (!m_Parent.Valid())
         {
-            m_Parent->GetComponent<Transform>()->CheckUpdateTree();
+            m_Parent.Get<Transform>()->CheckUpdateTree();
         }
 
         m_LocalRotation = quat;
@@ -403,23 +403,33 @@ namespace rush
 
     inline void Transform::SetLocalScale(const Vector3& scale)
     {
-        if (m_Parent != nullptr)
+        if (!m_Parent.Valid())
         {
-            m_Parent->GetComponent<Transform>()->CheckUpdateTree();
+            m_Parent.Get<Transform>()->CheckUpdateTree();
         }
 
         m_LocalScale = scale;
         MakeDirty();
     }
 
+    inline void Transform::SetLocalScale(float scale)
+    {
+        SetLocalScale(Vector3(scale));
+    }
+
+    inline void Transform::SetLocalScale(float x, float y, float z)
+    {
+        SetLocalScale(Vector3(x, y, z));
+    }
+
     inline void Transform::SetRotation(const Quat& quat)
     {
-        if (m_Parent != nullptr)
+        if (!m_Parent.Valid())
         {
-            m_Parent->GetComponent<Transform>()->CheckUpdateTree();
+            m_Parent.Get<Transform>()->CheckUpdateTree();
             m_Rotation = quat;
             m_EulerAngles = quatToEuler(m_Rotation);
-            m_LocalRotation = inverse(m_Parent->GetComponent<Transform>()->m_Rotation) * m_Rotation;
+            m_LocalRotation = inverse(m_Parent.Get<Transform>()->m_Rotation) * m_Rotation;
             m_LocalEulerAngles = quatToEuler(m_LocalRotation);
         }
         else
@@ -441,12 +451,12 @@ namespace rush
 
     inline void Transform::SetEulerAngles(const Vector3& euler)
     {
-        if (m_Parent != nullptr)
+        if (!m_Parent.Valid())
         {
-            m_Parent->GetComponent<Transform>()->CheckUpdateTree();
+            m_Parent.Get<Transform>()->CheckUpdateTree();
             m_Rotation = eularToQuat(euler);
             m_EulerAngles = euler;
-            m_LocalRotation = glm::inverse(m_Parent->GetComponent<Transform>()->GetRotation()) * eularToQuat(euler);
+            m_LocalRotation = glm::inverse(m_Parent.Get<Transform>()->GetRotation()) * eularToQuat(euler);
             m_LocalEulerAngles = euler;
         }
         else
@@ -473,9 +483,9 @@ namespace rush
 
     inline void Transform::SetPosition(const Vector3& pos)
     {
-        if (m_Parent != nullptr)
+        if (m_Parent.Valid())
         {
-            auto trans = m_Parent->GetComponent<Transform>();
+            auto trans = m_Parent.Get<Transform>();
             trans->CheckUpdateTree();
             Vector3 SafeRecipScale3D = getSafeScaleReciprocal(trans->m_Scale);
             Quat Inverse = glm::inverse(trans->m_Rotation);
@@ -503,9 +513,9 @@ namespace rush
 
     inline void Transform::SetScale(const Vector3& sc)
     {
-        if (m_Parent != nullptr)
+        if (!m_Parent.Valid())
         {
-            auto trans = m_Parent->GetComponent<Transform>();
+            auto trans = m_Parent.Get<Transform>();
             trans->CheckUpdateTree();
             m_Scale = sc;
             Vector3 SafeRecipScale3D = getSafeScaleReciprocal(trans->m_Scale);
@@ -552,28 +562,28 @@ namespace rush
 
     inline int Transform::GetHierarchyDeep()
     {
-        if (m_Parent == nullptr)
+        if (!m_Parent.Valid())
         {
             return 0;
         }
 
         auto result = GetOwner();
         int deep = 0;
-        while (result->GetComponent<Transform>()->GetParent() != nullptr)
+        while (result.Get<Transform>()->GetParent().Valid())
         {
-            result = result->GetComponent<Transform>()->GetParent();
+            result = result.Get<Transform>()->GetParent();
             ++deep;
         }
 
         return deep;
     }
 
-    inline void Transform::AddChild(Ref<Entity> child)
+    inline void Transform::AddChild(Entity child)
     {
         m_Children.push_back(child);
     }
 
-    inline void Transform::RemoveChild(Ref<Entity> child)
+    inline void Transform::RemoveChild(Entity child)
     {
         for (auto iter = m_Children.begin(); iter != m_Children.end(); ++iter)
         {
@@ -590,7 +600,7 @@ namespace rush
         m_IsDirty = true;
         for (auto child : m_Children)
         {
-            auto trans = child->GetComponent<Transform>();
+            auto trans = child.Get<Transform>();
             trans->m_IsDirty = true;
             trans->MakeDirty();
         }
@@ -618,21 +628,21 @@ namespace rush
 
         for (auto child : m_Children)
         {
-            child->GetComponent<Transform>()->UpdateTree();
+            child.Get<Transform>()->UpdateTree();
         }
     }
 
     inline const Transform* Transform::GetDirtyAncestor() const
     {
         const Transform* result = this;
-        if (m_Parent == nullptr && m_IsDirty)
+        if (!m_Parent.Valid() && m_IsDirty)
         {
             return result;
         }
 
-        while (result->GetParent() != nullptr && result->GetParent()->GetComponent<Transform>()->m_IsDirty)
+        while (result->GetParent().Valid() && result->GetParent().Get<Transform>()->m_IsDirty)
         {
-            result = result->GetParent()->GetComponent<Transform>();
+            result = result->GetParent().Get<Transform>();
         }
 
         if (!result->m_IsDirty)
