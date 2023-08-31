@@ -12,19 +12,21 @@ namespace rush
     {
         Logger::Init("Rush3D.log", "Rush3D");
         LOG_INFO("Version {}", VERSION);
+
     }
 
-    Ref<Window> Engine::CreateRenderWindow(const WindowDesc& desc)
+    void Engine::Init()
+    {
+        m_RenderManager.Init();
+
+    }
+
+    Ref<Window> Engine::CreateRenderWindow(const WindowDesc& desc, const RendererDesc& rendererDesc)
     {
         auto window = Window::Construct();
         window->Create(desc);
+        window->m_Renderer = Renderer::Construct(window, rendererDesc);
         return window;
-    }
-
-    Ref<Renderer> Engine::CreateRenderer(Ref<Window> window, const RendererDesc* rendererDesc)
-    {
-        auto renderer = Renderer::Construct(window, rendererDesc);
-        return renderer;
     }
 
     void Engine::Update()
@@ -33,6 +35,11 @@ namespace rush
         m_RenderManager.Update();
 
         Entity::ClearRecycle();
+    }
+
+    void Engine::Shutdown()
+    {
+        m_RenderManager.Shutdown();
     }
 
 }

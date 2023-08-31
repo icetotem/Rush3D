@@ -9,17 +9,17 @@ namespace rush
     {
     }
 
-	bool Frustum::CullPoint(const Vector3& point) const
+    FrustumCullResult Frustum::CullPoint(const Vector3& point) const
 	{
 		for (int i = 0; i < 6; ++i)
 		{
 			if (dot(m_Planes[i].ToVec4(), Vector4(point, 1.0f)) < 0)
-				return false;
+				return FrustumCullResult::Outside;
 		}
-		return true;
+		return FrustumCullResult::Inside;
 	}
 
-	bool Frustum::CullAABB(const AABB& aabb) const
+    FrustumCullResult Frustum::CullAABB(const AABB& aabb) const
 	{
 		for (int i = 0; i < 6; i++)
 		{
@@ -34,13 +34,13 @@ namespace rush
 			out += ((dot(m_Planes[i].ToVec4(), Vector4(aabb.maxBounds.x, aabb.maxBounds.y, aabb.maxBounds.z, 1.0f)) < 0.0) ? 1 : 0);
 
 			if (out == 8)
-				return false;
+				return FrustumCullResult::Outside;
 		}
 
-		return true;
+		return FrustumCullResult::Inside;
 	}
 
-    bool Frustum::CullOBB(const OBB& obb) const
+    FrustumCullResult Frustum::CullOBB(const OBB& obb) const
     {
         Vector3 corner[8] =
         {
@@ -68,10 +68,10 @@ namespace rush
             out += ((dot(m_Planes[i].ToVec4(), Vector4(corner[7], 1.0f)) < 0.0) ? 1 : 0);
 
             if (out == 8)
-                return false;
+                return FrustumCullResult::Outside;
         }
 
-        return true;
+        return FrustumCullResult::Inside;
     }
 
 

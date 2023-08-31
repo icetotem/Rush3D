@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "components/Camera.h"
 #include "components/Geometry.h"
+#include "components/MaterialInst.h"
 
 namespace rush
 {   
@@ -19,7 +20,7 @@ namespace rush
 
     void RenderManager::Init()
     {
-
+        Renderer::Init(RenderBackend::D3D12);
     }
 
     void RenderManager::Update()
@@ -27,8 +28,8 @@ namespace rush
         HMap<Camera*, Ref<RContent>> renderContents;
 
         // fetch culled results
-        auto view = EcsSystem::registry.view<InFrustumFlag, Geometry>();
-        for (auto [entity, flag, geo] : view.each())
+        auto view = EcsSystem::registry.view<InFrustumFlag, Geometry, MaterialInst>();
+        for (auto [entity, flag, geo, mat] : view.each())
         {
             Entity ent = Entity::Find(entity);
             auto cam = flag.m_ByCamera.Get<Camera>();
@@ -50,6 +51,8 @@ namespace rush
             auto batch = content->NewBatch();
             batch->indexBuffer = geo.m_IndexBuffer;
             batch->vertexBuffers = geo.m_VertexBuffers;
+            batch->pipeline = mat.m_Pipeline;
+            batch->bindGroup = mat.m_BindGroup;
         }
 
         // render
@@ -64,7 +67,7 @@ namespace rush
 
     void RenderManager::Shutdown()
     {
-
+        Renderer::Shutdown();
     }
 
 }

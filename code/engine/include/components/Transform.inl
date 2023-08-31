@@ -180,6 +180,11 @@ namespace rush
         LookAt(pos, worldUp);
     }
 
+    inline void Transform::LookAt(float x, float y, float z, Vector3 worldUp /*= yAxis*/)
+    {
+        LookAt(Vector3(x, y, z), yAxis);
+    }
+
     inline void Transform::LookAt(const Vector3& worldPosition, Vector3 worldUp /*= yAxis*/)
     {
         Vector3 forward = normalize(worldPosition - GetPosition());
@@ -424,7 +429,7 @@ namespace rush
 
     inline void Transform::SetRotation(const Quat& quat)
     {
-        if (!m_Parent.Valid())
+        if (m_Parent.Valid())
         {
             m_Parent.Get<Transform>()->CheckUpdateTree();
             m_Rotation = quat;

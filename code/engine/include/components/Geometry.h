@@ -6,12 +6,15 @@
 
 namespace rush
 {
+    class Renderer;
 
     class Geometry : public Component
     {
     public:
         Geometry(Entity owner);
         ~Geometry();
+
+        void SetAsset(const StringView& path);
 
     protected:
         friend class RenderManager;

@@ -19,6 +19,20 @@ namespace rush
         BlendFactor dstAlpha = BlendFactor::DstAlpha;
     };
 
+    struct VertexAttribute
+    {
+        VertexFormat format = VertexFormat::Float32;
+        uint64_t offset = 0;
+        uint32_t shaderLocation = 0;
+    };
+
+    struct VertexLayout
+    {
+        uint64_t stride = 0;
+        uint32_t attributeCount = 0;
+        VertexAttribute* attributes = nullptr;
+    };
+
     /// <summary>
     /// PipelineDesc
     /// </summary>
@@ -44,24 +58,18 @@ namespace rush
     };
 
 
-
     /// <summary>
     /// RPipeline
     /// </summary>
     class RPipeline
     {
     public:
+        RPipeline(const PipelineDesc& desc, const char* lable = nullptr);
+
         ~RPipeline() = default;
 
     protected:
         friend class Renderer;
-
-        RPipeline(Ref<RContex> contex, const PipelineDesc& desc, const char* lable);
-
-        static Ref<RPipeline> Construct(Ref<RContex> contex, const PipelineDesc& desc, const char* lable)
-        {
-            return std::shared_ptr<RPipeline>(new RPipeline(contex, desc, lable));
-        }
 
         Ref<wgpu::RenderPipeline> m_Pipeline;
     };

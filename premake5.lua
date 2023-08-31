@@ -47,3 +47,6 @@ solution "Rush3D"
 
 include "3rdparty"
 include "code/Engine"
+
+group "samples"
+include "code/samples"

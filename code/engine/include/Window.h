@@ -29,6 +29,8 @@ namespace rush
     typedef void* WindowHandle;
     typedef void* DisplayHandle;
 
+    class Renderer;
+
     class Window
     {
     public:
@@ -39,15 +41,17 @@ namespace rush
         DisplayHandle GetDisplay() const { return m_Display; }
 
         const String& GetTitle() const { return m_Title; }
-
         uint32_t GetWidth() const { return m_Width; }
-
         uint32_t GetHeight() const { return m_Height; }
+
+        Ref<Renderer> GetRenderer() const { return m_Renderer; }
 
         bool ShouldClose() const;
         void MessgeLoop();
 
         void Show(bool show = true);
+
+        void Present();
 
     protected:
         friend class Engine;
@@ -56,7 +60,7 @@ namespace rush
 
         static Ref<Window> Construct()
         {
-            return std::shared_ptr<Window>(new Window);
+            return std::shared_ptr<Window>(new Window());
         }
 
         bool Create(const WindowDesc& desc);
@@ -64,6 +68,7 @@ namespace rush
     protected:
         struct Impl;
         Ref<Impl> m_Impl;
+        Ref<Renderer> m_Renderer;
 
         String m_Title;
         uint32_t m_Width = 1024;

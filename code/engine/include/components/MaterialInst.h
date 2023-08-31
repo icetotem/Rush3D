@@ -14,14 +14,13 @@ namespace rush
         MaterialInst(Entity owner);
         ~MaterialInst();
 
-        void SetAssets(const StringView& assetPath);
+        void SetAsset(const StringView& assetPath);
 
     protected:
         friend class RenderManager;
         Ref<RPipeline> m_Pipeline;
-        Ref<RBindGroup> m_Uniforms;
-        PipelineDesc m_PiplineDesc;
-        String m_Vs, m_Fs;
+        Ref<RBindGroup> m_BindGroup;
+        Ref<RUniformBuffer> m_UniformBuf;
     };
         
 }

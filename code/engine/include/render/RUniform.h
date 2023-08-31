@@ -13,6 +13,8 @@ namespace rush
     class RUniformBuffer
     {
     public:
+        RUniformBuffer(BufferUsage usage, uint64_t size, const char* lable = nullptr);
+
         ~RUniformBuffer() = default;
 
         void UpdateData(const void* data, uint64_t size, uint64_t offset = 0);
@@ -22,15 +24,7 @@ namespace rush
     protected:
         friend class Renderer;
 
-        RUniformBuffer(Ref<RContex> contex, BufferUsage usage, uint64_t size, const char* lable);
-
-        static Ref<RUniformBuffer> Construct(Ref<RContex> contex, BufferUsage usage, uint64_t size, const char* lable)
-        {
-            return std::shared_ptr<RUniformBuffer>(new RUniformBuffer(contex, usage, size, lable));
-        }
-
         Ref<wgpu::Buffer> m_Buffer;
-        Ref<RContex> m_Contex;
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -74,19 +68,14 @@ namespace rush
     class RBindGroup
     {
     public:
+        RBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable = nullptr);
+
         ~RBindGroup();
 
         Ref<BindingLayout> GetBindingLayout() const { return m_BindLayout; }
 
     protected:
         friend class Renderer;
-
-        RBindGroup(Ref<RContex> contex, Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable);
-
-        static Ref<RBindGroup> Construct(Ref<RContex> contex, Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable)
-        {
-            return std::shared_ptr<RBindGroup>(new RBindGroup(contex, layout, entriesInitializer, lable));
-        }
 
         Ref<BindingLayout> m_BindLayout;
         Ref<wgpu::BindGroup> m_BindGroup;

@@ -9,11 +9,11 @@ namespace rush
 {
     extern wgpu::TextureFormat g_WGPUTextureFormat[(int)TextureFormat::Count];
 
-    RSampler::RSampler(Ref<RContex> contex, const char* lable)
+    RSampler::RSampler(const char* lable)
     {
         wgpu::SamplerDescriptor desc = {};
         desc.label = lable;
-        m_Sampler = CreateRef<wgpu::Sampler>(contex->device.CreateSampler(&desc));
+        m_Sampler = CreateRef<wgpu::Sampler>(RContex::device.CreateSampler(&desc));
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -27,7 +27,6 @@ namespace rush
         descriptor.size = size;
         descriptor.usage = usage | wgpu::BufferUsage::CopyDst;
         wgpu::Buffer buffer = device.CreateBuffer(&descriptor);
-
         device.GetQueue().WriteBuffer(buffer, 0, data, size);
         return buffer;
     }
@@ -40,7 +39,6 @@ namespace rush
         textureDataLayout.offset = offset;
         textureDataLayout.bytesPerRow = bytesPerRow;
         textureDataLayout.rowsPerImage = rowsPerImage;
-
         return textureDataLayout;
     }
 
@@ -52,7 +50,6 @@ namespace rush
         wgpu::ImageCopyBuffer imageCopyBuffer = {};
         imageCopyBuffer.buffer = buffer;
         imageCopyBuffer.layout = CreateTextureDataLayout(offset, bytesPerRow, rowsPerImage);
-
         return imageCopyBuffer;
     }
 
@@ -66,20 +63,17 @@ namespace rush
         imageCopyTexture.mipLevel = mipLevel;
         imageCopyTexture.origin = origin;
         imageCopyTexture.aspect = aspect;
-
         return imageCopyTexture;
     }
 
-    RTexture::RTexture(Ref<RContex> contex, uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth/* = 1*/, const char* lable/* = nullptr*/)
+    RTexture::RTexture(uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth/* = 1*/, const char* lable/* = nullptr*/)
     {
-        m_Contex = contex;
         m_Width = width;
         m_Height = height;
         m_Depth = depth;
         m_Mips = mips;
         m_Format = format;
         m_Dim = TextureDimension::Texture2D;
-
         wgpu::TextureDescriptor descriptor;
         descriptor.dimension = wgpu::TextureDimension::e2D;
         descriptor.size.width = m_Width;
@@ -89,25 +83,19 @@ namespace rush
         descriptor.format =  wgpu::TextureFormat::BGRA8Unorm;
         descriptor.mipLevelCount = m_Mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
-        m_Texture = CreateRef<wgpu::Texture>(contex->device.CreateTexture(&descriptor));
+        m_Texture = CreateRef<wgpu::Texture>(RContex::device.CreateTexture(&descriptor));
     }
 
     void RTexture::UpdateData(const void* data, uint64_t size)
     {
-        wgpu::Buffer stagingBuffer = CreateBufferFromData(
-            m_Contex->device, data, size, wgpu::BufferUsage::CopySrc);
-
+        wgpu::Buffer stagingBuffer = CreateBufferFromData(RContex::device, data, size, wgpu::BufferUsage::CopySrc);
         wgpu::ImageCopyBuffer imageCopyBuffer = CreateImageCopyBuffer(stagingBuffer, 0, size);
-
         wgpu::ImageCopyTexture imageCopyTexture = CreateImageCopyTexture(*m_Texture, 0, {0, 0, 0});
-
         wgpu::Extent3D copySize = { m_Width, m_Height, m_Depth };
-
-        wgpu::CommandEncoder encoder = m_Contex->device.CreateCommandEncoder();
+        wgpu::CommandEncoder encoder = RContex::device.CreateCommandEncoder();
         encoder.CopyBufferToTexture(&imageCopyBuffer, &imageCopyTexture, &copySize);
-
         wgpu::CommandBuffer copy = encoder.Finish();
-        m_Contex->queue.Submit(1, &copy);
+        RContex::queue.Submit(1, &copy);
     }
 
     }

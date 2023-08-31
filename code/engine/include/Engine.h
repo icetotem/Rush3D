@@ -19,11 +19,13 @@ namespace rush
     public:
         Engine();
 
-        Ref<Window> CreateRenderWindow(const WindowDesc& desc);
+        void Init();
 
-        Ref<Renderer> CreateRenderer(Ref<Window> window, const RendererDesc* rendererDesc);
+        Ref<Window> CreateRenderWindow(const WindowDesc& desc, const RendererDesc& rendererDesc);
 
         void Update();
+
+        void Shutdown();
 
     private:    
     };

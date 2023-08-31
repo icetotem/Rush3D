@@ -2,7 +2,7 @@ ENGINE_DIR = "./"
 DEP_DIR = "../../3rdparty"
 
 project "Rush3D_Engine"
-	kind "ConsoleApp"
+	kind "StaticLib"
 	language "C++"
 	cppdialect "C++17"
 	exceptionhandling "Off"
@@ -25,11 +25,6 @@ project "Rush3D_Engine"
 		path.join(ENGINE_DIR, "**.cpp"),
     }
 
-	excludes
-	{
-		
-	}
-
 	includedirs
 	{
 		DEP_DIR,
@@ -38,16 +33,4 @@ project "Rush3D_Engine"
 		path.join(DEP_DIR, "spdlog/include"),
 		path.join(DEP_DIR, "glfw/include"),
 	}
-
-	links
-    {
-        "Rush3D_Deps", "dawn_native", "dawn_platform", "dawn_proc", "dawncpp"
-    }
-
-	filter "system:windows"
-		libdirs
-		{
-			path.join(DEP_DIR, "dawn/lib/win/%{cfg.buildcfg}"),
-		}
-
 

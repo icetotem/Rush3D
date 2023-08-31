@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "components/MaterialInst.h"
+#include "render/Renderer.h"
+#include "render/RDefines.h"
 
 namespace rush
 {
@@ -49,15 +51,22 @@ namespace rush
 
     MaterialInst::MaterialInst(Entity owner)
     {
-        m_Vs = triangle_vert_wgsl;
-        m_Fs = triangle_frag_wgsl;
 
-		m_PiplineDesc = {};
-        m_PiplineDesc.depthWrite = true;
-        m_PiplineDesc.depthTest = false;
-        m_PiplineDesc.colorFormat = TextureFormat::BGRA8Unorm;
-        m_PiplineDesc.depthStencilFormat = TextureFormat::Depth24PlusStencil8;
-        m_PiplineDesc.depthCompare = DepthCompareFunction::LessEqual;
+    }
+
+    MaterialInst::~MaterialInst()
+    {
+
+    }
+
+    void MaterialInst::SetAsset(const StringView& assetPath)
+    {
+        PipelineDesc piplineDesc = {};
+        piplineDesc.depthWrite = true;
+        piplineDesc.depthTest = false;
+        piplineDesc.colorFormat = TextureFormat::BGRA8Unorm;
+        piplineDesc.depthStencilFormat = TextureFormat::Depth24PlusStencil8;
+        piplineDesc.depthCompare = DepthCompareFunction::LessEqual;
 
         VertexAttribute vertAttrs[2];
         vertAttrs[0].format = VertexFormat::Float32x2;
@@ -67,40 +76,35 @@ namespace rush
         vertAttrs[1].offset = 0;
         vertAttrs[1].shaderLocation = 1;
 
-        auto& vLayout0 = m_PiplineDesc.vertexLayouts.emplace_back();
+        auto& vLayout0 = piplineDesc.vertexLayouts.emplace_back();
         vLayout0.stride = sizeof(float) * 2;
         vLayout0.attributes = &vertAttrs[0];
         vLayout0.attributeCount = 1;
 
-        auto& vLayout1 = m_PiplineDesc.vertexLayouts.emplace_back();
+        auto& vLayout1 = piplineDesc.vertexLayouts.emplace_back();
         vLayout1.stride = sizeof(float) * 3;
         vLayout1.attributes = &vertAttrs[1];
         vLayout1.attributeCount = 1;
 
-//         Ref<RShader> vs = renderer->CreateShader(triangle_vert_wgsl, ShaderStage::Vertex, "vs_test");
-//         Ref<RShader> fs = renderer->CreateShader(triangle_frag_wgsl, ShaderStage::Fragment, "fs_test");
-//         m_PiplineDesc.vs = vs;
-//         m_PiplineDesc.fs = fs;
-        m_PiplineDesc.writeMask = ColorWriteMask::Write_All;
+        Ref<RShader> vs = CreateRef<RShader>(ShaderStage::Vertex, triangle_vert_wgsl, "vs_test");
+        Ref<RShader> fs = CreateRef<RShader>(ShaderStage::Fragment, triangle_frag_wgsl, "fs_test");
+        piplineDesc.vs = vs;
+        piplineDesc.fs = fs;
+        piplineDesc.writeMask = ColorWriteMask::Write_All;
 
-//         Ref<BindingLayout> bindingLayout = renderer->CreateBindingLayout({
-//             {0, ShaderStage::Vertex, BufferBindingType::Uniform}
-//         });
+        auto layout = { BindingLayoutHelper{0, ShaderStage::Vertex, BufferBindingType::Uniform} };
+        Ref<BindingLayout> bindingLayout = CreateRef<BindingLayout>(layout);
 
-        //m_PiplineDesc.bindLayout = bindingLayout;
-        m_PiplineDesc.primitiveType = PrimitiveType::TriangleList;
-        m_PiplineDesc.frontFace = FrontFace::CCW;
-        m_PiplineDesc.cullModel = CullMode::Back;
-    }
+        piplineDesc.bindLayout = bindingLayout;
+        piplineDesc.primitiveType = PrimitiveType::TriangleList;
+        piplineDesc.frontFace = FrontFace::CCW;
+        piplineDesc.cullModel = CullMode::Back;
+        m_Pipeline = CreateRef<RPipeline>(piplineDesc);
 
-    MaterialInst::~MaterialInst()
-    {
+        m_UniformBuf = CreateRef<RUniformBuffer>(BufferUsage::Uniform, sizeof(float), "uniforms0");
 
-    }
-
-    void MaterialInst::SetAssets(const StringView& assetPath)
-    {
-        
+        auto layout2 = { BindingInitializationHelper(0, m_UniformBuf) };
+        m_BindGroup = CreateRef<RBindGroup>(bindingLayout, layout2);
     }
 
 }

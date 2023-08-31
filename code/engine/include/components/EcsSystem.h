@@ -148,7 +148,7 @@ namespace rush
     {
         if (Has<ComponentType>())
         {
-            Get<Component>()->OnDestroy();
+            Get<ComponentType>()->OnDestroy();
             EcsSystem::registry.remove<ComponentType>(m_EntityID);
         }
     }

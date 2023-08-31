@@ -71,12 +71,12 @@ namespace rush
                 const float halfHSide = halfVSide * camera.GetAspect();
                 const Vector3 frontMultFar = camera.GetFarClip() * front;
 
-                frustm.SetPlane(FS_Near, Plane(front, position + camera.GetNearClip() * front)); // near
-                frustm.SetPlane(FS_Far, Plane(-front, position + frontMultFar)); // far
-                frustm.SetPlane(FS_Right, Plane(cross(frontMultFar + left * halfHSide, up), position)); // right
-                frustm.SetPlane(FS_Left, Plane(cross(up, frontMultFar - left * halfHSide), position)); // left
-                frustm.SetPlane(FS_Bottom, Plane(cross(frontMultFar - up * halfVSide, left), position)); // bottom
-                frustm.SetPlane(FS_Top, Plane(cross(left, frontMultFar + up * halfVSide), position)); // top
+                frustm.SetPlane(FrustumSide::FS_Near, Plane(front, position + camera.GetNearClip() * front)); // near
+                frustm.SetPlane(FrustumSide::FS_Far, Plane(-front, position + frontMultFar)); // far
+                frustm.SetPlane(FrustumSide::FS_Right, Plane(cross(frontMultFar + left * halfHSide, up), position)); // right
+                frustm.SetPlane(FrustumSide::FS_Left, Plane(cross(up, frontMultFar - left * halfHSide), position)); // left
+                frustm.SetPlane(FrustumSide::FS_Bottom, Plane(cross(frontMultFar - up * halfVSide, left), position)); // bottom
+                frustm.SetPlane(FrustumSide::FS_Top, Plane(cross(left, frontMultFar + up * halfVSide), position)); // top
             }
         }
 
@@ -114,7 +114,7 @@ namespace rush
                 auto view2 = EcsSystem::registry.view<Transform, Bounding>();
                 for (auto [entity2, transform, bounding] : view2.each())
                 {
-                    if (frustum.CullAABB(bounding.m_AABB))
+                    if (frustum.CullAABB(bounding.m_AABB) == FrustumCullResult::Inside)
                     {
                         Entity ent = Entity::Find(entity2);
                         auto flag = ent.Add<InFrustumFlag>();

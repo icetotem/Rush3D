@@ -7,22 +7,27 @@
 namespace rush
 {
 
+    struct RenderPassDesc
+    {
+        uint32_t width = 128;
+        uint32_t height = 128;
+        TextureFormat colorFormat = TextureFormat::BGRA8Unorm;
+        TextureFormat depthStencilFormat = TextureFormat::Depth24PlusStencil8;
+        Vector4 clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
+        float clearDepth = 1.0f;
+        bool useDepthStencil = true;
+    };
+
     class RPass
     {
     public:
+        RPass(const RenderPassDesc& desc, const char* lable = nullptr);
+
         ~RPass() = default;
 
         Ref<RTexture> GetColorTexture() const { return m_ColorTexture; }
 
         Ref<RTexture> GetDepthStencilTexture() const { return m_DepthStencilTexture; }
-
-    private:
-        RPass(Ref<RContex> renderContex, uint32_t width, uint32_t height, TextureFormat colorFormat, TextureFormat depthStencilFormat, const Vector4& clearColor, float clearDepth, bool withDepth, const char* lable);
-
-        static Ref<RPass> Construct(Ref<RContex> renderContex, uint32_t width, uint32_t height, TextureFormat color, TextureFormat depthStencil, const Vector4& clearColor, float clearDepth, bool withDepth, const char* lable)
-        {
-            return std::shared_ptr<RPass>(new RPass(renderContex, width, height, color, depthStencil, clearColor, clearDepth, withDepth, lable));
-        }
 
     private:
         friend class Renderer;

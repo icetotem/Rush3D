@@ -8,8 +8,6 @@
 namespace rush
 {
 
-    //////////////////////////////////////////////////////////////////////////
-
     extern wgpu::VertexFormat g_WGPUVertexFormat[(int)VertexFormat::Count];
     extern wgpu::TextureFormat g_WGPUTextureFormat[(int)TextureFormat::Count];
     extern wgpu::CullMode g_WGPUCullMode[(int)CullMode::Count];
@@ -19,8 +17,7 @@ namespace rush
     extern wgpu::BlendOperation g_WGPUBlendOperation[(int)BlendOperation::Count];
     extern wgpu::CompareFunction g_WGPUCompareFunction[(int)DepthCompareFunction::Count];
 
-
-    RPipeline::RPipeline(Ref<RContex> contex, const PipelineDesc& desc, const char* lable /*= nullptr*/)
+    RPipeline::RPipeline(const PipelineDesc& desc, const char* lable /*= nullptr*/)
     {
         wgpu::PipelineLayoutDescriptor layoutDesc = {};
         if (desc.bindLayout != nullptr) 
@@ -36,7 +33,7 @@ namespace rush
 
         wgpu::RenderPipelineDescriptor descriptor = {};
         descriptor.label = lable;
-        descriptor.layout = contex->device.CreatePipelineLayout(&layoutDesc);
+        descriptor.layout = RContex::device.CreatePipelineLayout(&layoutDesc);
 
         // Setup vertex state.
         std::array<wgpu::VertexBufferLayout, kMaxVertexBuffers> cBuffers;
@@ -142,7 +139,7 @@ namespace rush
 //             multisample->alphaToCoverageEnabled = false;
 //         }
 
-        m_Pipeline = CreateRef<wgpu::RenderPipeline>(contex->device.CreateRenderPipeline(&descriptor));
+        m_Pipeline = CreateRef<wgpu::RenderPipeline>(RContex::device.CreateRenderPipeline(&descriptor));
     }
 
 }

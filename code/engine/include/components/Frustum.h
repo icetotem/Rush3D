@@ -7,7 +7,7 @@
 namespace rush
 {
 
-	enum FrustumSide
+	enum class FrustumSide
 	{
 		FS_Near,
 		FS_Far,
@@ -15,28 +15,32 @@ namespace rush
 		FS_Left,
         FS_Bottom,
         FS_Top,
-
-		FS_Plane_Max
+		Count
 	};
 
+	enum class FrustumCullResult
+	{
+        Outside,
+        Inside
+	};
 
 	class Frustum : public Component
 	{
 	public:
 		Frustum(Entity owner);
 
-		bool CullPoint(const Vector3& point) const;
+		FrustumCullResult CullPoint(const Vector3& point) const;
 
-		bool CullAABB(const AABB& aabb) const;
+		FrustumCullResult CullAABB(const AABB& aabb) const;
 
-		bool CullOBB(const OBB& obb) const;
+		FrustumCullResult CullOBB(const OBB& obb) const;
 
-		const Plane& GetPlane(FrustumSide side) { return m_Planes[side]; }
+		const Plane& GetPlane(FrustumSide side) { return m_Planes[(int)side]; }
 
-		void SetPlane(FrustumSide side, const Plane& plane) { m_Planes[side] = plane; }
+		void SetPlane(FrustumSide side, const Plane& plane) { m_Planes[(int)side] = plane; }
 
     private:
-		Plane m_Planes[FS_Plane_Max];
+		Plane m_Planes[(int)FrustumSide::Count];
 	};
 }
 

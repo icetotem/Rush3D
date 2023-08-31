@@ -9,12 +9,13 @@ namespace rush
 
     struct RContex
     {
-        dawn::native::Adapter adapter;
-        wgpu::Device device;
+        static dawn::native::Adapter adapter;
+        static wgpu::Device device;
+        static wgpu::Queue queue;
+        wgpu::TextureView depthStencilView;
         wgpu::SwapChain swapChain;
         wgpu::CommandEncoder encoder;
         wgpu::CommandBuffer commands;
-        wgpu::Queue queue;
     };
 
 }

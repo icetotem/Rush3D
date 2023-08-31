@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/Core.h"
 #include "components/EcsSystem.h"
 
 namespace rush
@@ -44,6 +45,7 @@ namespace rush
         void Reset();
 
         void LookAt(Transform* target, Vector3 worldUp = yAxis);
+        void LookAt(float x, float y, float z, Vector3 worldUp = yAxis);
         void LookAt(const Vector3& worldPosition, Vector3 worldUp = yAxis);
 
         void Rotate(const Quat& quat, Space relativeTo = Space::Local);

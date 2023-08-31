@@ -72,9 +72,9 @@ namespace rush
         return device.CreateBindGroup(&descriptor);
     }
 
-    RBindGroup::RBindGroup(Ref<RContex> contex, Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable)
+    RBindGroup::RBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable)
     {
-        m_BindGroup = CreateRef<wgpu::BindGroup>(MakeBindGroup(contex->device, *layout->m_Layout, entriesInitializer));
+        m_BindGroup = CreateRef<wgpu::BindGroup>(MakeBindGroup(RContex::device, *layout->m_Layout, entriesInitializer));
         m_BindLayout = layout;
     }
 
@@ -84,18 +84,17 @@ namespace rush
 
     //////////////////////////////////////////////////////////////////////////
 
-    RUniformBuffer::RUniformBuffer(Ref<RContex> contex, BufferUsage usage, uint64_t size, const char* lable)
+    RUniformBuffer::RUniformBuffer(BufferUsage usage, uint64_t size, const char* lable)
     {
-        m_Contex = contex;
         wgpu::BufferDescriptor descriptor;
         descriptor.size = size;
         descriptor.usage = g_BufferUsage[(int)usage] | wgpu::BufferUsage::CopyDst;
-        m_Buffer = CreateRef<wgpu::Buffer>(contex->device.CreateBuffer(&descriptor));
+        m_Buffer = CreateRef<wgpu::Buffer>(RContex::device.CreateBuffer(&descriptor));
     }
 
     void RUniformBuffer::UpdateData(const void* data, uint64_t size, uint64_t offset /*= 0*/)
     {
-        m_Contex->queue.WriteBuffer(*m_Buffer, offset, data, size);
+        RContex::queue.WriteBuffer(*m_Buffer, offset, data, size);
     }
 
 

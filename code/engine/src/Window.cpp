@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Window.h"
+#include "render/Renderer.h"
 
 #if defined(RUSH_PLATFORM_WINDOWS) || defined(RUSH_PLATFORM_MAC) || defined(RUSH_PLATFORM_LINUX) // GLFW implementation
 
@@ -41,6 +42,8 @@ namespace rush
         GLFWwindow* handle = nullptr;
     };
 
+    //////////////////////////////////////////////////////////////////////////
+
     Window::Window()
     {
         m_Impl = CreateRef<Impl>();
@@ -81,7 +84,6 @@ namespace rush
         return nullptr;
 #endif
     }
-
 
     bool Window::Create(const WindowDesc& desc)
     {        
@@ -144,6 +146,11 @@ namespace rush
         {
             glfwHideWindow(m_Impl->handle);
         }
+    }
+
+    void Window::Present()
+    {
+        m_Renderer->Present();
     }
 
 }

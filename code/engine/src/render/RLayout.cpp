@@ -43,7 +43,7 @@ namespace rush
         m_Entry->texture.viewDimension = g_TextureViewDimension[(int)viewDimension];
     }
 
-    BindingLayout::BindingLayout(Ref<RContex> contex, std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable)
+    BindingLayout::BindingLayout(std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable)
     {
         std::vector<wgpu::BindGroupLayoutEntry> entries;
         for (const BindingLayoutHelper& entry : entriesInitializer) 
@@ -55,7 +55,7 @@ namespace rush
         descriptor.entryCount = entries.size();
         descriptor.entries = entries.data();
         descriptor.label = lable;
-        m_Layout = CreateRef<wgpu::BindGroupLayout>(contex->device.CreateBindGroupLayout(&descriptor));
+        m_Layout = CreateRef<wgpu::BindGroupLayout>(RContex::device.CreateBindGroupLayout(&descriptor));
     }
 
 }

@@ -12,7 +12,7 @@ namespace rush
 struct RBatch
 {
     Ref<RPipeline> pipeline;
-    Ref<RBindGroup> uniforms;
+    Ref<RBindGroup> bindGroup;
     List<Ref<RVertexBuffer>> vertexBuffers;
     Ref<RIndexBuffer> indexBuffer;
     uint32_t instanceCount = 1;

@@ -7,20 +7,6 @@
 namespace rush
 {
 
-    struct VertexAttribute
-    {
-        VertexFormat format = VertexFormat::Float32;
-        uint64_t offset = 0;
-        uint32_t shaderLocation = 0;
-    };
-
-    struct VertexLayout
-    {
-        uint64_t stride = 0;
-        uint32_t attributeCount = 0;
-        VertexAttribute* attributes = nullptr;
-    };
-
     class BindingLayoutHelper
     {
     public:
@@ -49,19 +35,14 @@ namespace rush
     class BindingLayout
     {
     public:
+        BindingLayout(std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable = nullptr);
+
         ~BindingLayout() = default;
 
     private:
         friend class Renderer;
         friend class RPipeline;
         friend class RBindGroup;
-
-        BindingLayout(Ref<RContex> contex, std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable);
-
-        static Ref<BindingLayout> Construct(Ref<RContex> contex, std::initializer_list<BindingLayoutHelper> entriesInitializer, const char* lable)
-        {
-            return std::shared_ptr<BindingLayout>(new BindingLayout(contex, entriesInitializer, lable));
-        }
 
         Ref<wgpu::BindGroupLayout> m_Layout;
     };
