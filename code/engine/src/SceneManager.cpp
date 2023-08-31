@@ -1,9 +1,10 @@
 #include "stdafx.h"
-#include "Scene.h"
+#include "SceneManager.h"
 #include "components/Camera.h"
 #include "components/Frustum.h"
 #include "components/Transform.h"
 #include "components/Bounding.h"
+#include "components/CommonComponents.h"
 
 namespace rush
 {

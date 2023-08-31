@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "RenderManager.h"
-#include "Scene.h"
 #include "components/Camera.h"
-#include "components/Geometry.h"
-#include "components/MaterialInst.h"
+#include "components/MeshRenderer.h"
+#include "components/CommonComponents.h"
+#include "render/RMaterial.h"
 
 namespace rush
 {   
@@ -28,8 +28,8 @@ namespace rush
         HMap<Camera*, Ref<RContent>> renderContents;
 
         // fetch culled results
-        auto view = EcsSystem::registry.view<InFrustumFlag, Geometry, MaterialInst>();
-        for (auto [entity, flag, geo, mat] : view.each())
+        auto view = EcsSystem::registry.view<InFrustumFlag, MeshRenderer>();
+        for (auto [entity, flag, meshRdr] : view.each())
         {
             Entity ent = Entity::Find(entity);
             auto cam = flag.m_ByCamera.Get<Camera>();
@@ -48,11 +48,14 @@ namespace rush
 
             RUSH_ASSERT(content != nullptr);
 
-            auto batch = content->NewBatch();
-            batch->indexBuffer = geo.m_IndexBuffer;
-            batch->vertexBuffers = geo.m_VertexBuffers;
-            batch->pipeline = mat.m_Pipeline;
-            batch->bindGroup = mat.m_BindGroup;
+            for (const auto& part : meshRdr.m_Parts)
+            {
+                auto batch = content->NewBatch();
+                batch->indexBuffer = part.indexBuffer;
+                batch->vertexBuffers = part.vertexBuffers;
+                batch->pipeline = part.material->m_Material->m_Pipeline;
+                batch->bindGroup = part.material->m_BindGroup;
+            }
         }
 
         // render

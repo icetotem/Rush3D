@@ -59,6 +59,7 @@ namespace rush
 
         Ref<wgpu::Buffer> m_Buffer;
     };
+
 }
 
 #endif // RBuffer_h__

@@ -6,6 +6,7 @@
 
 namespace rush
 {
+
     Engine* Engine::s_Inst = nullptr;
 
     Engine::Engine()

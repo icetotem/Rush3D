@@ -23,13 +23,6 @@ namespace rush
     protected:
     };
 
-    class InFrustumFlag : public Component
-    {
-    public:
-        InFrustumFlag(Entity owner) : Component(owner) {}
-    
-        Entity m_ByCamera;    
-    };
 
     class SceneManager
     {

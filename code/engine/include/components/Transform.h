@@ -1,4 +1,5 @@
-#pragma once
+#ifndef Transform_h__
+#define Transform_h__
 
 #include "core/Core.h"
 #include "components/EcsSystem.h"
@@ -167,3 +168,5 @@ namespace rush
 }
 
 #include "Transform.inl"
+
+#endif // Transform_h__

@@ -4,6 +4,7 @@
 #include "core/Core.h"
 #include "render/RDefines.h"
 #include "render/RBuffer.h"
+#include "Asset.h"
 
 namespace rush
 {
@@ -24,11 +25,14 @@ namespace rush
 
     //////////////////////////////////////////////////////////////////////////
 
-    class RTexture
+    class RTexture : public Asset
     {
     public:
         ~RTexture() = default;
 
+        bool Load(const StringView& path) override;
+
+        RTexture();
         RTexture(uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth, const char* lable = nullptr);
 
         void UpdateData(const void* data, uint64_t size);

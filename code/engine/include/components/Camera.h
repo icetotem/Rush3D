@@ -1,4 +1,5 @@
-#pragma once
+#ifndef Camera_h__
+#define Camera_h__
 
 #include "components/EcsSystem.h"
 #include "render/Renderer.h"
@@ -59,3 +60,5 @@ namespace rush
         Matrix4 m_ViewMatrix, m_ProjMatrix;
     };
 }
+
+#endif // Camera_h__

@@ -9,26 +9,26 @@
 namespace rush
 {
 
-struct RBatch
-{
-    Ref<RPipeline> pipeline;
-    Ref<RBindGroup> bindGroup;
-    List<Ref<RVertexBuffer>> vertexBuffers;
-    Ref<RIndexBuffer> indexBuffer;
-    uint32_t instanceCount = 1;
-};
+    struct RBatch
+    {
+        Ref<RPipeline> pipeline;
+        Ref<RBindGroup> bindGroup;
+        List<Ref<RVertexBuffer>> vertexBuffers;
+        Ref<RIndexBuffer> indexBuffer;
+        uint32_t instanceCount = 1;
+    };
 
-class RContent
-{
-public:
-    ~RContent() = default;
+    class RContent
+    {
+    public:
+        ~RContent() = default;
 
-    Ref<RBatch> NewBatch();
+        Ref<RBatch> NewBatch();
 
-private:
-    friend class Renderer;
-    List<Ref<RBatch>> m_Batches;
-};
+    private:
+        friend class Renderer;
+        List<Ref<RBatch>> m_Batches;
+    };
 
 }
 

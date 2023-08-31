@@ -4,8 +4,10 @@
 #include "core/Common.h"
 #include "render/Renderer.h"
 #include "Window.h"
-#include "Scene.h"
+#include "SceneManager.h"
 #include "RenderManager.h"
+#include "AssetManager.h"
+#include "BundleManager.h"
 
 namespace rush
 {
@@ -13,6 +15,8 @@ namespace rush
     class Engine : public Singleton<Engine>
     {
     public:
+        BundleManager m_BundleManager;
+        AssetsManager m_AssetsManager;
         SceneManager m_SceneManager;
         RenderManager m_RenderManager;
 

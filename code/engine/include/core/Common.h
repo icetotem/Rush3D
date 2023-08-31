@@ -105,6 +105,9 @@ namespace rush
 
     typedef std::string String;
     typedef std::string_view StringView;
+
+    namespace FS = std::filesystem;
+    using Path = std::filesystem::path;
     
     template<typename T>
     using List = std::list<T>;

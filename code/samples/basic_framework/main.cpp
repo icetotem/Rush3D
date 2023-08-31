@@ -10,11 +10,11 @@
 #include "render/RBatch.h"
 #include "components/EcsSystem.h"
 #include "components/Transform.h"
-#include "components/Geometry.h"
-#include "components/MaterialInst.h"
+#include "components/MeshRenderer.h"
 #include "components/Camera.h"
 #include "components/Bounding.h"
 #include "components/Frustum.h"
+#include "components/MeshFilter.h"
 
 using namespace rush;
 
@@ -22,6 +22,8 @@ int main(int argc, char* argv[])
 {
     Engine engine;
     engine.Init();
+
+    engine.m_BundleManager.AddFolder("../../assets");
 
     WindowDesc wndDesc;
     wndDesc.title = "RushDmeo";
@@ -39,6 +41,8 @@ int main(int argc, char* argv[])
         return -1;
 
     window->Show(true);
+
+
 
     // create camera
     {
@@ -62,11 +66,9 @@ int main(int argc, char* argv[])
         auto trans = ent0.Add<Transform>();
         trans->SetPosition(0, 0, 0);
 
-        auto geo = ent0.Add<Geometry>();
-        geo->SetAsset("assets/monkey.obj");
-
-        auto matInst = ent0.Add<MaterialInst>();
-        matInst->SetAsset("");
+        ent0.Add<MeshRenderer>();
+        auto meshFilter = ent0.Add<MeshFilter>();
+        meshFilter->AddPart("mesh_name", "mat_name");
 
         auto bonding = ent0.Add<Bounding>();
     }
