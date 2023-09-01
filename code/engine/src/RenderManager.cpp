@@ -48,7 +48,7 @@ namespace rush
 
             RUSH_ASSERT(content != nullptr);
 
-            for (const auto& part : meshRdr.m_Parts)
+            for (const auto& part : meshRdr.m_Primitives)
             {
                 auto batch = content->NewBatch();
                 batch->indexBuffer = part.indexBuffer;

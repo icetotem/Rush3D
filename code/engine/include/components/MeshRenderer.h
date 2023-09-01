@@ -11,7 +11,7 @@ namespace rush
     class MeshRenderer : public Component
     {
     public:
-        struct Part
+        struct Primitive
         {
             List<Ref<RVertexBuffer>> vertexBuffers;
             Ref<RIndexBuffer> indexBuffer;
@@ -22,11 +22,11 @@ namespace rush
         ~MeshRenderer();
 
         int AddPart();
-        MeshRenderer::Part* GetPart(int slot);
+        MeshRenderer::Primitive* GetPart(int slot);
 
     protected:
         friend class RenderManager;
-        DArray<Part> m_Parts;
+        DArray<Primitive> m_Primitives;
     };
 
 }

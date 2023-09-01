@@ -16,13 +16,13 @@ namespace rush
     public:
         virtual bool Load(const StringView& path);
 
-        struct SubMesh
+        struct Primitive
         {
             List<Ref<RVertexBuffer>> vertexBuffers;
             Ref<RIndexBuffer> indexBuffer;
         };
 
-        List<SubMesh> subMeshes;
+        List<Primitive> m_Primitives;
     };
 
 }

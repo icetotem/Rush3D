@@ -17,7 +17,7 @@ namespace rush
 
         static char const triangle_vert_wgsl[] = R"(
 	        struct VertexIn {
-		        @location(0) aPos : vec2<f32>,
+		        @location(0) aPos : vec3<f32>,
 		        @location(1) aUV  : vec2<f32>,
 	        }
 	        struct VertexOut {
@@ -30,15 +30,8 @@ namespace rush
 	        @group(0) @binding(0) var<uniform> uRot : Rotation;
 	        @vertex
 	        fn main(input : VertexIn) -> VertexOut {
-		        var rads : f32 = radians(uRot.degs);
-		        var cosA : f32 = cos(rads);
-		        var sinA : f32 = sin(rads);
-		        var rot : mat3x3<f32> = mat3x3<f32>(
-			        vec3<f32>( cosA, sinA, 0.0),
-			        vec3<f32>(-sinA, cosA, 0.0),
-			        vec3<f32>( 0.0,  0.0,  1.0));
 		        var output : VertexOut;
-		        output.Position = vec4<f32>(rot * vec3<f32>(input.aPos, 1.0), 1.0);
+		        output.Position = vec4<f32>(input.aPos, 1.0);
 		        output.vUV = input.aUV;
 		        return output;
 	        }
@@ -49,7 +42,10 @@ namespace rush
 			@group(0) @binding(2) var myTexture : texture_2d<f32>;
 	        @fragment
 	        fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4<f32> {
-		        return textureSample(myTexture, mySampler, vUV);
+		        var color = textureSample(myTexture, mySampler, vUV);
+                color = pow(abs(color), vec4<f32>(2.2)); // to linear 
+                color = pow(abs(color), vec4<f32>(1.0/2.2)); // to gamma
+                return color;
 	        }
         )";
 
@@ -64,7 +60,7 @@ namespace rush
         pipeDesc.depthCompare = DepthCompareFunction::LessEqual;
 
         VertexAttribute vertAttrs[2];
-        vertAttrs[0].format = VertexFormat::Float32x2;
+        vertAttrs[0].format = VertexFormat::Float32x3;
         vertAttrs[0].offset = 0;
         vertAttrs[0].shaderLocation = 0;
         vertAttrs[1].format = VertexFormat::Float32x2;
@@ -72,7 +68,7 @@ namespace rush
         vertAttrs[1].shaderLocation = 1;
 
         auto& vLayout0 = pipeDesc.vertexLayouts.emplace_back();
-        vLayout0.stride = sizeof(float) * 2;
+        vLayout0.stride = sizeof(float) * 3;
         vLayout0.attributes = &vertAttrs[0];
         vLayout0.attributeCount = 1;
 
@@ -93,7 +89,7 @@ namespace rush
         Ref<BindingLayout> bindingLayout = CreateRef<BindingLayout>(l);
 
         Ref<RTexture> tex;
-        AssetsManager::instance().LoadTexture("assets/BasicClock3_S.jpg", [&](AssetLoadResult result, Ref<RTexture> texture, void* param) {
+        AssetsManager::instance().LoadTexture("assets/Bricks051_2K_Color.jpg", [&](AssetLoadResult result, Ref<RTexture> texture, void* param) {
             tex = texture;
         });
 

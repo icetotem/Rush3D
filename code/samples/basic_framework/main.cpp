@@ -27,8 +27,8 @@ int main(int argc, char* argv[])
 
     WindowDesc wndDesc;
     wndDesc.title = "RushDmeo";
-    wndDesc.width = 1280;
-    wndDesc.height = 900;
+    wndDesc.width = 1024;
+    wndDesc.height = 1024;
     wndDesc.alwaysTop = false;
     wndDesc.visible = false;
 

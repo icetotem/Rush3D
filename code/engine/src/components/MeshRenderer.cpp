@@ -16,15 +16,15 @@ namespace rush
 
     int MeshRenderer::AddPart()
     {
-        m_Parts.emplace_back();
-        return m_Parts.size() - 1;
+        m_Primitives.emplace_back();
+        return m_Primitives.size() - 1;
     }
 
-    MeshRenderer::Part* MeshRenderer::GetPart(int slot)
+    MeshRenderer::Primitive* MeshRenderer::GetPart(int slot)
     {
-        if (slot >= 0 && slot < m_Parts.size())
+        if (slot >= 0 && slot < m_Primitives.size())
         {
-            return &m_Parts[slot];
+            return &m_Primitives[slot];
         }
         else
         {
