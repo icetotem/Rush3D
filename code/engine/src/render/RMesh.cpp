@@ -79,6 +79,17 @@ namespace rush
                     // 你可以在这里遍历法线数据并使用它们
                 }
 
+                // 访问切线数据
+                if (primitive.attributes.find("TANGENT") != primitive.attributes.end()) {
+                    int tangentAccessorIdx = primitive.attributes.at("TANGENT");
+                    const tinygltf::Accessor& tangentAccessor = model.accessors[tangentAccessorIdx];
+                    const tinygltf::BufferView& tangentBufferView = model.bufferViews[tangentAccessor.bufferView];
+                    const tinygltf::Buffer& tangentBuffer = model.buffers[tangentBufferView.buffer];
+                    const float* tangents = reinterpret_cast<const float*>(&(tangentBuffer.data[tangentAccessor.byteOffset + tangentBufferView.byteOffset]));
+
+                    // 在这里访问切线数据（tangents）
+                }
+
                 // 访问纹理坐标数据
                 if (primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end()) {
                     int accessorIdx = primitive.attributes.at("TEXCOORD_0");
@@ -92,6 +103,26 @@ namespace rush
                     uint32_t size = numVertices * numComponents * sizeof(float);
                     texcoordBuffer = CreateRef<RVertexBuffer>(sizeof(float) * 2, size, "texcoord");
                     texcoordBuffer->UpdateData(vertexData, size);
+                }
+
+                // 访问骨骼索引和权重数据
+                if (primitive.attributes.find("JOINTS_0") != primitive.attributes.end() &&
+                    primitive.attributes.find("WEIGHTS_0") != primitive.attributes.end()) {
+                    int jointsAccessorIdx = primitive.attributes.at("JOINTS_0");
+                    int weightsAccessorIdx = primitive.attributes.at("WEIGHTS_0");
+
+                    const tinygltf::Accessor& jointsAccessor = model.accessors[jointsAccessorIdx];
+                    const tinygltf::Accessor& weightsAccessor = model.accessors[weightsAccessorIdx];
+                    const tinygltf::BufferView& jointsBufferView = model.bufferViews[jointsAccessor.bufferView];
+                    const tinygltf::BufferView& weightsBufferView = model.bufferViews[weightsAccessor.bufferView];
+                    const tinygltf::Buffer& jointsBuffer = model.buffers[jointsBufferView.buffer];
+                    const tinygltf::Buffer& weightsBuffer = model.buffers[weightsBufferView.buffer];
+
+                    const uint16_t* jointIndices = reinterpret_cast<const uint16_t*>(&(jointsBuffer.data[jointsAccessor.byteOffset + jointsBufferView.byteOffset]));
+                    const float* jointWeights = reinterpret_cast<const float*>(&(weightsBuffer.data[weightsAccessor.byteOffset + weightsBufferView.byteOffset]));
+
+                    // 在这里访问骨骼索引和权重数据
+                    // jointIndices 包含骨骼索引，jointWeights 包含权重数据
                 }
 
                 // 获取子网格的索引缓冲区
