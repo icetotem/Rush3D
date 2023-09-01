@@ -265,7 +265,7 @@ namespace rush
     void RTexture::UpdateData(const void* data, uint64_t size)
     {
         wgpu::Buffer stagingBuffer = CreateBufferFromData(RContex::device, data, size, wgpu::BufferUsage::CopySrc);
-        wgpu::ImageCopyBuffer imageCopyBuffer = CreateImageCopyBuffer(stagingBuffer, 0, size);
+        wgpu::ImageCopyBuffer imageCopyBuffer = CreateImageCopyBuffer(stagingBuffer, 0, size / m_Height);
         wgpu::ImageCopyTexture imageCopyTexture = CreateImageCopyTexture(*m_Texture, 0, {0, 0, 0});
         wgpu::Extent3D copySize = { m_Width, m_Height, m_Depth };
         wgpu::CommandEncoder encoder = RContex::device.CreateCommandEncoder();

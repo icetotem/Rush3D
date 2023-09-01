@@ -45,8 +45,8 @@ namespace rush
         )";
 
         static char const triangle_frag_wgsl[] = R"(
-        	@group(0) @binding(0) var mySampler : sampler;
-			@group(0) @binding(1) var myTexture : texture_2d<f32>;
+        	@group(0) @binding(1) var mySampler : sampler;
+			@group(0) @binding(2) var myTexture : texture_2d<f32>;
 	        @fragment
 	        fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4<f32> {
 		        return textureSample(myTexture, mySampler, vUV);
@@ -93,7 +93,7 @@ namespace rush
         Ref<BindingLayout> bindingLayout = CreateRef<BindingLayout>(l);
 
         Ref<RTexture> tex;
-        AssetsManager::instance().LoadTexture("assets/wave.png", [&](AssetLoadResult result, Ref<RTexture> texture, void* param) {
+        AssetsManager::instance().LoadTexture("assets/BasicClock3_S.jpg", [&](AssetLoadResult result, Ref<RTexture> texture, void* param) {
             tex = texture;
         });
 
