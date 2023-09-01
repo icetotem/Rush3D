@@ -116,7 +116,7 @@ namespace rush
         LOG_INFO("Found {} adapters:", adapters.size());
         int index = 1;
         bool found = false;
-        StringView adapterName;
+        StringView adapterName, backendName;
         std::vector<WGPUAdapterType> typePriority = std::vector<WGPUAdapterType>
         {
             WGPUAdapterType_DiscreteGPU,
@@ -135,7 +135,7 @@ namespace rush
             LOG_INFO(" -Driver: {}", properties.driverDescription);
             LOG_INFO(" -Adapter: {}", g_AdapterType[properties.adapterType]);
             LOG_INFO(" -Backend: {}", g_BackendTypeName[properties.backendType]);
-
+            backendName = g_BackendTypeName[properties.backendType];
             if (!found)
             {
                 for (auto reqType : typePriority)
@@ -157,7 +157,7 @@ namespace rush
         }
         else
         {
-            LOG_INFO("Select Adapter {}", adapterName);
+            LOG_INFO("Select Adapter {} {}", adapterName, backendName);
         }
 
         // get dawn procs
@@ -165,7 +165,22 @@ namespace rush
         dawnProcSetProcs(&procs);
 
         // create device
+        // request features when creating device
         WGPUDeviceDescriptor deviceDesc = {};
+        WGPUFeatureName required_features[2] = 
+        {
+            // for texture compression
+#if defined(RUSH_PLATFORM_WINDOWS)
+            WGPUFeatureName_TextureCompressionBC,
+#elif defined(RUSH_PLATFORM_ANDROID)
+            WGPUFeatureName_TextureCompressionETC2,
+#elif defined(RUSH_PLATFORM_MAC) || defined(RUSH_PLATFORM_IOS)
+            WGPUFeatureName_TextureCompressionASTC,
+#endif
+            WGPUFeatureName_BGRA8UnormStorage,
+        };
+        deviceDesc.requiredFeatureCount = (uint32_t)ARRAY_SIZE(required_features);
+        deviceDesc.requiredFeatures = required_features;
         auto device = RContex::adapter.CreateDevice(&deviceDesc);
         RContex::device = wgpu::Device::Acquire(device);
 
@@ -238,9 +253,9 @@ namespace rush
     void Renderer::GatherCaps()
     {
         // limits
-        LOG_INFO("\n---------------Limits-----------------");
+        LOG_INFO("---------------Limits-----------------");
         WGPUSupportedLimits limits = {};
-        if (m_Contex->adapter.GetLimits(&limits))
+        if (RContex::adapter.GetLimits(&limits))
         {
             memcpy(&m_Caps, &limits.limits, sizeof(WGPULimits));
 
@@ -278,7 +293,14 @@ namespace rush
             LOG_INFO("maxComputeWorkgroupSizeZ: {}", limits.limits.maxComputeWorkgroupSizeZ);
             LOG_INFO("maxComputeWorkgroupsPerDimension: {}", limits.limits.maxComputeWorkgroupsPerDimension);
         }
-        LOG_INFO("\n");
+
+        // features
+        LOG_INFO("---------------Adapter Features-----------------");
+        auto features = RContex::adapter.GetSupportedFeatures();
+        for (auto feature : features)
+        {
+            LOG_INFO("support: {}", feature);
+        }
     }
 
     Ref<RScreenQuad> Renderer::CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup)

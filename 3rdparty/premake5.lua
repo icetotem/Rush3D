@@ -36,6 +36,8 @@ project "Rush3D_Deps"
         path.join(DEP_DIR, "pugixml/**"),
         path.join(DEP_DIR, "bullet3/**"),
         path.join(DEP_DIR, "recast/**"),
+        path.join(DEP_DIR, "libsquish/*.h"),
+        path.join(DEP_DIR, "libsquish/*.cpp"),
         path.join(DEP_DIR, "glfw/include/GLFW/glfw3.h"),
         path.join(DEP_DIR, "glfw/include/GLFW/glfw3native.h"),
         path.join(DEP_DIR, "glfw/src/platform.c"),
@@ -67,6 +69,7 @@ project "Rush3D_Deps"
         path.join(DEP_DIR, "recast/DetourCrowd/include"),
         path.join(DEP_DIR, "recast/DetourTileCache/include"),
         path.join(DEP_DIR, "recast/Recast/include"),
+        path.join(DEP_DIR, "libsquish"),
     }
 
     filter "system:windows"

@@ -1,11 +1,51 @@
 #include "stdafx.h"
+
+// Define these only in *one* .cc file.
+#define TINYGLTF_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+// #define TINYGLTF_NOEXCEPTION // optional. disable exception handling.
+#undef STB_IMAGE_IMPLEMENTATION // already defined in RTexture.cpp
+#include <gltf/tiny_gltf.h>
+
 #include "render/RMesh.h"
+#include "BundleManager.h"
 
 namespace rush
 {
 
     bool RMesh::Load(const StringView& path)
     {
+        auto stream = BundleManager::instance().Get(path);
+        if (stream->IsEmpty())
+        {
+            return false;
+        }
+
+        using namespace tinygltf;
+
+        Model model;
+        TinyGLTF loader;
+        std::string err;
+        std::string warn;
+
+        bool ret = loader.LoadBinaryFromMemory(&model, &err, &warn, stream->GetData(), stream->GetSize());
+        if (!warn.empty()) 
+        {
+            LOG_WARN("Load glb Warning: {}", warn);
+        }
+
+        if (!err.empty())
+        {
+            LOG_WARN("Load glb Error: {}", err);
+        }
+
+        if (!ret)
+        {
+            LOG_WARN("Failed to parse glb: {}", path);
+            return false;
+        }
+
         auto& subMesh = subMeshes.emplace_back();
 
         // create the buffers (x, y)

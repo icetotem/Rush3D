@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 
         ent0.Add<MeshRenderer>();
         auto meshFilter = ent0.Add<MeshFilter>();
-        meshFilter->AddPart("assets/monkey.glb", "mat_name");
+        meshFilter->AddPart("mesh_name", "mat_name");
 
         auto bonding = ent0.Add<Bounding>();
     }
