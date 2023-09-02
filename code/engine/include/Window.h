@@ -47,7 +47,7 @@ namespace rush
         Ref<Renderer> GetRenderer() const { return m_Renderer; }
 
         bool ShouldClose() const;
-        void MessgeLoop();
+        static void MessgeLoop();
 
         void Show(bool show = true);
 

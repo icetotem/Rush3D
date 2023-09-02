@@ -1,6 +1,9 @@
 #ifndef Engine_h__
 #define Engine_h__
 
+#include <gainput/gainput.h>
+#include <gainput/GainputInputManager.h>
+
 #include "core/Common.h"
 #include "render/Renderer.h"
 #include "Window.h"
@@ -19,6 +22,11 @@ namespace rush
         AssetsManager m_AssetsManager;
         SceneManager m_SceneManager;
         RenderManager m_RenderManager;
+        gainput::InputManager m_InputManager;
+        gainput::DeviceId keyboardId;
+        gainput::DeviceId mouseId;
+        gainput::DeviceId padId;
+        gainput::DeviceId touchId;
 
     public:
         Engine();

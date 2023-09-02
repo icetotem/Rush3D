@@ -28,7 +28,7 @@ project "Sample_DrawTriangle"
 		path.join(ENGINE_DIR, "include"),
 		path.join(DEP_DIR, "dawn/inc"),
 		path.join(DEP_DIR, "spdlog/include"),
-		path.join(DEP_DIR, "glfw/include"),
+		path.join(DEP_DIR, "gainput/include"),
 	}
 
 	links
@@ -40,6 +40,10 @@ project "Sample_DrawTriangle"
 		libdirs
 		{
 			path.join(DEP_DIR, "dawn/lib/win/%{cfg.buildcfg}"),
+		}
+		links
+		{
+			"xinput"
 		}
 
 project "Sample_BasicFramework"
@@ -69,12 +73,16 @@ project "Sample_BasicFramework"
 		path.join(ENGINE_DIR, "include"),
 		path.join(DEP_DIR, "dawn/inc"),
 		path.join(DEP_DIR, "spdlog/include"),
-		path.join(DEP_DIR, "glfw/include"),
+		path.join(DEP_DIR, "gainput/include"),
 	}
 		
 	links
 	{
 		"Rush3D_Deps", "Rush3D_Engine", "dawn_native", "dawn_proc", "dawncpp"
+	}
+	links
+	{
+		"xinput"
 	}
 		
 	filter "system:windows"
@@ -110,7 +118,7 @@ project "Sample_LoadMesh"
 		path.join(ENGINE_DIR, "include"),
 		path.join(DEP_DIR, "dawn/inc"),
 		path.join(DEP_DIR, "spdlog/include"),
-		path.join(DEP_DIR, "glfw/include"),
+		path.join(DEP_DIR, "gainput/include"),
 	}
 		
 	links
@@ -122,4 +130,8 @@ project "Sample_LoadMesh"
 		libdirs
 		{
 			path.join(DEP_DIR, "dawn/lib/win/%{cfg.buildcfg}"),
+		}
+		links
+		{
+			"xinput"
 		}

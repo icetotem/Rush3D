@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
 
     while (window->ShouldClose())
     {
-        window->MessgeLoop();
+        Window::MessgeLoop();
         engine.Update();
         window->Present();
     }
