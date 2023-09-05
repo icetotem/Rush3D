@@ -46,6 +46,9 @@ namespace rush
         uint32_t GetWidth() const { return m_Width; }
         uint32_t GetHeight() const { return m_Height; }
 
+        uint32_t GetMouseX() const { return m_MouseX; }
+        uint32_t GetMouseY() const { return m_MouseY; }
+
         Ref<Renderer> GetRenderer() const { return m_Renderer; }
 
         bool ShouldClose() const;

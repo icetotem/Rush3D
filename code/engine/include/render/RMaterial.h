@@ -28,11 +28,14 @@ namespace rush
     public:
         virtual bool Load(const StringView& path) override;
 
+        static Ref<RUniformBuffer> GetGlobalUniformBuffer() { return s_GlobalUniformBuffer; }
+
     protected:
         friend class RenderManager;
 
         Ref<RMaterial> m_Material;
         Ref<RUniformBuffer> m_UniformBuffer;
+        static Ref<RUniformBuffer> s_GlobalUniformBuffer;
         Ref<RBindGroup> m_BindGroup;
     };
 

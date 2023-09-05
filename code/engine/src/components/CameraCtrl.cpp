@@ -49,9 +49,9 @@ namespace rush
         return _a * _b + _c;
     }
 
-    void CameraCtrlStandard::update(float _deltaTime, const IVector3& _mouseState, bool mouseDown, bool mouseUp, bool keys[CamCtrlCount])
+    void CameraCtrlStandard::update(float _deltaTime, const IVector3& _mouseState, bool mouseDown, bool keys[CamCtrlCount])
     {
-        if (mouseUp)
+        if (!mouseDown)
         {
             m_mouseLast.m_mx = _mouseState.x;
             m_mouseLast.m_my = _mouseState.y;

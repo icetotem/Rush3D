@@ -153,7 +153,10 @@ namespace rush
                 for (auto iter : rd->m_KeyCallbacks)
                 {
                     std::function<bool(InputButtonState, KeyCode)> function = iter;
-                    function(InputButtonState::Pressed, KeyCode(key));
+                    if (!function(InputButtonState::Pressed, KeyCode(key)))
+                    {
+                        break;
+                    }
                 }
                 break;
             }
@@ -162,7 +165,10 @@ namespace rush
                 for (auto iter : rd->m_KeyCallbacks)
                 {
                     std::function<bool(InputButtonState, KeyCode)> function = iter;
-                    function(InputButtonState::Released, KeyCode(key));
+                    if (!function(InputButtonState::Released, KeyCode(key)))
+                    {
+                        break;
+                    }
                 }
                 break;
             }
@@ -171,7 +177,10 @@ namespace rush
                 for (auto iter : rd->m_KeyCallbacks)
                 {
                     std::function<bool(InputButtonState, KeyCode)> function = iter;
-                    function(InputButtonState::Repeat, KeyCode(key));
+                    if (!function(InputButtonState::Repeat, KeyCode(key)))
+                    {
+                        break;
+                    }
                 }
                 break;
             }
@@ -184,7 +193,10 @@ namespace rush
             for (auto iter : rd->m_CharCallbacks)
             {
                 std::function<bool(uint16_t)> function = iter;
-                function(keycode);
+                if (!function(keycode))
+                {
+                    break;
+                }
             }
         });
 
@@ -198,7 +210,10 @@ namespace rush
                 for (auto iter : rd->m_MouseButtonCallbacks)
                 {
                     std::function<bool(InputButtonState, MouseCode, uint32_t mouseX, uint32_t mouseY)> function = iter;
-                    function(InputButtonState::Pressed, MouseCode(button), rd->m_MouseX, rd->m_MouseY);
+                    if (!function(InputButtonState::Pressed, MouseCode(button), rd->m_MouseX, rd->m_MouseY))
+                    {
+                        break;
+                    }
                 }
                 break;
             }
@@ -207,7 +222,10 @@ namespace rush
                 for (auto iter : rd->m_MouseButtonCallbacks)
                 {
                     std::function<bool(InputButtonState, MouseCode, uint32_t mouseX, uint32_t mouseY)> function = iter;
-                    function(InputButtonState::Released, MouseCode(button), rd->m_MouseX, rd->m_MouseY);
+                    if (!function(InputButtonState::Released, MouseCode(button), rd->m_MouseX, rd->m_MouseY))
+                    {
+                        break;
+                    }
                 }
                 break;
             }
@@ -220,7 +238,10 @@ namespace rush
             for (auto iter : rd->m_MouseWheelCallbacks)
             {
                 std::function<bool(uint32_t, uint32_t)> function = iter;
-                function((uint32_t)xOffset, (uint32_t)yOffset);
+                if (!function((uint32_t)xOffset, (uint32_t)yOffset))
+                {
+                    break;
+                }
             }
         });
 
@@ -230,7 +251,10 @@ namespace rush
             for (auto iter : rd->m_MouseMoveCallbacks)
             {
                 std::function<bool(uint32_t, uint32_t)> function = iter;
-                function((uint32_t)xPos, (uint32_t)yPos);
+                if (!function((uint32_t)xPos, (uint32_t)yPos))
+                {
+                    break;
+                }
             }
         });
 

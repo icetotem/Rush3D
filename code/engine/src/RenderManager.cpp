@@ -39,7 +39,7 @@ namespace rush
             if (iter == renderContents.end())
             {
                 content = CreateRef<RContent>();
-                renderContents.insert({cam, content });
+                renderContents.insert({ cam, content });
             }
             else
             {
@@ -47,6 +47,12 @@ namespace rush
             }
 
             RUSH_ASSERT(content != nullptr);
+
+            // update global uniforms
+            auto globalUniforms = RMaterialInst::GetGlobalUniformBuffer();
+
+            Matrix4 buff[] = { cam->GetViewMatrix(), cam->GetProjMatrix() };
+            globalUniforms->UpdateData(buff, sizeof(Matrix4) * 2);
 
             for (const auto& part : meshRdr.m_Primitives)
             {

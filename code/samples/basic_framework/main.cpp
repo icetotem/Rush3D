@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
 
     window->Show(true);
 
+    bool keyDown[CameraCtrlStandard::CamCtrlCount];
     window->BindKeyCallback([=](InputButtonState state, KeyCode code)->bool{
         if (state == InputButtonState::Pressed)
         {
@@ -52,6 +53,26 @@ int main(int argc, char* argv[])
             }
         }
         return false;
+    });
+
+    IVector3 mouseState;
+    bool mouseDown = false;
+    window->BindMouseButtonCallback([&](InputButtonState state, MouseCode code, uint32_t mouseX, uint32_t mouseY)->bool {
+        if (state == InputButtonState::Pressed && code == MouseCode::ButtonLeft)
+        {
+            mouseDown = true;
+        }
+        else if (state == InputButtonState::Released && code == MouseCode::ButtonLeft)
+        {
+            mouseDown = false;
+        }
+        return true;
+    });
+
+    window->BindMouseMoveCallback([&](uint32_t x, uint32_t y)->bool {
+        mouseState.x = x;
+        mouseState.y = y;
+        return true;
     });
 
     // create camera
@@ -93,8 +114,7 @@ int main(int argc, char* argv[])
         auto view = EcsSystem::registry.view<CameraCtrlStandard, Camera>();
         for (auto [EntityID, ctrl, camera] : view.each())
         {
-            //ctrl.update(Timer::GetDeltaTimeSec(), false);
-            
+            ctrl.update(Timer::GetDeltaTimeSec(), mouseState, mouseDown, keyDown);
         }
 
         window->Present();

@@ -24,7 +24,7 @@ namespace rush
 
         void OnInit() override;
 
-        void update(float deltaTime, const IVector3& mouseState, bool mouseDown, bool mouseUp, bool keys[CamCtrlCount]);
+        void update(float deltaTime, const IVector3& mouseState, bool mouseDown, bool keys[CamCtrlCount]);
 
     protected:
         void reset();

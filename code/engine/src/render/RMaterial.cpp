@@ -5,6 +5,8 @@
 namespace rush
 {
 
+    Ref<RUniformBuffer> RMaterialInst::s_GlobalUniformBuffer;
+
     bool RMaterial::Load(const StringView& path)
     {
 
@@ -24,14 +26,23 @@ namespace rush
 		        @location(0) vUV  : vec2<f32>,
 		        @builtin(position) Position : vec4<f32>
 	        }
-	        struct Rotation {
-		        @location(0) degs : f32
-	        }
-	        @group(0) @binding(0) var<uniform> uRot : Rotation;
+            struct GlobalUniforms {
+                @location(0) uView0 : vec4<f32>,
+                @location(1) uView1 : vec4<f32>,
+                @location(2) uView2 : vec4<f32>,
+                @location(3) uView3 : vec4<f32>,
+                @location(4) uProj0 : vec4<f32>,
+                @location(5) uProj1 : vec4<f32>,
+                @location(6) uProj2 : vec4<f32>,
+                @location(7) uProj3 : vec4<f32>
+            }
+	        @group(0) @binding(0) var<uniform> uGlobalUniforms : GlobalUniforms;
 	        @vertex
 	        fn main(input : VertexIn) -> VertexOut {
 		        var output : VertexOut;
-		        output.Position = vec4<f32>(input.aPos, 1.0);
+                var view = mat4x4<f32>(uGlobalUniforms.uView0, uGlobalUniforms.uView1, uGlobalUniforms.uView2, uGlobalUniforms.uView3);
+                var proj = mat4x4<f32>(uGlobalUniforms.uProj0, uGlobalUniforms.uProj1, uGlobalUniforms.uProj2, uGlobalUniforms.uProj3);
+		        output.Position = proj * view * vec4<f32>(input.aPos, 1.0);
 		        output.vUV = input.aUV;
 		        return output;
 	        }
@@ -98,13 +109,16 @@ namespace rush
         pipeDesc.frontFace = FrontFace::CCW;
         pipeDesc.cullModel = CullMode::Back;
 
-        float rotDeg = 0.0f;
-
-        auto uniformBuf = CreateRef<RUniformBuffer>(BufferUsage::Uniform, sizeof(rotDeg), "uniforms0");
-        uniformBuf->UpdateData(&rotDeg, sizeof(rotDeg));
+//         float rotDeg = 0.0f;
+//         auto uniformBuf = CreateRef<RUniformBuffer>(BufferUsage::Uniform, sizeof(rotDeg), "uniforms0");
+//         uniformBuf->UpdateData(&rotDeg, sizeof(rotDeg));
+        if (s_GlobalUniformBuffer == nullptr)
+        {   
+            s_GlobalUniformBuffer = CreateRef<RUniformBuffer>(BufferUsage::Uniform, sizeof(Matrix4) * 2, "GlobalUniforms");
+        }
 
         auto layout = { 
-            BindingInitializationHelper(0, uniformBuf),
+            BindingInitializationHelper(0, s_GlobalUniformBuffer),
             BindingInitializationHelper(1, CreateRef<RSampler>()),
             BindingInitializationHelper(2, tex)
         };
@@ -112,7 +126,7 @@ namespace rush
 
         m_Material = CreateRef<RMaterial>();
         m_Material->m_Pipeline = CreateRef<RPipeline>(pipeDesc, "pipeline_1");
-        m_UniformBuffer = uniformBuf;
+        m_UniformBuffer = nullptr;
         m_BindGroup = bindGroup;
 
         return true;
