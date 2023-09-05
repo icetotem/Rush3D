@@ -34,6 +34,5 @@ project "Rush3D_Engine"
 		path.join(DEP_DIR, "glfw/include"),
 		path.join(DEP_DIR, "json"),
 		path.join(DEP_DIR, "stb"),
-        path.join(DEP_DIR, "gainput/include"),
 	}
 

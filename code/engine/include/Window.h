@@ -1,6 +1,8 @@
 #ifndef Window_h__
 #define Window_h__
 
+#include "InputDefne.h"
+
 namespace rush
 {
 
@@ -51,7 +53,15 @@ namespace rush
 
         void Show(bool show = true);
 
+        void Close();
+
         void Present();
+
+        void BindKeyCallback(std::function<bool(InputButtonState, KeyCode)> callback);
+        void BindCharCallback(std::function<bool(uint16_t)> callback);
+        void BindMouseButtonCallback(std::function<bool(InputButtonState, MouseCode, uint32_t mouseX, uint32_t mouseY)> callback);
+        void BindMouseMoveCallback(std::function<bool(uint32_t mouseX, uint32_t mouseY)> callback);
+        void BindMouseWheelCallback(std::function<bool(uint32_t deltaH, uint32_t deltaV)> callback);
 
     protected:
         friend class Engine;
@@ -76,6 +86,15 @@ namespace rush
 
         WindowHandle m_Handle = nullptr;
         DisplayHandle m_Display = nullptr;
+
+        List<std::function<bool(InputButtonState, KeyCode)>> m_KeyCallbacks;
+        List<std::function<bool(uint16_t)>> m_CharCallbacks;
+        List<std::function<bool(InputButtonState, MouseCode, uint32_t mouseX, uint32_t mouseY)>> m_MouseButtonCallbacks;
+        List<std::function<bool(uint32_t mouseX, uint32_t mouseY)>> m_MouseMoveCallbacks;
+        List<std::function<bool(uint32_t deltaH, uint32_t deltaV)>> m_MouseWheelCallbacks;
+
+        uint32_t m_MouseX = 0;
+        uint32_t m_MouseY = 0;
     };
 
 }

@@ -15,6 +15,7 @@
 #include "components/Bounding.h"
 #include "components/Frustum.h"
 #include "components/MeshFilter.h"
+#include "components/CameraCtrl.h"
 
 using namespace rush;
 
@@ -42,7 +43,16 @@ int main(int argc, char* argv[])
 
     window->Show(true);
 
-
+    window->BindKeyCallback([=](InputButtonState state, KeyCode code)->bool{
+        if (state == InputButtonState::Pressed)
+        {
+            if (code == KeyCode::Escape)
+            {
+                window->Close();
+            }
+        }
+        return false;
+    });
 
     // create camera
     {
@@ -56,6 +66,8 @@ int main(int argc, char* argv[])
         cam->SetRenderer(window->GetRenderer());
 
         auto frustum = camEnt.Add<Frustum>();
+
+        auto ctrl = camEnt.Add<CameraCtrlStandard>();
 
     }
 
@@ -77,6 +89,14 @@ int main(int argc, char* argv[])
     {
         Window::MessgeLoop();
         engine.Update();
+
+        auto view = EcsSystem::registry.view<CameraCtrlStandard, Camera>();
+        for (auto [EntityID, ctrl, camera] : view.each())
+        {
+            //ctrl.update(Timer::GetDeltaTimeSec(), false);
+            
+        }
+
         window->Present();
     }
 
