@@ -29,12 +29,12 @@ namespace rush
         void SetClearDepth(float depth) { m_ClearDepth = depth; }
         float GetClearDepth() const { return m_ClearDepth; }
 
-        void UpdateFromViewMatrix(const Matrix4& viewMatrix);
+        void UpdateViewMatrix();
+        // for gizmos
+        void UpdateViewMatrix(const Matrix4& viewMatrix);
 
-        void UpdateMatrix();
-
-        Ray GetScreenCenterRay();
-        Ray GetScreenRay(int x, int y);
+        Ray GetScreenCenterRay() const;
+        Ray GetScreenRay(int x, int y) const;
 
         const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
         const Matrix4& GetProjMatrix() const { return m_ProjMatrix; }
@@ -45,10 +45,14 @@ namespace rush
         float GetFarClip() const { return m_FarClip; }
 
         // get real size in pixels
-        void GetViewSize(uint32_t& width, uint32_t& height);
+        void GetViewSize(uint32_t& width, uint32_t& height) const;
 
         // get left-top corner position in pixels
-        void GetViewCorner(uint32_t& x, uint32_t& y);
+        void GetViewCorner(uint32_t& x, uint32_t& y) const;
+
+    protected:
+        void UpdateProjMatrix();
+        void UpdateAspect();
 
     protected:
         Ref<Renderer> m_Renderer;

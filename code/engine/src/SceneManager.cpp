@@ -59,9 +59,6 @@ namespace rush
             auto view = EcsSystem::registry.view<Camera, Frustum, Transform>();
             for (auto [entity, camera, frustm, transform] : view.each())
             {
-                // update camera
-                camera.UpdateMatrix();
-
                 // update frustums
                 const auto& position = transform.GetPosition();
                 const auto& front = transform.GetForward();

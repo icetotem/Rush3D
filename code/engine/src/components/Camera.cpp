@@ -8,66 +8,62 @@ namespace rush
     Camera::Camera(Entity owner)
         : Component(owner)
         , m_Fov(60.0f), m_Aspect(1.33333f), m_NearClip(0.1f), m_FarClip(1000.0f)
-        , m_ProjMatrix(glm::identity<Matrix4>())
-        , m_ViewMatrix(glm::identity<Matrix4>())
     {
+        UpdateProjMatrix();
+        UpdateViewMatrix();
     }
 
     void Camera::SetRenderer(Ref<Renderer> renderer)
     {
         m_Renderer = renderer;
-        uint32_t width, height;
-        GetViewSize(width, height);
-        m_Aspect = (float)width / (float)height;
+        UpdateAspect();
     }
 
     void Camera::SetFov(float fov)
     {
         m_Fov = fov;
+        UpdateProjMatrix();
     }
 
     void Camera::SetClip(float nearClip, float farClip)
     {
         m_NearClip = nearClip;
         m_FarClip = farClip;
+        UpdateProjMatrix();
     }
 
     void Camera::SetViewport(float x, float y, float width, float height)
     {
         m_Viewport = { x, y, width, height };
-        uint32_t rtWidth, rtHeight;
-        GetViewSize(rtWidth, rtHeight);
+        UpdateAspect();
+    }
+
+    void Camera::UpdateAspect()
+    {
+        uint32_t width, height;
+        GetViewSize(width, height);
         m_Aspect = (float)width / (float)height;
+        UpdateProjMatrix();
     }
 
-    void Camera::GetViewSize(uint32_t& width, uint32_t& height)
+    void Camera::UpdateProjMatrix()
     {
-        width = m_Renderer->GetWidth() * (m_Viewport.z - m_Viewport.x);
-        height = m_Renderer->GetHeight() * (m_Viewport.w - m_Viewport.y);
+        m_ProjMatrix = glm::perspective(degToRad(m_Fov), m_Aspect, m_NearClip, m_FarClip);
     }
 
-    void Camera::GetViewCorner(uint32_t& x, uint32_t& y)
-    {
-        x = m_Renderer->GetWidth() * m_Viewport.x;
-        y = m_Renderer->GetHeight() * m_Viewport.y;
-    }
-
-    void Camera::UpdateMatrix()
+    void Camera::UpdateViewMatrix()
     {
         auto transform = Get<Transform>();
         const Vector3& eyePoint = transform->GetPosition();
         Vector3 lookPoint = transform->GetPosition() + transform->GetForward();
         const Vector3& camUp = transform->GetUp();
         m_ViewMatrix = glm::lookAt(eyePoint, lookPoint, camUp);
-
-        uint32_t rtWidth, rtHeight;
-        GetViewSize(rtWidth, rtHeight);
-        m_ProjMatrix = glm::perspectiveRH(m_Fov, m_Aspect, m_NearClip, m_FarClip);
     }
 
-    void Camera::UpdateFromViewMatrix(const Matrix4& viewMatrix)
+    void Camera::UpdateViewMatrix(const Matrix4& viewMatrix)
     {
-        auto invView = glm::inverse(viewMatrix);
+        m_ViewMatrix = viewMatrix;
+        auto invView = glm::inverse(m_ViewMatrix);
         Vector3 eyePoint = Vector3(invView[3][0], invView[3][1], invView[3][2]);
         auto transform = Get<Transform>();
         transform->SetPosition(eyePoint);
@@ -75,7 +71,7 @@ namespace rush
         transform->LookAt(eyePoint + forward);
     }
 
-    Ray Camera::GetScreenCenterRay()
+    Ray Camera::GetScreenCenterRay() const
     {
         Ray ray;
         auto transform = Get<Transform>();
@@ -84,7 +80,7 @@ namespace rush
         return ray;
     }
 
-    Ray Camera::GetScreenRay(int x, int y)
+    Ray Camera::GetScreenRay(int x, int y) const
     {
         uint32_t screenWidth, screenHeight;
         GetViewSize(screenWidth, screenHeight);
@@ -105,5 +101,23 @@ namespace rush
         return ray;
     }
 
+    void Camera::GetViewSize(uint32_t& width, uint32_t& height) const
+    {
+        if (m_Renderer)
+        {
+            width = m_Renderer->GetWidth() * (m_Viewport.z - m_Viewport.x);
+            height = m_Renderer->GetHeight() * (m_Viewport.w - m_Viewport.y);
+        }
+        else
+        {
+            width = 0;
+            height = 0;
+        }
+    }
 
+    void Camera::GetViewCorner(uint32_t& x, uint32_t& y) const
+    {
+        x = m_Renderer->GetWidth() * m_Viewport.x;
+        y = m_Renderer->GetHeight() * m_Viewport.y;
+    }
 }

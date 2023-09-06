@@ -92,7 +92,7 @@ namespace rush
     {
         m_Forward = glm::rotate(m_Rotation, Vector3(0, 0, 1));
         m_Up = glm::rotate(m_Rotation, Vector3(0, 1, 0));
-        m_Left = glm::rotate(m_Rotation, Vector3(1, 0, 0));
+        m_Left = glm::rotate(m_Rotation, Vector3(-1, 0, 0));
     }
 
     inline void Transform::UpdateWorldMatrix()
