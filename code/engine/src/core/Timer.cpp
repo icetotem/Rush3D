@@ -17,6 +17,9 @@ namespace rush
     float Timer::m_FrameCPUTime_C = 0;
     float Timer::m_FrameTimePeriod_C = 0;
 
+    float Timer::m_DetalMin = 0.001f;
+    float Timer::m_DetalMax = 0.1f;
+
 	std::list<Timer::DelayCallback> Timer::s_DelayCallbacks;
 
 	void Timer::Tick()
@@ -56,7 +59,12 @@ namespace rush
 		}
 	}
 
-	double Timer::GetTimeSec()
+    void Timer::SetDeltaTimeClamp(float _min, float _max)
+    {
+
+    }
+
+    double Timer::GetTimeSec()
 	{
 		auto now = std::chrono::system_clock::now();
 		uint64_t dis_seconds = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
@@ -79,7 +87,7 @@ namespace rush
 
 	double Timer::GetDeltaTimeMs()
 	{
-		return (double)m_DeltaTime;
+		return glm::clamp<double>((double)m_DeltaTime, m_DetalMin * 1000.0, m_DetalMax * 1000.0);
 	}
 
 	double Timer::GetDeltaTimeSec()

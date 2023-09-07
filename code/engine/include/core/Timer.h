@@ -9,6 +9,8 @@ namespace rush
 	public:
 		static void Tick();
 
+		static void SetDeltaTimeClamp(float _min, float _max);
+
 		static double GetTimeMicro();
 		static double GetTimeMill();
 		static double GetTimeSec();
@@ -44,6 +46,9 @@ namespace rush
         static float m_FrameGPUTime_C;
         static float m_FrameCPUTime_C;
         static float m_FrameTimePeriod_C;
+
+        static float m_DetalMin;
+        static float m_DetalMax;
 
 		struct DelayCallback
 		{

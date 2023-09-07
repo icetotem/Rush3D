@@ -33,9 +33,9 @@ namespace rush
 
     void Engine::Update()
     {
+        Timer::Tick();
         m_SceneManager.Update();
         m_RenderManager.Update();
-
         Entity::ClearRecycle();
     }
 

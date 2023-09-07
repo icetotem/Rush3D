@@ -79,6 +79,9 @@ int main(int argc, char* argv[])
     {
         Window::MessgeLoop();
         engine.Update();
+
+        firstPersonCtrl.Update();
+
         window->Present();
     }
 

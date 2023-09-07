@@ -14,8 +14,10 @@ namespace rush
 
         void Setup(Ref<Window> window, Entity camera);
 
+        void Update();
+
     public:
-        float m_MoveSpeed = 3.0f;
+        float m_MoveSpeed = 5.0f;
         float m_OrbitSpeed = 5.0f;
         float m_ZoomSpeed = 7.0f;
 
@@ -35,6 +37,7 @@ namespace rush
         float m_Distance = 0;
         int m_LastMouseX = 0;
         int m_LastMouseY = 0;
+        bool m_BoostMove = false;
     };
 
 }

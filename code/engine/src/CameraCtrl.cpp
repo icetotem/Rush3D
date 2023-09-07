@@ -16,27 +16,33 @@ namespace rush
         m_Camera = camera;
 
         window->BindKeyCallback([=](InputButtonState state, KeyCode code)->bool {
-            if (state == InputButtonState::Pressed)
+            if (code == KeyCode::A)
             {
-                camera.Get<Camera>();
-                if (code == KeyCode::A)
-                {
-                }
-                else if (code == KeyCode::S)
-                {
-                }
-                else if (code == KeyCode::D)
-                {
-                }
-                else if (code == KeyCode::W)
-                {
-                }
-                else if (code == KeyCode::Q)
-                {
-                }
-                else if (code == KeyCode::E)
-                {
-                }
+                m_MovingLeft = (state != InputButtonState::Released);
+            }
+            else if (code == KeyCode::S)
+            {
+                m_MovingBackward = (state != InputButtonState::Released);
+            }
+            else if (code == KeyCode::D)
+            {
+                m_MovingRight = (state != InputButtonState::Released);
+            }
+            else if (code == KeyCode::W)
+            {
+                m_MovingForward = (state != InputButtonState::Released);
+            }
+            else if (code == KeyCode::Q)
+            {
+                m_MovingDown = (state != InputButtonState::Released);
+            }
+            else if (code == KeyCode::E)
+            {
+                m_MovingUp = (state != InputButtonState::Released);
+            }
+            else if (code == KeyCode::LeftShift)
+            {
+                m_BoostMove = (state != InputButtonState::Released);
             }
             return false;
         });
@@ -62,10 +68,50 @@ namespace rush
             return false;
         });
 
-        window->BindMouseWheelCallback([&](uint32_t v, uint32_t h)->bool {
-            Zoom(v);
+        window->BindMouseWheelCallback([&](uint32_t delta)->bool {
+            Zoom(delta);
             return false;
         });
+    }
+
+    void CameraCtrlFirstPerson::Update()
+    {
+        double deltaSec = Timer::GetDeltaTimeSec();
+        float delta = deltaSec * m_MoveSpeed * (m_BoostMove ? 2.0f : 1.0f);
+        auto transform = m_Camera.Get<Transform>();
+
+        if (m_MovingLeft)
+        {
+            transform->Translate({ -delta, 0, 0 });
+        }
+
+        if (m_MovingRight)
+        {
+            transform->Translate({ delta, 0, 0 });
+        }
+
+        if (m_MovingForward)
+        {
+            transform->Translate({ 0, 0, delta });
+        }
+
+        if (m_MovingBackward)
+        {
+            transform->Translate({ 0, 0, -delta });
+        }
+
+        if (m_MovingUp)
+        {
+            transform->Translate({ 0, delta, 0 }, Space::World);
+        }
+
+        if (m_MovingDown)
+        {
+            transform->Translate({ 0, -delta, 0 }, Space::World);
+        }
+
+        auto camera = m_Camera.Get<Camera>();
+        camera->UpdateViewMatrix();
     }
 
     void CameraCtrlFirstPerson::OnMouseMove(int x, int y)
@@ -95,17 +141,15 @@ namespace rush
             }
 
             const auto& deltaYaw = glm::angleAxis(degToRad(deltaX), yAxis);
-            const auto& deltaPitch = glm::angleAxis(degToRad(deltaY), transform->GetLeft());
+            const auto& deltaPitch = glm::angleAxis(degToRad(deltaY), transform->GetRight());
 
-            auto towardsCam = -transform->GetForward();
-            towardsCam = glm::rotate(deltaPitch * deltaYaw, towardsCam);
-
-            auto right = glm::normalize(glm::cross(yAxis, -towardsCam));
-
-            auto newRot = quatFromXZ(right, -towardsCam);
-
+            auto forward = transform->GetForward();
+            forward = glm::rotate(deltaPitch * deltaYaw, forward);
+            auto right = glm::normalize(glm::cross(yAxis, forward));
+            auto newRot = quatFromXZ(right, forward);
             transform->SetRotation(newRot);
 
+            // update camera view matrix
             auto camera = m_Camera.Get<Camera>();
             camera->UpdateViewMatrix();
         }

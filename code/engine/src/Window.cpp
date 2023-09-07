@@ -237,8 +237,8 @@ namespace rush
             Window* rd = (Window*)glfwGetWindowUserPointer(window);
             for (auto iter : rd->m_MouseWheelCallbacks)
             {
-                std::function<bool(uint32_t, uint32_t)> function = iter;
-                if (!function((uint32_t)xOffset, (uint32_t)yOffset))
+                std::function<bool(uint32_t)> function = iter;
+                if (!function((uint32_t)yOffset))
                 {
                     break;
                 }
@@ -313,7 +313,7 @@ namespace rush
         m_MouseMoveCallbacks.push_back(callback);
     }
 
-    void Window::BindMouseWheelCallback(std::function<bool(uint32_t deltaH, uint32_t deltaV)> callback)
+    void Window::BindMouseWheelCallback(std::function<bool(uint32_t delta)> callback)
     {
         m_MouseWheelCallbacks.push_back(callback);
     }

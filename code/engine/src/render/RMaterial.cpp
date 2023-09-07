@@ -65,10 +65,10 @@ namespace rush
 
         PipelineDesc pipeDesc = {};
         pipeDesc.depthWrite = true;
-        pipeDesc.depthTest = false;
+        pipeDesc.depthTest = true;
         pipeDesc.colorFormat = TextureFormat::BGRA8Unorm;
         pipeDesc.depthStencilFormat = TextureFormat::Depth24PlusStencil8;
-        pipeDesc.depthCompare = DepthCompareFunction::LessEqual;
+        pipeDesc.depthCompare = DepthCompareFunction::Less;
 
         VertexAttribute vertAttrs[2];
         vertAttrs[0].format = VertexFormat::Float32x3;
@@ -106,7 +106,7 @@ namespace rush
 
         pipeDesc.bindLayout = bindingLayout;
         pipeDesc.primitiveType = PrimitiveType::TriangleList;
-        pipeDesc.frontFace = FrontFace::CCW;
+        pipeDesc.frontFace = FrontFace::CW;
         pipeDesc.cullModel = CullMode::Back;
 
 //         float rotDeg = 0.0f;
