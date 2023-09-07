@@ -23,6 +23,7 @@ project "Rush3D_Deps"
         path.join(DEP_DIR, "glm/**"),
         path.join(DEP_DIR, "gltf/**"),
         path.join(DEP_DIR, "json/**"),
+        path.join(DEP_DIR, "toml/**"),
         path.join(DEP_DIR, "LuaBridge/**"),
         path.join(DEP_DIR, "mio/**"),
         path.join(DEP_DIR, "spdlog/**"),

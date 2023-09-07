@@ -33,6 +33,7 @@ project "Rush3D_Engine"
 		path.join(DEP_DIR, "spdlog/include"),
 		path.join(DEP_DIR, "glfw/include"),
 		path.join(DEP_DIR, "json"),
+		path.join(DEP_DIR, "toml"),
 		path.join(DEP_DIR, "stb"),
 	}
 
