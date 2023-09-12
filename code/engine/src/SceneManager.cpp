@@ -116,7 +116,7 @@ namespace rush
                     {
                         Entity ent = Entity::Find(entity2);
                         auto flag = ent.Add<InFrustumFlag>();
-                        flag->m_ByCamera = Entity::Find(entity1);
+                        flag->camera = Entity::Find(entity1);
                     }
                 }
             }

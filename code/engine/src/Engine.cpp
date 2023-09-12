@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Engine.h"
-#include "render/Renderer.h"
+#include "render/RenderContex.h"
 #include "version.h"
 #include "components/EcsSystem.h"
 
@@ -27,7 +27,7 @@ namespace rush
     {
         auto window = Window::Construct();
         window->Create(desc);
-        window->m_Renderer = Renderer::Construct(window, rendererDesc);
+        window->m_Renderer = RenderContex::Construct(window, rendererDesc);
         return window;
     }
 

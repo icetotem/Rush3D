@@ -30,16 +30,16 @@ namespace rush
         Ref<RTexture> GetDepthStencilTexture() const { return m_DepthStencilTexture; }
 
     private:
-        friend class Renderer;
+        friend class RenderContex;
 
         uint32_t m_FrameBufferWidth;
         uint32_t m_FrameBufferHeight;
 
         Ref<RTexture> m_ColorTexture;
         Ref<RTexture> m_DepthStencilTexture;
-        Ref<wgpu::RenderPassDescriptor> m_RenderPassDesc;
-        Ref<wgpu::RenderPassColorAttachment> m_ColorAttachment;
-        Ref<wgpu::RenderPassDepthStencilAttachment> m_DepthStencilAttachment;
+        wgpu::RenderPassDescriptor m_RenderPassDesc;
+        wgpu::RenderPassColorAttachment m_ColorAttachment;
+        wgpu::RenderPassDepthStencilAttachment m_DepthStencilAttachment;
     };
 
 }

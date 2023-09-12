@@ -1,22 +1,18 @@
 #include "stdafx.h"
 
-#include <dawn/webgpu_cpp.h>
-
 #include "render/RTexture.h"
-#include "RContex.h"
 #include "BundleManager.h"
 #include "ImageCodec.h"
+#include "render/RenderContex.h"
 
 namespace rush
 {
-    extern wgpu::TextureFormat g_WGPUTextureFormat[(int)TextureFormat::Count];
-    extern wgpu::TextureDimension g_TextureDimension[(int)TextureDimension::Count];
 
     RSampler::RSampler(const char* lable)
     {
         wgpu::SamplerDescriptor desc = {};
         desc.label = lable;
-        m_Sampler = CreateRef<wgpu::Sampler>(RContex::device.CreateSampler(&desc));
+        m_Sampler = RenderContex::device.CreateSampler(&desc);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -76,7 +72,7 @@ namespace rush
         m_Depth = depth;
         m_Mips = mips;
         m_Format = format;
-        m_Dim = TextureDimension::Texture2D;
+        m_Dim = TextureDimension::e2D;
         wgpu::TextureDescriptor descriptor;
         descriptor.dimension = wgpu::TextureDimension::e2D;
         descriptor.size.width = m_Width;
@@ -86,7 +82,7 @@ namespace rush
         descriptor.format =  wgpu::TextureFormat::BGRA8Unorm;
         descriptor.mipLevelCount = m_Mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
-        m_Texture = CreateRef<wgpu::Texture>(RContex::device.CreateTexture(&descriptor));
+        m_Texture = RenderContex::device.CreateTexture(&descriptor);
     }
 
     RTexture::RTexture()
@@ -115,11 +111,11 @@ namespace rush
 
         m_Width = rawData.width;
         m_Height = rawData.height;
-        m_Dim = TextureDimension::Texture2D;
+        m_Dim = TextureDimension::e2D;
         m_Depth = 1;
         m_Mips = 1;
 
-        if (m_Dim == TextureDimension::Texture2D)
+        if (m_Dim == TextureDimension::e2D)
         {
             if (compress)
             {
@@ -138,15 +134,15 @@ namespace rush
 
         wgpu::TextureDescriptor descriptor;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
-        descriptor.dimension = g_TextureDimension[(int)m_Dim];
+        descriptor.dimension = m_Dim;
         descriptor.size.width = m_Width;
         descriptor.size.height = m_Height;
         descriptor.size.depthOrArrayLayers = m_Depth;
         descriptor.sampleCount = 1;
-        descriptor.format = g_WGPUTextureFormat[(int)m_Format];
+        descriptor.format = m_Format;
         descriptor.mipLevelCount = m_Mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
-        m_Texture = CreateRef<wgpu::Texture>(RContex::device.CreateTexture(&descriptor));
+        m_Texture = RenderContex::device.CreateTexture(&descriptor);
 
         if (compress)
         {
@@ -169,14 +165,14 @@ namespace rush
 
     void RTexture::UpdateData(const void* data, uint64_t size)
     {
-        wgpu::Buffer stagingBuffer = CreateBufferFromData(RContex::device, data, size, wgpu::BufferUsage::CopySrc);
+        wgpu::Buffer stagingBuffer = CreateBufferFromData(RenderContex::device, data, size, wgpu::BufferUsage::CopySrc);
         wgpu::ImageCopyBuffer imageCopyBuffer = CreateImageCopyBuffer(stagingBuffer, 0, m_Width * 4); // TODO: calculate bytesPerRow
-        wgpu::ImageCopyTexture imageCopyTexture = CreateImageCopyTexture(*m_Texture, 0, {0, 0, 0});
+        wgpu::ImageCopyTexture imageCopyTexture = CreateImageCopyTexture(m_Texture, 0, {0, 0, 0});
         wgpu::Extent3D copySize = { m_Width, m_Height, m_Depth };
-        wgpu::CommandEncoder encoder = RContex::device.CreateCommandEncoder();
+        wgpu::CommandEncoder encoder = RenderContex::device.CreateCommandEncoder();
         encoder.CopyBufferToTexture(&imageCopyBuffer, &imageCopyTexture, &copySize);
         wgpu::CommandBuffer copy = encoder.Finish();
-        RContex::queue.Submit(1, &copy);
+        RenderContex::queue.Submit(1, &copy);
     }
 
 }

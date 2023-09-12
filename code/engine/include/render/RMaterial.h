@@ -15,7 +15,7 @@ namespace rush
         virtual bool Load(const StringView& path) override;
 
     protected:
-        friend class RenderManager;
+        friend class SceneRenderer;
         friend class RMaterialInst;
 
         Ref<RPipeline> m_Pipeline;
@@ -31,7 +31,7 @@ namespace rush
         static Ref<RUniformBuffer> GetGlobalUniformBuffer() { return s_GlobalUniformBuffer; }
 
     protected:
-        friend class RenderManager;
+        friend class SceneRenderer;
 
         Ref<RMaterial> m_Material;
         Ref<RUniformBuffer> m_UniformBuffer;

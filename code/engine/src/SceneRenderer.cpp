@@ -1,52 +1,55 @@
 #include "stdafx.h"
-#include "RenderManager.h"
+#include "SceneRenderer.h"
 #include "components/Camera.h"
 #include "components/MeshRenderer.h"
 #include "components/CommonComponents.h"
 #include "render/RMaterial.h"
+#include "render/fg/FrameGraph.hpp"
+#include "render/fg/Blackboard.hpp"
 
 namespace rush
 {   
 
-    RenderManager::RenderManager()
+    SceneRenderer::SceneRenderer()
     {
 
     }
 
-    RenderManager::~RenderManager()
+    SceneRenderer::~SceneRenderer()
     {
 
     }
 
-    void RenderManager::Init()
+    void SceneRenderer::Init()
     {
-        Renderer::Init(RenderBackend::D3D12);
+        RenderContex::Init(BackendType::D3D12);
     }
 
-    void RenderManager::Update()
+    void SceneRenderer::Update()
     {
-        HMap<Camera*, Ref<RContent>> renderContents;
+        HMap<Camera*, Ref<RenderableHub>> renderContents;
 
         // fetch culled results
         auto view = EcsSystem::registry.view<InFrustumFlag, MeshRenderer>();
         for (auto [entity, flag, meshRdr] : view.each())
         {
             Entity ent = Entity::Find(entity);
-            auto cam = flag.m_ByCamera.Get<Camera>();
+            auto cam = flag.camera.Get<Camera>();
             auto renderer = cam->GetRenderer();
             auto iter = renderContents.find(cam);
-            Ref<RContent> content;
+            Ref<RenderableHub> contex;
             if (iter == renderContents.end())
             {
-                content = CreateRef<RContent>();
-                renderContents.insert({ cam, content });
+                contex = CreateRef<RenderableHub>();
+                contex->camera = flag.camera;
+                renderContents.insert({ cam, contex });
             }
             else
             {
-                content = iter->second;
+                contex = iter->second;
             }
 
-            RUSH_ASSERT(content != nullptr);
+            RUSH_ASSERT(contex != nullptr);
 
             // update global uniforms
             auto globalUniforms = RMaterialInst::GetGlobalUniformBuffer();
@@ -56,7 +59,7 @@ namespace rush
 
             for (const auto& part : meshRdr.m_Primitives)
             {
-                auto batch = content->NewBatch();
+                auto batch = contex->NewBatch();
                 batch->indexBuffer = part.indexBuffer;
                 batch->vertexBuffers = part.vertexBuffers;
                 batch->pipeline = part.material->m_Material->m_Pipeline;
@@ -71,12 +74,21 @@ namespace rush
             renderer->BeginDraw(cam->GetViewport());
             renderer->DrawFinalPass(content);
             renderer->EndDraw();
+
+//             FrameGraph fg;
+//             FrameGraphBlackboard blackboard;
+// 
+//             EarlyZPass{ fg, blackboard };
+//             RenderScenePass{ fg, blackboard };
+// 
+//             fg.compile();
+//             fg.execute(&content);
         }
     }
 
-    void RenderManager::Shutdown()
+    void SceneRenderer::Shutdown()
     {
-        Renderer::Shutdown();
+        RenderContex::Shutdown();
     }
 
 }

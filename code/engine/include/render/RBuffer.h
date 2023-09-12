@@ -7,57 +7,84 @@
 namespace rush
 {
 
-    /// <summary>
-    /// RBuffer
-    /// </summary>
-    class RVertexBuffer
+    //////////////////////////////////////////////////////////////////////////
+
+    class RBuffer
     {
     public:
-        RVertexBuffer(uint32_t stride, uint64_t size, const char* lable);
+        virtual ~RBuffer() = default;
+        RBuffer(const RBuffer&) = delete;
+        RBuffer& operator=(const RBuffer&) = delete;
 
-        ~RVertexBuffer() = default;
+        const wgpu::Buffer& GetBuffer() const { return m_Buffer; }
 
-        void UpdateData(const void* data, uint64_t size, uint64_t startVertex = 0);
+        void UpdateData(const void* data, uint64_t size, uint64_t offset = 0);
 
-        uint64_t GetCount() const { return m_Count; }
+    protected:
+        RBuffer(wgpu::BufferUsage usage, uint64_t size, const void* data, const char* lable);
+
+    protected:
+        friend class RenderContex;
+        uint64_t m_Size = 0;
+        wgpu::Buffer m_Buffer;
+    };
+
+    //////////////////////////////////////////////////////////////////////////
+
+    class RUniformBuffer : public RBuffer
+    {
+    public:
+        RUniformBuffer(uint64_t size, const void* data = nullptr, const char* lable = nullptr);
+
+    };
+
+    //////////////////////////////////////////////////////////////////////////
+    class RStorageBuffer : public RBuffer
+    {
+    public:
+        RStorageBuffer(uint64_t size, const void* data = nullptr, const char* lable = nullptr);
+
+    };
+
+    //////////////////////////////////////////////////////////////////////////
+
+    class RVertexBuffer : public RBuffer
+    {
+    public:
+        RVertexBuffer(uint32_t stride, uint64_t size, const void* data = nullptr, const char* lable = nullptr);
+
+        uint64_t GetVertCount() const { return m_VertCount; }
 
         uint32_t GetStride() const { return m_Stride; }
 
         uint64_t GetSize() const { return m_Size; }
 
     protected:
-        friend class Renderer;
+        friend class RenderContex;
 
-        uint64_t m_Count = 0;
+        uint64_t m_VertCount = 0;
         uint32_t m_Stride = 0;
-        uint64_t m_Size = 0;
-
-        Ref<wgpu::Buffer> m_Buffer;
     };
 
-    class RIndexBuffer
+
+    //////////////////////////////////////////////////////////////////////////
+
+    class RIndexBuffer : public RBuffer
     {
     public:
-        RIndexBuffer(uint64_t count, bool use32bits, const char* lable);
+        RIndexBuffer(uint64_t count, IndexFormat type, const void* data = nullptr, const char* lable = nullptr);
 
-        ~RIndexBuffer() = default;
+        IndexFormat GetType() const { return m_Type; }
 
-        void UpdateData(const void* data, uint64_t size, uint32_t startIndex = 0);
-
-        bool Is32Bits() const { return m_Use32Bits; }
-
-        uint64_t GetCount() const { return m_Count; }
+        uint64_t GetIndexCount() const { return m_IndexCount; }
 
         uint64_t GetSize() const { return m_Size; }
 
     protected:
-        friend class Renderer;
+        friend class RenderContex;
 
-        uint64_t m_Count = 0;
-        uint64_t m_Size = 0;
-        bool m_Use32Bits = 0;
-
-        Ref<wgpu::Buffer> m_Buffer;
+        uint64_t m_IndexCount = 0;
+        IndexFormat m_Type = IndexFormat::Uint16;
     };
 
 }

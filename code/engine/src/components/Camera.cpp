@@ -13,7 +13,7 @@ namespace rush
         UpdateViewMatrix();
     }
 
-    void Camera::SetRenderer(Ref<Renderer> renderer)
+    void Camera::SetRenderer(Ref<RenderContex> renderer)
     {
         m_Renderer = renderer;
         UpdateAspect();

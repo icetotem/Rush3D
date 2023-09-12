@@ -64,8 +64,7 @@ namespace rush
                     int numVertices = accessor.count;
                     int numComponents = accessor.type == TINYGLTF_TYPE_VEC3 ? 3 : 2; // 2 for texture coordinates, 3 for positions
                     uint32_t size = numVertices * numComponents * sizeof(float);
-                    positionBuffer = CreateRef<RVertexBuffer>(sizeof(float) * 3, size, "position");
-                    positionBuffer->UpdateData(vertexData, size);
+                    positionBuffer = CreateRef<RVertexBuffer>(sizeof(float) * 3, size, vertexData, "position");
                 }
 
                 // 访问法线数据
@@ -101,8 +100,7 @@ namespace rush
                     int numVertices = accessor.count;
                     int numComponents = accessor.type == TINYGLTF_TYPE_VEC3 ? 3 : 2; // 2 for texture coordinates, 3 for positions
                     uint32_t size = numVertices * numComponents * sizeof(float);
-                    texcoordBuffer = CreateRef<RVertexBuffer>(sizeof(float) * 2, size, "texcoord");
-                    texcoordBuffer->UpdateData(vertexData, size);
+                    texcoordBuffer = CreateRef<RVertexBuffer>(sizeof(float) * 2, size, vertexData, "texcoord");
                 }
 
                 // 访问骨骼索引和权重数据
@@ -135,8 +133,7 @@ namespace rush
                     const uint16_t* indices = reinterpret_cast<const uint16_t*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
                     int numIndices = accessor.count;
 
-                    indexBuffer = CreateRef<RIndexBuffer>(numIndices, false, "index");
-                    indexBuffer->UpdateData(indices, numIndices * sizeof(uint16_t));
+                    indexBuffer = CreateRef<RIndexBuffer>(numIndices, IndexFormat::Uint16, indices, "index");
                 }
             }
         }

@@ -12,8 +12,8 @@ namespace rush
     struct BlendState
     {
         BlendOperation opColor = BlendOperation::Add;
-        BlendFactor srcColor = BlendFactor::SrcColor;
-        BlendFactor dstColor = BlendFactor::DstColor;
+        BlendFactor srcColor = BlendFactor::Src;
+        BlendFactor dstColor = BlendFactor::Dst;
         BlendOperation opAlpha = BlendOperation::Add;
         BlendFactor srcAlpha = BlendFactor::SrcAlpha;
         BlendFactor dstAlpha = BlendFactor::DstAlpha;
@@ -42,17 +42,17 @@ namespace rush
         Ref<RShader> fs;
         Ref<BindingLayout> bindLayout;
         List<VertexLayout> vertexLayouts;
-        PrimitiveType primitiveType = PrimitiveType::TriangleList;
+        PrimitiveTopology primitiveType = PrimitiveTopology::TriangleList;
         FrontFace frontFace = FrontFace::CCW;
         CullMode cullModel = CullMode::Back;
         bool useBlend = false;
         BlendState blendStates;
         TextureFormat colorFormat = TextureFormat::BGRA8Unorm;
-        uint32_t writeMask = ColorWriteMask::Write_All;
+        ColorWriteMask writeMask = ColorWriteMask::All;
         TextureFormat depthStencilFormat = TextureFormat::Depth24PlusStencil8;
         bool depthTest = true;
         bool depthWrite = true;
-        DepthCompareFunction depthCompare = DepthCompareFunction::LessEqual;
+        CompareFunction depthCompare = CompareFunction::LessEqual;
         bool stencilTest = false;
         bool stencilWrite = false;
     };
@@ -68,10 +68,12 @@ namespace rush
 
         ~RPipeline() = default;
 
-    protected:
-        friend class Renderer;
+        const wgpu::RenderPipeline& GetPipeline() const { return m_Pipeline; }
 
-        Ref<wgpu::RenderPipeline> m_Pipeline;
+    protected:
+        friend class RenderContex;
+
+        wgpu::RenderPipeline m_Pipeline;
     };
 
 }

@@ -3,7 +3,7 @@
 
 #include "core/Core.h"
 #include "render/RDefines.h"
-#include "render/RBatch.h"
+#include "render/RenderableHub.h"
 #include "Window.h"
 #include "RPass.h"
 
@@ -66,12 +66,12 @@ namespace rush
     /// <summary>
     /// Renderer
     /// </summary>
-    class Renderer
+    class RenderContex
     {
     public:
-        ~Renderer() = default;
+        ~RenderContex() = default;
 
-        static void Init(RenderBackend backend);
+        static void Init(BackendType backend);
         static void Shutdown();
 
         uint32_t GetWidth() const { return m_Width; }
@@ -80,21 +80,19 @@ namespace rush
         Ref<RScreenQuad> CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup);
 
         void BeginDraw(const Vector4& viewport);
-        void DrawOffScreenPass(Ref<RPass> renderPass, Ref<RContent> content);
+        void DrawOffScreenPass(Ref<RPass> renderPass, Ref<RenderableHub> content);
         void DrawOffScreenQuad(Ref<RPass> renderPass, Ref<RScreenQuad> sQuad);
         void DrawFinalScreenQuad(Ref<RScreenQuad> sQuad);
-        void DrawFinalPass(Ref<RContent> content);
+        void DrawFinalPass(Ref<RenderableHub> content);
         void EndDraw();
 
     protected:
-        friend class Engine;
-
-        static Ref<Renderer> Construct(Ref<Window> window, const RendererDesc& rendererDesc)
+        static Ref<RenderContex> Construct(Ref<Window> window, const RendererDesc& rendererDesc)
         {
-            return std::shared_ptr<Renderer>(new Renderer(window, rendererDesc));
+            return std::shared_ptr<RenderContex>(new RenderContex(window, rendererDesc));
         }
 
-        Renderer(Ref<Window> window, const RendererDesc& rendererDesc);
+        RenderContex(Ref<Window> window, const RendererDesc& rendererDesc);
 
         void CreateSurface(const RendererDesc& rendererDesc);
 
@@ -103,8 +101,24 @@ namespace rush
         void Present();
 
     protected:
+        friend class Engine;
         friend class Window;
-        Ref<RContex> m_Contex;
+        friend class RBuffer;
+        friend class BindingLayout;
+        friend class RSampler;
+        friend class RPass;
+        friend class RPipeline;
+        friend class RShader;
+        friend class RTexture;
+        friend class RBindGroup;
+
+        static wgpu::Device device;
+        static wgpu::Queue queue;
+        wgpu::TextureView depthStencilView;
+        wgpu::SwapChain swapChain;
+        wgpu::CommandEncoder encoder;
+        wgpu::CommandBuffer commands;
+
         Vector4 m_Viewport = { 0.0f, 0.0f, 1.0f, 1.0f };
         RenderCaps m_Caps;
         uint32_t m_Width;

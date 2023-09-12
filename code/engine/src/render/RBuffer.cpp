@@ -1,66 +1,63 @@
 #include "stdafx.h"
-
-#include <dawn/webgpu_cpp.h>
-
 #include "render/RBuffer.h"
-#include "RContex.h"
+#include "render/RenderContex.h"
 
 namespace rush
 {
 
-    RVertexBuffer::RVertexBuffer(uint32_t stride, uint64_t size, const char* lable)
+    //////////////////////////////////////////////////////////////////////////
+
+    RBuffer::RBuffer(wgpu::BufferUsage usage, uint64_t size, const void* data, const char* lable)
     {
         m_Size = size;
-        m_Stride = stride;
-        m_Count = m_Size / m_Stride;
-        RUSH_ASSERT(m_Size % 4 == 0);
         wgpu::BufferDescriptor descriptor;
         descriptor.label = lable;
-        descriptor.size = m_Size;
-        descriptor.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        m_Buffer = CreateRef<wgpu::Buffer>(RContex::device.CreateBuffer(&descriptor));
+        descriptor.size = size;
+        descriptor.usage = usage | wgpu::BufferUsage::CopyDst;
+        m_Buffer = RenderContex::device.CreateBuffer(&descriptor);
+        UpdateData(data, m_Size, 0);
     }
 
-    void RVertexBuffer::UpdateData(const void* data, uint64_t size, uint64_t startVertex)
+    void RBuffer::UpdateData(const void* data, uint64_t size, uint64_t offset /*= 0*/)
     {
-        uint64_t offset = startVertex * m_Stride;
         if (data != nullptr && size > 0 && offset + size <= m_Size)
         {
-            RContex::queue.WriteBuffer(*m_Buffer.get(), offset, data, size);
-        }
-        else
-        {
-            LOG_ERROR("RVertexBuffer::UpdateData, size error {} {}", size, offset);
+            RenderContex::queue.WriteBuffer(m_Buffer, offset, data, size);
         }
     }
 
     //////////////////////////////////////////////////////////////////////////
 
-    RIndexBuffer::RIndexBuffer(uint64_t count, bool use32bits /*= false*/, const char* lable)
+    RVertexBuffer::RVertexBuffer(uint32_t stride, uint64_t size, const void* data, const char* lable)
+        : RBuffer(wgpu::BufferUsage::Vertex, size, data, lable)
     {
-        m_Use32Bits = use32bits;
-        m_Count = count;
-        m_Size = m_Count * (use32bits ? sizeof(uint32_t) : sizeof(uint16_t));
+        m_Stride = stride;
+        m_VertCount = m_Size / m_Stride;
         RUSH_ASSERT(m_Size % 4 == 0);
-        wgpu::BufferDescriptor descriptor;
-        descriptor.label = lable;
-        descriptor.size = m_Size;
-        descriptor.usage = wgpu::BufferUsage::Index | wgpu::BufferUsage::CopyDst;
-        m_Buffer = CreateRef<wgpu::Buffer>(RContex::device.CreateBuffer(&descriptor));
     }
 
-    void RIndexBuffer::UpdateData(const void* data, uint64_t size, uint32_t startIndex /*= 0*/)
+    //////////////////////////////////////////////////////////////////////////
+
+    RIndexBuffer::RIndexBuffer(uint64_t count, IndexFormat type, const void* data /*= nullptr*/, const char* lable /*= nullptr*/)
+        : RBuffer(wgpu::BufferUsage::Index, count * (type == IndexFormat::Uint32 ? sizeof(uint32_t) : sizeof(uint16_t)), data, lable)
     {
-        uint64_t offset = startIndex * (m_Use32Bits ? sizeof(uint32_t) : sizeof(uint16_t));
-        if (data != nullptr && size > 0 && offset + size <= m_Size)
-        {
-            RContex::queue.WriteBuffer(*m_Buffer.get(), offset, data, size);
-        }
-        else
-        {
-            LOG_ERROR("RVertexBuffer::UpdateData, size error {} {}", size, offset);
-        }
+        m_Type = type;
+        m_IndexCount = count;
+        RUSH_ASSERT(m_Size % 4 == 0);
     }
 
+    //////////////////////////////////////////////////////////////////////////
+
+    RUniformBuffer::RUniformBuffer(uint64_t size, const void* data /*= nullptr*/, const char* lable /*= nullptr*/)
+        : RBuffer(wgpu::BufferUsage::Uniform, size, data, lable)
+    {
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+
+    RStorageBuffer::RStorageBuffer(uint64_t size, const void* data /*= nullptr*/, const char* lable /*= nullptr*/)
+        : RBuffer(wgpu::BufferUsage::Storage, size, data, lable)
+    {
+    }
 
 }

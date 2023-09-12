@@ -68,7 +68,7 @@ namespace rush
         pipeDesc.depthTest = true;
         pipeDesc.colorFormat = TextureFormat::BGRA8Unorm;
         pipeDesc.depthStencilFormat = TextureFormat::Depth24PlusStencil8;
-        pipeDesc.depthCompare = DepthCompareFunction::Less;
+        pipeDesc.depthCompare = CompareFunction::Less;
 
         VertexAttribute vertAttrs[2];
         vertAttrs[0].format = VertexFormat::Float32x3;
@@ -90,7 +90,7 @@ namespace rush
 
         pipeDesc.vs = vs;
         pipeDesc.fs = fs;
-        pipeDesc.writeMask = ColorWriteMask::Write_All;
+        pipeDesc.writeMask = ColorWriteMask::All;
 
         auto l = { 
             BindingLayoutHelper(0, ShaderStage::Vertex, BufferBindingType::Uniform),
@@ -105,7 +105,7 @@ namespace rush
         });
 
         pipeDesc.bindLayout = bindingLayout;
-        pipeDesc.primitiveType = PrimitiveType::TriangleList;
+        pipeDesc.primitiveType = PrimitiveTopology::TriangleList;
         pipeDesc.frontFace = FrontFace::CW;
         pipeDesc.cullModel = CullMode::Back;
 
@@ -114,7 +114,7 @@ namespace rush
 //         uniformBuf->UpdateData(&rotDeg, sizeof(rotDeg));
         if (s_GlobalUniformBuffer == nullptr)
         {   
-            s_GlobalUniformBuffer = CreateRef<RUniformBuffer>(BufferUsage::Uniform, sizeof(Matrix4) * 2, "GlobalUniforms");
+            s_GlobalUniformBuffer = CreateRef<RUniformBuffer>(sizeof(Matrix4) * 2, "GlobalUniforms");
         }
 
         auto layout = { 

@@ -1,9 +1,7 @@
 #include "stdafx.h"
 
-#include <dawn/webgpu_cpp.h>
-
 #include "render/RShader.h"
-#include "RContex.h"
+#include "render/RenderContex.h"
 
 namespace rush
 {
@@ -16,7 +14,7 @@ namespace rush
         wgpu::ShaderModuleDescriptor descriptor;
         descriptor.nextInChain = &wgslDesc;
         descriptor.label = lable;
-        m_Module = CreateRef<wgpu::ShaderModule>(RContex::device.CreateShaderModule(&descriptor));
+        m_Module = CreateRef<wgpu::ShaderModule>(RenderContex::device.CreateShaderModule(&descriptor));
     }
 
 

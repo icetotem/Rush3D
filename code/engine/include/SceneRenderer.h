@@ -6,11 +6,11 @@
 namespace rush
 {
 
-    class RenderManager
+    class SceneRenderer
     {
     public:
-        RenderManager();
-        ~RenderManager();
+        SceneRenderer();
+        ~SceneRenderer();
 
         void Init();
 

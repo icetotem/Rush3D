@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "Engine.h"
 #include "Window.h"
-#include "render/Renderer.h"
+#include "render/RenderContex.h"
 #include "render/RTexture.h"
 #include "render/RBuffer.h"
 #include "render/RShader.h"
 #include "render/RUniform.h"
 #include "render/RPipeline.h"
-#include "render/RBatch.h"
+#include "render/RenderableHub.h"
 #include "components/EcsSystem.h"
 #include "components/Transform.h"
 
@@ -60,8 +60,8 @@ static char const triangle_frag_wgsl[] = R"(
 	}
 )";
 
-Ref<Renderer> g_Renderer = nullptr;
-Ref<RContent> content0 = CreateRef<RContent>();
+Ref<RenderContex> g_Renderer = nullptr;
+Ref<RenderableHub> content0 = CreateRef<RenderableHub>();
 Ref<RPass> pass0;
 Ref<RPass> pass1;
 Ref<RBindGroup> bindGroup;
@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
 		pipeDesc.depthTest = false;
 		pipeDesc.colorFormat = TextureFormat::BGRA8Unorm;
 		pipeDesc.depthStencilFormat = TextureFormat::Depth24PlusStencil8;
-		pipeDesc.depthCompare = DepthCompareFunction::LessEqual;
+		pipeDesc.depthCompare = CompareFunction::LessEqual;
 
 		VertexAttribute vertAttrs[2];
 		vertAttrs[0].format = VertexFormat::Float32x2;
@@ -219,13 +219,13 @@ int main(int argc, char* argv[])
 
 		pipeDesc.vs = vs;
 		pipeDesc.fs = fs;
-		pipeDesc.writeMask = ColorWriteMask::Write_All;
+		pipeDesc.writeMask = ColorWriteMask::All;
 
 		auto l = { BindingLayoutHelper(0, ShaderStage::Vertex, BufferBindingType::Uniform) };
 		Ref<BindingLayout> bindingLayout = CreateRef<BindingLayout>(l);
 
 		pipeDesc.bindLayout = bindingLayout;
-		pipeDesc.primitiveType = PrimitiveType::TriangleList;
+		pipeDesc.primitiveType = PrimitiveTopology::TriangleList;
 		pipeDesc.frontFace = FrontFace::CCW;
 		pipeDesc.cullModel = CullMode::Back;
 
@@ -250,22 +250,17 @@ int main(int argc, char* argv[])
 		};
 
 
-		Ref<RVertexBuffer> vb0 = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(vertData0), "vb0");
-		vb0->UpdateData(vertData0, sizeof(vertData0));
+		Ref<RVertexBuffer> vb0 = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(vertData0), vertData0, "vb0");
+		Ref<RVertexBuffer> vb1 = CreateRef<RVertexBuffer>(sizeof(float) * 3, sizeof(vertData1), vertData1, "vb1");
 
-		Ref<RVertexBuffer> vb1 = CreateRef<RVertexBuffer>(sizeof(float) * 3, sizeof(vertData1), "vb1");
-		vb1->UpdateData(vertData1, sizeof(vertData1));
+		Ref<RIndexBuffer> ib = CreateRef<RIndexBuffer>(4, IndexFormat::Uint16, indxData, "ib0");
 
-		Ref<RIndexBuffer> ib = CreateRef<RIndexBuffer>(4, false, "ib0");
-		ib->UpdateData(indxData, sizeof(indxData));
-
-		uniformBuf = CreateRef<RUniformBuffer>(BufferUsage::Uniform, sizeof(rotDeg), "uniforms0");
-		uniformBuf->UpdateData(&rotDeg, sizeof(rotDeg));
+		uniformBuf = CreateRef<RUniformBuffer>(sizeof(rotDeg), &rotDeg, "uniforms0");
 
         auto layout = { BindingInitializationHelper(0, uniformBuf) };
 		bindGroup = CreateRef<RBindGroup>(bindingLayout, layout, "bindgroup0");
 
-		Ref<RBatch> batch0 = content0->NewBatch();
+		Ref<Renderable> batch0 = content0->NewBatch();
 		batch0->pipeline = rpipe1;
         batch0->bindGroup = bindGroup;
         batch0->vertexBuffers.push_back(vb0);

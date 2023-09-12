@@ -5,11 +5,12 @@
 #include "render/RPipeline.h"
 #include "render/RBuffer.h"
 #include "render/RUniform.h"
+#include "components/EcsSystem.h"
 
 namespace rush
 {
 
-    struct RBatch
+    struct Renderable
     {
         Ref<RPipeline> pipeline;
         Ref<RBindGroup> bindGroup;
@@ -18,16 +19,18 @@ namespace rush
         uint32_t instanceCount = 1;
     };
 
-    class RContent
+    class RenderableHub
     {
     public:
-        ~RContent() = default;
+        ~RenderableHub() = default;
 
-        Ref<RBatch> NewBatch();
+        Ref<Renderable> NewBatch();
+
+        Entity camera;
 
     private:
-        friend class Renderer;
-        List<Ref<RBatch>> m_Batches;
+        friend class RenderContex;
+        List<Ref<Renderable>> m_Batches;
     };
 
 }

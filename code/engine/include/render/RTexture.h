@@ -12,15 +12,15 @@ namespace rush
     class RSampler
     {
     public:
-        friend class Renderer;
+        friend class RenderContex;
         friend class RPass;
 
         RSampler(const char* lable = nullptr);
 
-        Ref<wgpu::Sampler> GetSampler() const { return m_Sampler; }
+        const wgpu::Sampler& GetSampler() const { return m_Sampler; }
 
     private:
-        Ref<wgpu::Sampler> m_Sampler;
+        wgpu::Sampler m_Sampler;
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -37,19 +37,19 @@ namespace rush
 
         void UpdateData(const void* data, uint64_t size);
 
-        Ref<wgpu::Texture> GetTexture() const { return m_Texture; }
+        const wgpu::Texture& GetTexture() const { return m_Texture; }
 
     private:
-        friend class Renderer;
+        friend class RenderContex;
         friend class RPass;
 
         TextureFormat m_Format = TextureFormat::RGBA8Unorm;
-        TextureDimension m_Dim = TextureDimension::Texture2D;
+        TextureDimension m_Dim = TextureDimension::e2D;
         uint32_t m_Width = 1;
         uint32_t m_Height = 1;
         uint32_t m_Depth = 1;
         uint32_t m_Mips = 1;
-        Ref<wgpu::Texture> m_Texture;
+        wgpu::Texture m_Texture;
     };
 
 }

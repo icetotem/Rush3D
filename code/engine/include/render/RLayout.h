@@ -26,10 +26,10 @@ namespace rush
             TextureSampleType textureSampleType,
             TextureViewDimension viewDimension);
 
-        Ref<wgpu::BindGroupLayoutEntry> GetEntry() const { return m_Entry; }
+        const wgpu::BindGroupLayoutEntry& GetEntry() const { return m_Entry; }
 
     private:
-        Ref<wgpu::BindGroupLayoutEntry> m_Entry;
+        wgpu::BindGroupLayoutEntry m_Entry;
     };
 
     class BindingLayout
@@ -39,12 +39,14 @@ namespace rush
 
         ~BindingLayout() = default;
 
+        const wgpu::BindGroupLayout& GetLayout() const { return m_Layout; }
+
     private:
-        friend class Renderer;
+        friend class RenderContex;
         friend class RPipeline;
         friend class RBindGroup;
 
-        Ref<wgpu::BindGroupLayout> m_Layout;
+        wgpu::BindGroupLayout m_Layout;
     };
 
 }

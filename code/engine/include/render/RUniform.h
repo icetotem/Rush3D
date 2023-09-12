@@ -10,23 +10,6 @@
 namespace rush
 {
 
-    class RUniformBuffer
-    {
-    public:
-        RUniformBuffer(BufferUsage usage, uint64_t size, const char* lable = nullptr);
-
-        ~RUniformBuffer() = default;
-
-        void UpdateData(const void* data, uint64_t size, uint64_t offset = 0);
-
-        Ref<wgpu::Buffer> GetBuffer() const { return m_Buffer; }
-
-    protected:
-        friend class Renderer;
-
-        Ref<wgpu::Buffer> m_Buffer;
-    };
-
     //////////////////////////////////////////////////////////////////////////
 
     class BindingInitializationHelper 
@@ -37,17 +20,19 @@ namespace rush
         BindingInitializationHelper(uint32_t binding, Ref<RSampler> sampler);
 
         BindingInitializationHelper(uint32_t binding,
-            Ref<RUniformBuffer> buffer,
+            Ref<RBuffer> buffer,
             uint64_t offset = 0,
-            uint64_t size = kWholeSize);
+            uint64_t size = wgpu::kWholeSize);
 
         BindingInitializationHelper(const BindingInitializationHelper&) = default;
         ~BindingInitializationHelper() = default;
 
+        void AddBinding(std::vector<wgpu::BindGroupEntry>& entries) const;
+
         uint32_t GetBinding() const { return m_Binding; }
         Ref<RTexture> GetTexture() const { return m_Texture; }
         Ref<RSampler> GetSampler() const { return m_Sampler; }
-        Ref<RUniformBuffer> GetBuffer() const { return m_Buffer; }
+        Ref<RBuffer> GetBuffer() const { return m_Buffer; }
         uint64_t GetSize() const { return m_Size; }
         uint64_t GetOffset() const { return m_Offset; }
 
@@ -57,7 +42,7 @@ namespace rush
         uint32_t m_Binding;
         Ref<RTexture> m_Texture;
         Ref<RSampler> m_Sampler;
-        Ref<RUniformBuffer> m_Buffer;
+        Ref<RBuffer> m_Buffer;
         uint64_t m_Offset = 0;
         uint64_t m_Size = 0;
     };
@@ -72,13 +57,15 @@ namespace rush
 
         ~RBindGroup();
 
-        Ref<BindingLayout> GetBindingLayout() const { return m_BindLayout; }
+        Ref<BindingLayout> GetBindLayout() const { return m_BindLayout; }
+
+        const wgpu::BindGroup& GetBindGroup() const { return m_BindGroup; }
 
     protected:
-        friend class Renderer;
+        friend class RenderContex;
 
         Ref<BindingLayout> m_BindLayout;
-        Ref<wgpu::BindGroup> m_BindGroup;
+        wgpu::BindGroup m_BindGroup;
     };
 
 }

@@ -1,21 +1,12 @@
 #include "stdafx.h"
 
-#include <dawn/webgpu_cpp.h>
-
 #include "render/RPipeline.h"
-#include "RContex.h"
+#include "render/RenderContex.h"
 
 namespace rush
 {
-
-    extern wgpu::VertexFormat g_WGPUVertexFormat[(int)VertexFormat::Count];
-    extern wgpu::TextureFormat g_WGPUTextureFormat[(int)TextureFormat::Count];
-    extern wgpu::CullMode g_WGPUCullMode[(int)CullMode::Count];
-    extern wgpu::FrontFace g_WGPUFrontFace[(int)FrontFace::Count];
-    extern wgpu::PrimitiveTopology g_WGPUPrimitiveTopology[(int)PrimitiveType::Count];
-    extern wgpu::BlendFactor g_WGPUBlendFactor[(int)BlendFactor::Count];
-    extern wgpu::BlendOperation g_WGPUBlendOperation[(int)BlendOperation::Count];
-    extern wgpu::CompareFunction g_WGPUCompareFunction[(int)DepthCompareFunction::Count];
+    static constexpr uint8_t kMaxVertexBuffers = 8u;
+    static constexpr uint8_t kMaxVertexAttributes = 16u;
 
     RPipeline::RPipeline(const PipelineDesc& desc, const char* lable /*= nullptr*/)
     {
@@ -23,7 +14,7 @@ namespace rush
         if (desc.bindLayout != nullptr) 
         {
             layoutDesc.bindGroupLayoutCount = 1;
-            layoutDesc.bindGroupLayouts = desc.bindLayout->m_Layout.get();
+            layoutDesc.bindGroupLayouts = &desc.bindLayout->GetLayout();
         }
         else 
         {
@@ -33,7 +24,7 @@ namespace rush
 
         wgpu::RenderPipelineDescriptor descriptor = {};
         descriptor.label = lable;
-        descriptor.layout = RContex::device.CreatePipelineLayout(&layoutDesc);
+        descriptor.layout = RenderContex::device.CreatePipelineLayout(&layoutDesc);
 
         // Setup vertex state.
         std::array<wgpu::VertexBufferLayout, kMaxVertexBuffers> cBuffers;
@@ -55,7 +46,7 @@ namespace rush
 
                 for (uint32_t j = 0; j < layout.attributeCount; ++j)
                 {
-                    cAttributes[attr].format = g_WGPUVertexFormat[(int)layout.attributes[j].format];
+                    cAttributes[attr].format = layout.attributes[j].format;
                     cAttributes[attr].offset = layout.attributes[j].offset;
                     cAttributes[attr].shaderLocation = layout.attributes[j].shaderLocation;
                     ++attr;
@@ -77,27 +68,27 @@ namespace rush
             descriptor.fragment = &cFragment;         
 
             cFragment.targets = &cTargets;
-            cTargets.format = g_WGPUTextureFormat[(int)desc.colorFormat];
+            cTargets.format = desc.colorFormat;
             cTargets.writeMask = (wgpu::ColorWriteMask)desc.writeMask;
 
             if (desc.useBlend)
             {
                 cTargets.blend = &cBlendState;
-                cBlendState.color.srcFactor = g_WGPUBlendFactor[(int)desc.blendStates.srcColor];
-                cBlendState.color.dstFactor = g_WGPUBlendFactor[(int)desc.blendStates.dstColor];
-                cBlendState.color.operation = g_WGPUBlendOperation[(int)desc.blendStates.opColor];
-                cBlendState.alpha.srcFactor = g_WGPUBlendFactor[(int)desc.blendStates.srcAlpha];
-                cBlendState.alpha.dstFactor = g_WGPUBlendFactor[(int)desc.blendStates.dstAlpha];
-                cBlendState.alpha.operation = g_WGPUBlendOperation[(int)desc.blendStates.opAlpha];
+                cBlendState.color.srcFactor = desc.blendStates.srcColor;
+                cBlendState.color.dstFactor = desc.blendStates.dstColor;
+                cBlendState.color.operation = desc.blendStates.opColor;
+                cBlendState.alpha.srcFactor = desc.blendStates.srcAlpha;
+                cBlendState.alpha.dstFactor = desc.blendStates.dstAlpha;
+                cBlendState.alpha.operation = desc.blendStates.opAlpha;
             }
         }
 
         // Set the defaults for the primitive state
         {
             wgpu::PrimitiveState* primitive = &descriptor.primitive;
-            primitive->topology = g_WGPUPrimitiveTopology[(int)desc.primitiveType];
-            primitive->frontFace = g_WGPUFrontFace[(int)desc.frontFace];
-            primitive->cullMode = g_WGPUCullMode[(int)desc.cullModel];
+            primitive->topology = desc.primitiveType;
+            primitive->frontFace = desc.frontFace;
+            primitive->cullMode = desc.cullModel;
             primitive->stripIndexFormat = wgpu::IndexFormat::Undefined;
         }
 
@@ -106,10 +97,10 @@ namespace rush
         if (desc.depthTest || desc.depthWrite || desc.stencilTest || desc.stencilWrite)
         {
             descriptor.depthStencil = &cDepthStencil;
-            cDepthStencil.format = g_WGPUTextureFormat[(int)desc.depthStencilFormat];
+            cDepthStencil.format = desc.depthStencilFormat;
             cDepthStencil.depthWriteEnabled = desc.depthWrite;
             if (desc.depthTest)
-                cDepthStencil.depthCompare = g_WGPUCompareFunction[(int)desc.depthCompare];
+                cDepthStencil.depthCompare = desc.depthCompare;
             else
                 cDepthStencil.depthCompare = wgpu::CompareFunction::Always;
             cDepthStencil.depthBias = 0;
@@ -139,7 +130,7 @@ namespace rush
 //             multisample->alphaToCoverageEnabled = false;
 //         }
 
-        m_Pipeline = CreateRef<wgpu::RenderPipeline>(RContex::device.CreateRenderPipeline(&descriptor));
+        m_Pipeline = RenderContex::device.CreateRenderPipeline(&descriptor);
     }
 
 }

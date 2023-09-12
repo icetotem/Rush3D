@@ -10,7 +10,7 @@ namespace rush
     public:
         InFrustumFlag(Entity owner) : Component(owner) {}
 
-        Entity m_ByCamera;
+        Entity camera;
     };
 
 }

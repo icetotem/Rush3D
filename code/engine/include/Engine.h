@@ -2,10 +2,10 @@
 #define Engine_h__
 
 #include "core/Common.h"
-#include "render/Renderer.h"
+#include "render/RenderContex.h"
 #include "Window.h"
 #include "SceneManager.h"
-#include "RenderManager.h"
+#include "SceneRenderer.h"
 #include "AssetManager.h"
 #include "BundleManager.h"
 
@@ -18,7 +18,7 @@ namespace rush
         BundleManager m_BundleManager;
         AssetsManager m_AssetsManager;
         SceneManager m_SceneManager;
-        RenderManager m_RenderManager;
+        SceneRenderer m_RenderManager;
 
     public:
         Engine();

@@ -1,13 +1,9 @@
 #include "stdafx.h"
-
-#include <dawn/webgpu_cpp.h>
-
 #include "render/RUniform.h"
-#include "RContex.h"
+#include "render/RenderContex.h"
 
 namespace rush
 {
-    extern wgpu::BufferUsage g_BufferUsage[(int)BufferUsage::Count];
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -23,7 +19,7 @@ namespace rush
         this->m_Sampler = sampler;
     }
 
-    BindingInitializationHelper::BindingInitializationHelper(uint32_t binding, Ref<RUniformBuffer> buffer, uint64_t offset /*= 0*/, uint64_t size /*= kWholeSize*/)
+    BindingInitializationHelper::BindingInitializationHelper(uint32_t binding, Ref<RBuffer> buffer, uint64_t offset /*= 0*/, uint64_t size /*= kWholeSize*/)
     {
         this->m_Binding = binding;
         this->m_Buffer = buffer;
@@ -31,25 +27,25 @@ namespace rush
         this->m_Size = size;
     }
 
-    void AddBinding(const BindingInitializationHelper& helper, std::vector<wgpu::BindGroupEntry>& entries)
+    void BindingInitializationHelper::AddBinding(std::vector<wgpu::BindGroupEntry>& entries) const
     {
         wgpu::BindGroupEntry result = {};
-        result.binding = helper.GetBinding();
-        if (helper.GetSampler())
+        result.binding = GetBinding();
+        if (GetSampler())
         {
-            result.sampler = *helper.GetSampler()->GetSampler();
+            result.sampler = GetSampler()->GetSampler();
             entries.push_back(result);
         }
-        else if (helper.GetTexture())
+        else if (GetTexture())
         {
-            result.textureView = helper.GetTexture()->GetTexture()->CreateView();
+            result.textureView = GetTexture()->GetTexture().CreateView();
             entries.push_back(result);
         }
-        else if (helper.GetBuffer())
+        else if (GetBuffer())
         {
-            result.buffer = *helper.GetBuffer()->GetBuffer();
-            result.offset = helper.GetOffset();
-            result.size = helper.GetSize();
+            result.buffer = GetBuffer()->GetBuffer();
+            result.offset = GetOffset();
+            result.size = GetSize();
             entries.push_back(result);
         }
     }
@@ -62,7 +58,7 @@ namespace rush
         std::vector<wgpu::BindGroupEntry> entries;
         for (const BindingInitializationHelper& helper : entriesInitializer) 
         {
-            AddBinding(helper, entries);
+            helper.AddBinding(entries);
         }
 
         wgpu::BindGroupDescriptor descriptor;
@@ -74,27 +70,12 @@ namespace rush
 
     RBindGroup::RBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable)
     {
-        m_BindGroup = CreateRef<wgpu::BindGroup>(MakeBindGroup(RContex::device, *layout->m_Layout, entriesInitializer));
+        m_BindGroup = MakeBindGroup(RenderContex::device, layout->m_Layout, entriesInitializer);
         m_BindLayout = layout;
     }
 
     RBindGroup::~RBindGroup()
     {
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-
-    RUniformBuffer::RUniformBuffer(BufferUsage usage, uint64_t size, const char* lable)
-    {
-        wgpu::BufferDescriptor descriptor;
-        descriptor.size = size;
-        descriptor.usage = g_BufferUsage[(int)usage] | wgpu::BufferUsage::CopyDst;
-        m_Buffer = CreateRef<wgpu::Buffer>(RContex::device.CreateBuffer(&descriptor));
-    }
-
-    void RUniformBuffer::UpdateData(const void* data, uint64_t size, uint64_t offset /*= 0*/)
-    {
-        RContex::queue.WriteBuffer(*m_Buffer, offset, data, size);
     }
 
 
