@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Engine.h"
 #include "Window.h"
-#include "render/RenderContex.h"
+#include "render/RenderContext.h"
 #include "render/RTexture.h"
 #include "render/RBuffer.h"
 #include "render/RShader.h"

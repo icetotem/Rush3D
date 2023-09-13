@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Engine.h"
 #include "Window.h"
-#include "render/RenderContex.h"
+#include "render/RenderContext.h"
 #include "render/RTexture.h"
 #include "render/RBuffer.h"
 #include "render/RShader.h"
@@ -60,7 +60,7 @@ static char const triangle_frag_wgsl[] = R"(
 	}
 )";
 
-Ref<RenderContex> g_Renderer = nullptr;
+Ref<RenderContext> g_Renderer = nullptr;
 Ref<RenderableHub> content0 = CreateRef<RenderableHub>();
 Ref<RPass> pass0;
 Ref<RPass> pass1;

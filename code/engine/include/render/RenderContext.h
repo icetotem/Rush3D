@@ -66,10 +66,10 @@ namespace rush
     /// <summary>
     /// Renderer
     /// </summary>
-    class RenderContex
+    class RenderContext
     {
     public:
-        ~RenderContex() = default;
+        ~RenderContext() = default;
 
         static void Init(BackendType backend);
         static void Shutdown();
@@ -87,12 +87,12 @@ namespace rush
         void EndDraw();
 
     protected:
-        static Ref<RenderContex> Construct(Ref<Window> window, const RendererDesc& rendererDesc)
+        static Ref<RenderContext> Construct(Ref<Window> window, const RendererDesc& rendererDesc)
         {
-            return std::shared_ptr<RenderContex>(new RenderContex(window, rendererDesc));
+            return std::shared_ptr<RenderContext>(new RenderContext(window, rendererDesc));
         }
 
-        RenderContex(Ref<Window> window, const RendererDesc& rendererDesc);
+        RenderContext(Ref<Window> window, const RendererDesc& rendererDesc);
 
         void CreateSurface(const RendererDesc& rendererDesc);
 

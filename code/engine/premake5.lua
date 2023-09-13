@@ -36,5 +36,6 @@ project "Rush3D_Engine"
 		path.join(DEP_DIR, "json"),
 		path.join(DEP_DIR, "toml"),
 		path.join(DEP_DIR, "stb"),
+		path.join(DEP_DIR, "tracy"),
 	}
 

@@ -2,6 +2,7 @@
 #define RenderManager_h__
 
 #include "core/Common.h"
+#include "render/passes/TransientResources.h"
 
 namespace rush
 {
@@ -17,6 +18,9 @@ namespace rush
         void Update();
 
         void Shutdown();
+
+    private:
+        TransientResources m_transientResources;
     };
 
 }

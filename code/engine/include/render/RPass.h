@@ -30,7 +30,7 @@ namespace rush
         Ref<RTexture> GetDepthStencilTexture() const { return m_DepthStencilTexture; }
 
     private:
-        friend class RenderContex;
+        friend class RenderContext;
 
         uint32_t m_FrameBufferWidth;
         uint32_t m_FrameBufferHeight;

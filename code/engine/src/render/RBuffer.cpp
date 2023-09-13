@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "render/RBuffer.h"
-#include "render/RenderContex.h"
+#include "render/RenderContext.h"
 
 namespace rush
 {
@@ -14,15 +14,32 @@ namespace rush
         descriptor.label = lable;
         descriptor.size = size;
         descriptor.usage = usage | wgpu::BufferUsage::CopyDst;
-        m_Buffer = RenderContex::device.CreateBuffer(&descriptor);
+        m_Buffer = RenderContext::device.CreateBuffer(&descriptor);
         UpdateData(data, m_Size, 0);
+    }
+
+    bool RBuffer::IsValid() const
+    {
+        return (bool)m_Buffer;
+    }
+
+    void RBuffer::Destroy()
+    {
+        m_Buffer = {};
     }
 
     void RBuffer::UpdateData(const void* data, uint64_t size, uint64_t offset /*= 0*/)
     {
-        if (data != nullptr && size > 0 && offset + size <= m_Size)
+        if (data != nullptr)
         {
-            RenderContex::queue.WriteBuffer(m_Buffer, offset, data, size);
+            if (size > 0 && offset + size <= m_Size)
+            {
+                RenderContext::queue.WriteBuffer(m_Buffer, offset, data, size);
+            }
+            else if (size <= 0)
+            {
+                RenderContext::queue.WriteBuffer(m_Buffer, offset, data, m_Size);
+            }
         }
     }
 

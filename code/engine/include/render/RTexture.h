@@ -12,7 +12,7 @@ namespace rush
     class RSampler
     {
     public:
-        friend class RenderContex;
+        friend class RenderContext;
         friend class RPass;
 
         RSampler(const char* lable = nullptr);
@@ -28,19 +28,26 @@ namespace rush
     class RTexture : public Asset
     {
     public:
+        RTexture() = default;
+        RTexture(uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth, TextureDimension dim = TextureDimension::e2D, const char* lable = nullptr);
         ~RTexture() = default;
 
         bool Load(const StringView& path) override;
-
-        RTexture();
-        RTexture(uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth, const char* lable = nullptr);
+        bool IsValid() const;
+        void Destroy();
 
         void UpdateData(const void* data, uint64_t size);
 
         const wgpu::Texture& GetTexture() const { return m_Texture; }
 
+        uint32_t GetWidth() const { return m_Width; }
+        uint32_t GetHeight() const { return m_Height; }
+        uint32_t GetDepth() const { return m_Depth; }
+        uint32_t GetMips() const { return m_Mips; }
+        TextureFormat GetFormat() const { return m_Format; }
+
     private:
-        friend class RenderContex;
+        friend class RenderContext;
         friend class RPass;
 
         TextureFormat m_Format = TextureFormat::RGBA8Unorm;

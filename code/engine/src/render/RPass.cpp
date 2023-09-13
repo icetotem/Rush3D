@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "render/RPass.h"
-#include "render/RenderContex.h"
+#include "render/RenderContext.h"
 
 namespace rush
 {
@@ -18,8 +18,8 @@ namespace rush
         colorTexDesc.format = desc.colorFormat;
         colorTexDesc.mipLevelCount = 1;
         colorTexDesc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-        m_ColorTexture = CreateRef<RTexture>(m_FrameBufferWidth, m_FrameBufferHeight, desc.colorFormat, 1, 1, lable);
-        m_ColorTexture->m_Texture = RenderContex::device.CreateTexture(&colorTexDesc);
+        m_ColorTexture = CreateRef<RTexture>(m_FrameBufferWidth, m_FrameBufferHeight, desc.colorFormat, 1, 1, TextureDimension::e2D, lable);
+        m_ColorTexture->m_Texture = RenderContext::device.CreateTexture(&colorTexDesc);
 
         m_RenderPassDesc = {};
         m_ColorAttachment = {};
@@ -42,8 +42,8 @@ namespace rush
             depthStencilTexDesc.mipLevelCount = 1;
             depthStencilTexDesc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
 
-            m_DepthStencilTexture = CreateRef<RTexture>(m_FrameBufferWidth, m_FrameBufferHeight, desc.depthStencilFormat, 1, 1, lable);
-            m_DepthStencilTexture->m_Texture = RenderContex::device.CreateTexture(&depthStencilTexDesc);
+            m_DepthStencilTexture = CreateRef<RTexture>(m_FrameBufferWidth, m_FrameBufferHeight, desc.depthStencilFormat, 1, 1, TextureDimension::e2D, lable);
+            m_DepthStencilTexture->m_Texture = RenderContext::device.CreateTexture(&depthStencilTexDesc);
 
             m_DepthStencilAttachment = {};
             m_DepthStencilAttachment.view = m_DepthStencilTexture->GetTexture().CreateView();

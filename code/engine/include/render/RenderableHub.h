@@ -29,7 +29,7 @@ namespace rush
         Entity camera;
 
     private:
-        friend class RenderContex;
+        friend class RenderContext;
         List<Ref<Renderable>> m_Batches;
     };
 

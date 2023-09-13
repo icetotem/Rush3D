@@ -6,6 +6,8 @@
 #include "render/RMaterial.h"
 #include "render/fg/FrameGraph.hpp"
 #include "render/fg/Blackboard.hpp"
+#include "render/passes/FinalPass.h"
+#include "render/passes/UploadFrameBlock.h"
 
 namespace rush
 {   
@@ -22,7 +24,7 @@ namespace rush
 
     void SceneRenderer::Init()
     {
-        RenderContex::Init(BackendType::D3D12);
+        RenderContext::Init(BackendType::D3D12);
     }
 
     void SceneRenderer::Update()
@@ -70,25 +72,40 @@ namespace rush
         // render
         for (auto& [cam, content] : renderContents)
         {
-            auto renderer = cam->GetRenderer();
-            renderer->BeginDraw(cam->GetViewport());
-            renderer->DrawFinalPass(content);
-            renderer->EndDraw();
+//             auto renderer = cam->GetRenderer();
+//             renderer->BeginDraw(cam->GetViewport());
+//             renderer->DrawFinalPass(content);
+//             renderer->EndDraw();
 
-//             FrameGraph fg;
-//             FrameGraphBlackboard blackboard;
-// 
-//             EarlyZPass{ fg, blackboard };
-//             RenderScenePass{ fg, blackboard };
-// 
-//             fg.compile();
-//             fg.execute(&content);
+            FrameGraph fg;
+            FrameGraphBlackboard blackboard;
+
+            uint32_t w, h;
+            cam->GetViewSize(w, h);
+
+            FrameInfo frameInfo = {
+                (float)Timer::GetTimeSec(),
+                (float)Timer::GetDeltaTimeSec(),
+                Vector2(w, h),
+                *cam,
+                0, // features
+                0 // debug flags
+            };
+            uploadFrameBlock(fg, blackboard, frameInfo);
+
+            FinalPass finalPass;
+            finalPass.compose(fg, blackboard, OutputMode::BaseColor);
+
+            fg.compile();
+            fg.execute(&content, &m_transientResources);
+
+            m_transientResources.update(Timer::GetDeltaTimeSec());
         }
     }
 
     void SceneRenderer::Shutdown()
     {
-        RenderContex::Shutdown();
+        RenderContext::Shutdown();
     }
 
 }

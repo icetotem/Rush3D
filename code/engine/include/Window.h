@@ -31,7 +31,7 @@ namespace rush
     typedef void* WindowHandle;
     typedef void* DisplayHandle;
 
-    class RenderContex;
+    class RenderContext;
 
     class Window
     {
@@ -49,7 +49,7 @@ namespace rush
         uint32_t GetMouseX() const { return m_MouseX; }
         uint32_t GetMouseY() const { return m_MouseY; }
 
-        Ref<RenderContex> GetRenderer() const { return m_Renderer; }
+        Ref<RenderContext> GetRenderer() const { return m_Renderer; }
 
         bool ShouldClose() const;
         static void MessgeLoop();
@@ -81,7 +81,7 @@ namespace rush
     protected:
         struct Impl;
         Ref<Impl> m_Impl;
-        Ref<RenderContex> m_Renderer;
+        Ref<RenderContext> m_Renderer;
 
         String m_Title;
         uint32_t m_Width = 1024;

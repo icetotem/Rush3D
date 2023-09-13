@@ -71,7 +71,7 @@ namespace rush
         const wgpu::RenderPipeline& GetPipeline() const { return m_Pipeline; }
 
     protected:
-        friend class RenderContex;
+        friend class RenderContext;
 
         wgpu::RenderPipeline m_Pipeline;
     };

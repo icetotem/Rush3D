@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Window.h"
-#include "render/RenderContex.h"
+#include "render/RenderContext.h"
 
 #if defined(RUSH_PLATFORM_WINDOWS) || defined(RUSH_PLATFORM_MAC) || defined(RUSH_PLATFORM_LINUX) // GLFW implementation
 

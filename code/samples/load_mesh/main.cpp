@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "Engine.h"
 #include "Window.h"
-#include "render/Renderer.h"
+#include "render/RenderContext.h"
 #include "render/RTexture.h"
 #include "render/RBuffer.h"
 #include "render/RShader.h"
 #include "render/RUniform.h"
 #include "render/RPipeline.h"
-#include "render/RBatch.h"
+#include "render/RenderableHub.h"
 #include "components/EcsSystem.h"
 #include "components/Transform.h"
 #include "components/MeshRenderer.h"
@@ -15,6 +15,7 @@
 #include "components/Bounding.h"
 #include "components/Frustum.h"
 #include "components/MeshFilter.h"
+#include "CameraCtrl.h"
 
 using namespace rush;
 
@@ -27,8 +28,8 @@ int main(int argc, char* argv[])
 
     WindowDesc wndDesc;
     wndDesc.title = "RushDmeo";
-    wndDesc.width = 1280;
-    wndDesc.height = 900;
+    wndDesc.width = 1024;
+    wndDesc.height = 1024;
     wndDesc.alwaysTop = false;
     wndDesc.visible = false;
 
@@ -42,14 +43,14 @@ int main(int argc, char* argv[])
 
     window->Show(true);
 
-
+    CameraCtrlFirstPerson firstPersonCtrl;
 
     // create camera
     {
         auto camEnt = Entity::Create();
 
         auto trans = camEnt.Add<Transform>();
-        trans->SetPosition(1, 1, 1);
+        trans->SetPosition(-15, 0, -15);
         trans->LookAt(0, 0, 0);
 
         auto cam = camEnt.Add<Camera>();
@@ -57,6 +58,7 @@ int main(int argc, char* argv[])
 
         auto frustum = camEnt.Add<Frustum>();
 
+        firstPersonCtrl.Setup(window, camEnt);
     }
 
     // create the entity
@@ -68,15 +70,18 @@ int main(int argc, char* argv[])
 
         ent0.Add<MeshRenderer>();
         auto meshFilter = ent0.Add<MeshFilter>();
-        meshFilter->AddPart("mesh_name", "mat_name");
+        meshFilter->AddPart("assets/monkey.glb", "mat_name");
 
         auto bonding = ent0.Add<Bounding>();
     }
 
     while (window->ShouldClose())
     {
-        window->MessgeLoop();
+        Window::MessgeLoop();
         engine.Update();
+
+        firstPersonCtrl.Update();
+
         window->Present();
     }
 

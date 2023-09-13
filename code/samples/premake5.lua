@@ -107,9 +107,9 @@ project "Sample_LoadMesh"
 		
 	files
 	{
-		path.join("basic_framework", "**.h"),
-		path.join("basic_framework", "**.inl"),
-		path.join("basic_framework", "**.cpp"),
+		path.join("load_mesh", "**.h"),
+		path.join("load_mesh", "**.inl"),
+		path.join("load_mesh", "**.cpp"),
 	}
 		
 	includedirs

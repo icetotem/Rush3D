@@ -2,7 +2,7 @@
 
 #include <dawn/dawn_proc.h>
 
-#include "render/RenderContex.h"
+#include "render/RenderContext.h"
 #include "render/RShader.h"
 #include "dawn/native/DawnNative.h"
 
@@ -86,8 +86,8 @@ namespace rush
         }
     } g_GPUInfo;
 
-    wgpu::Device RenderContex::device;
-    wgpu::Queue RenderContex::queue;
+    wgpu::Device RenderContext::device;
+    wgpu::Queue RenderContext::queue;
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -167,7 +167,7 @@ namespace rush
     static std::unique_ptr<dawn::native::Instance> g_DawnInstance;
     static dawn::native::Adapter g_Adapter;
 
-    void RenderContex::Init(BackendType backend)
+    void RenderContext::Init(BackendType backend)
     {
         if (g_DawnInstance != nullptr)
             return;
@@ -246,7 +246,7 @@ namespace rush
         deviceDesc.requiredFeatureCount = (uint32_t)ARRAY_SIZE(required_features);
         deviceDesc.requiredFeatures = required_features;
         auto device = g_Adapter.CreateDevice(&deviceDesc);
-        RenderContex::device = wgpu::Device::Acquire(device);
+        RenderContext::device = wgpu::Device::Acquire(device);
 
         // set device callbacks
         procs.deviceSetUncapturedErrorCallback(device, PrintDeviceError, nullptr);
@@ -254,16 +254,16 @@ namespace rush
         procs.deviceSetLoggingCallback(device, DeviceLogCallback, nullptr);
 
         // setup command queue
-        RenderContex::queue = RenderContex::device.GetQueue();
+        RenderContext::queue = RenderContext::device.GetQueue();
     }
 
-    void RenderContex::Shutdown()
+    void RenderContext::Shutdown()
     {
-        RenderContex::queue = {};
-        RenderContex::device = {};
+        RenderContext::queue = {};
+        RenderContext::device = {};
     }
 
-    RenderContex::RenderContex(Ref<Window> window, const RendererDesc& rendererDesc)
+    RenderContext::RenderContext(Ref<Window> window, const RendererDesc& rendererDesc)
         : m_Window(window)
     {
         m_Width = m_Window->GetWidth();
@@ -288,7 +288,7 @@ namespace rush
         return depthStencilTexture.CreateView();
     }
 
-    void RenderContex::CreateSurface(const RendererDesc& rendererDesc)
+    void RenderContext::CreateSurface(const RendererDesc& rendererDesc)
     {
         // get dawn procs
         auto procs = dawn::native::GetProcs();
@@ -307,11 +307,11 @@ namespace rush
         scDesc.width = m_Width;
         scDesc.height = m_Height;
         scDesc.presentMode = rendererDesc.vsync ? wgpu::PresentMode::Fifo : wgpu::PresentMode::Mailbox;
-        swapChain = RenderContex::device.CreateSwapChain(surface, &scDesc);
-        depthStencilView = CreateDefaultDepthStencilView(RenderContex::device, m_Width, m_Height);
+        swapChain = RenderContext::device.CreateSwapChain(surface, &scDesc);
+        depthStencilView = CreateDefaultDepthStencilView(RenderContext::device, m_Width, m_Height);
     }
 
-    void RenderContex::GatherCaps()
+    void RenderContext::GatherCaps()
     {
         // limits
         LOG_INFO("---------------Limits-----------------");
@@ -364,7 +364,7 @@ namespace rush
         }
     }
 
-    Ref<RScreenQuad> RenderContex::CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup)
+    Ref<RScreenQuad> RenderContext::CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup)
     {
         Ref<RScreenQuad> sQuad = CreateRef<RScreenQuad>();
         if (m_QuadVS == nullptr)
@@ -431,14 +431,14 @@ namespace rush
         return sQuad;
     }
 
-    void RenderContex::BeginDraw(const Vector4& viewport)
+    void RenderContext::BeginDraw(const Vector4& viewport)
     {
         m_Viewport = viewport;
         dawn::native::InstanceProcessEvents(g_DawnInstance->Get());
-        encoder = RenderContex::device.CreateCommandEncoder();
+        encoder = RenderContext::device.CreateCommandEncoder();
     }
 
-    void RenderContex::DrawOffScreenPass(Ref<RPass> renderPass, Ref<RenderableHub> content)
+    void RenderContext::DrawOffScreenPass(Ref<RPass> renderPass, Ref<RenderableHub> content)
     {
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPass->m_RenderPassDesc);
         pass.SetScissorRect(m_Viewport.x * m_Width, m_Viewport.y * m_Height, (m_Viewport.z - m_Viewport.x) * m_Width, (m_Viewport.w - m_Viewport.y) * m_Height);
@@ -458,7 +458,7 @@ namespace rush
         pass.End();
     }
 
-    void RenderContex::DrawOffScreenQuad(Ref<RPass> renderPass, Ref<RScreenQuad> sQuad)
+    void RenderContext::DrawOffScreenQuad(Ref<RPass> renderPass, Ref<RScreenQuad> sQuad)
     {
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPass->m_RenderPassDesc);
         pass.SetPipeline(sQuad->pipeline->GetPipeline());
@@ -468,7 +468,7 @@ namespace rush
         pass.End();
     }
 
-    void RenderContex::DrawFinalScreenQuad(Ref<RScreenQuad> sQuad)
+    void RenderContext::DrawFinalScreenQuad(Ref<RScreenQuad> sQuad)
     {
         wgpu::TextureView backbufferView = swapChain.GetCurrentTextureView();
         wgpu::RenderPassDescriptor renderPassDesc = {};
@@ -490,7 +490,7 @@ namespace rush
         pass.End();
     }
 
-    void RenderContex::DrawFinalPass(Ref<RenderableHub> content)
+    void RenderContext::DrawFinalPass(Ref<RenderableHub> content)
     {
         wgpu::TextureView backbufferView = swapChain.GetCurrentTextureView();
         wgpu::RenderPassDescriptor renderPassDesc = {};
@@ -532,13 +532,13 @@ namespace rush
         pass.End();
     }
 
-    void RenderContex::EndDraw()
+    void RenderContext::EndDraw()
     {
         wgpu::CommandBuffer commands = encoder.Finish();
-        RenderContex::queue.Submit(1, &commands);
+        RenderContext::queue.Submit(1, &commands);
     }
 
-    void RenderContex::Present()
+    void RenderContext::Present()
     {
         swapChain.Present();
     }

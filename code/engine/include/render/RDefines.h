@@ -38,6 +38,8 @@ namespace rush
     using ColorWriteMask = wgpu::ColorWriteMask;
     using CompareFunction = wgpu::CompareFunction;
     using IndexFormat = wgpu::IndexFormat;
+    using AddressMode = wgpu::AddressMode;
+    using FilterMode = wgpu::FilterMode;
 
 }
 

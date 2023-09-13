@@ -62,7 +62,7 @@ namespace rush
         const wgpu::BindGroup& GetBindGroup() const { return m_BindGroup; }
 
     protected:
-        friend class RenderContex;
+        friend class RenderContext;
 
         Ref<BindingLayout> m_BindLayout;
         wgpu::BindGroup m_BindGroup;

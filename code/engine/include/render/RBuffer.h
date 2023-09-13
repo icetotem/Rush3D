@@ -16,15 +16,20 @@ namespace rush
         RBuffer(const RBuffer&) = delete;
         RBuffer& operator=(const RBuffer&) = delete;
 
+        bool IsValid() const;
+        void Destroy();
+
         const wgpu::Buffer& GetBuffer() const { return m_Buffer; }
 
-        void UpdateData(const void* data, uint64_t size, uint64_t offset = 0);
+        void UpdateData(const void* data, uint64_t size = 0, uint64_t offset = 0);
+
+        uint64_t GetSize() const { return m_Size; }
 
     protected:
         RBuffer(wgpu::BufferUsage usage, uint64_t size, const void* data, const char* lable);
 
     protected:
-        friend class RenderContex;
+        friend class RenderContext;
         uint64_t m_Size = 0;
         wgpu::Buffer m_Buffer;
     };
@@ -60,7 +65,7 @@ namespace rush
         uint64_t GetSize() const { return m_Size; }
 
     protected:
-        friend class RenderContex;
+        friend class RenderContext;
 
         uint64_t m_VertCount = 0;
         uint32_t m_Stride = 0;
@@ -81,7 +86,7 @@ namespace rush
         uint64_t GetSize() const { return m_Size; }
 
     protected:
-        friend class RenderContex;
+        friend class RenderContext;
 
         uint64_t m_IndexCount = 0;
         IndexFormat m_Type = IndexFormat::Uint16;

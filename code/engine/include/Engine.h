@@ -2,7 +2,7 @@
 #define Engine_h__
 
 #include "core/Common.h"
-#include "render/RenderContex.h"
+#include "render/RenderContext.h"
 #include "Window.h"
 #include "SceneManager.h"
 #include "SceneRenderer.h"

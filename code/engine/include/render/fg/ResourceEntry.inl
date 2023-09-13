@@ -22,7 +22,7 @@ namespace rush
         m_version{ version }, m_imported{ imported } {}
 
     template <typename T> inline auto* ResourceEntry::_getModel() const {
-        auto* model = dynamic_cast<Model<T> *>(m_concept.get());
+        auto* model = static_cast<Model<T> *>(m_concept.get());
         assert(model && "Invalid type");
         return model;
     }

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "render/RLayout.h"
-#include "render/RenderContex.h"
+#include "render/RenderContext.h"
 
 namespace rush
 {
@@ -43,7 +43,7 @@ namespace rush
         descriptor.entryCount = entries.size();
         descriptor.entries = entries.data();
         descriptor.label = lable;
-        m_Layout =RenderContex::device.CreateBindGroupLayout(&descriptor);
+        m_Layout =RenderContext::device.CreateBindGroupLayout(&descriptor);
     }
 
 }
