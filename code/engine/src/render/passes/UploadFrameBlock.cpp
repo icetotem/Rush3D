@@ -4,7 +4,7 @@
 #include "render/fg/Blackboard.hpp"
 #include "render/passes/FrameGraphBuffer.h"
 #include "render/passes/FrameGraphHelper.h"
-#include "render/passes/FrameData.h"
+#include "render/passes/PassesData.h"
 #include "components/Camera.h"
 
 namespace {

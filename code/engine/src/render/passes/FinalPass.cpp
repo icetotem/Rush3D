@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "render/passes/FinalPass.h"
-#include "render/passes/FrameData.h"
+#include "render/passes/PassesData.h"
 #include "render/passes/FrameGraphTexture.h"
 #include "render/RenderContext.h"
 
@@ -121,7 +121,7 @@ namespace rush
 
         fg.addCallbackPass(
             "FinalComposition",
-                [&](FrameGraph::Builder& builder, auto&) {
+            [&](FrameGraph::Builder& builder, auto&) {
                 builder.read(frameBlock);
                 if (mode != Mode_Discard) 
                     builder.read(output);
