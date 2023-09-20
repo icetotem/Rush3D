@@ -17,7 +17,7 @@ namespace rush
             {
                 auto meshRdr = this->Get<MeshRenderer>();
                 auto part = meshRdr->GetPart(*(int*)slot);
-                for (auto& subMesh : mesh->m_Primitives)
+                for (auto& subMesh : mesh->primitives)
                 {
                     part->vertexBuffers = subMesh.vertexBuffers;
                     part->indexBuffer = subMesh.indexBuffer;

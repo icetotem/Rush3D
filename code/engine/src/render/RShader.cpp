@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "render/RShader.h"
-#include "render/RenderContext.h"
+#include "render/RDevice.h"
 
 namespace rush
 {
@@ -14,7 +14,7 @@ namespace rush
         wgpu::ShaderModuleDescriptor descriptor;
         descriptor.nextInChain = &wgslDesc;
         descriptor.label = lable;
-        m_Module = CreateRef<wgpu::ShaderModule>(RenderContext::device.CreateShaderModule(&descriptor));
+        m_Module = CreateRef<wgpu::ShaderModule>(RDevice::instance().GetDevice().CreateShaderModule(&descriptor));
     }
 
 

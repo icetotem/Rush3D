@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "Engine.h"
-#include "render/RenderContext.h"
+#include "render/Renderer.h"
 #include "version.h"
 #include "components/EcsSystem.h"
+#include "render/RDevice.h"
 
 namespace rush
 {
@@ -15,33 +16,37 @@ namespace rush
 
         Logger::Init("Rush3D.log", "Rush3D");
         LOG_INFO("Version {}", VERSION);
+
+        static RDevice device;
+        device.Create(wgpu::BackendType::D3D12);
     }
 
     void Engine::Init()
     {
-        m_RenderManager.Init();
 
     }
 
-    Ref<Window> Engine::CreateRenderWindow(const WindowDesc& desc, const RendererDesc& rendererDesc)
+    Ref<Window> Engine::CreateRenderWindow(const WindowDesc& desc)
     {
         auto window = Window::Construct();
         window->Create(desc);
-        window->m_Renderer = RenderContext::Construct(window, rendererDesc);
         return window;
+    }
+
+    Ref<Renderer> Engine::CreateRenderer(uint32_t width, uint32_t height)
+    {
+        return Renderer::Construct(width, height);
     }
 
     void Engine::Update()
     {
         Timer::Tick();
-        m_SceneManager.Update();
-        m_RenderManager.Update();
         Entity::ClearRecycle();
     }
 
     void Engine::Shutdown()
     {
-        m_RenderManager.Shutdown();
+
     }
 
 }

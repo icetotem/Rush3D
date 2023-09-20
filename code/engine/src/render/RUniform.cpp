@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "render/RUniform.h"
-#include "render/RenderContext.h"
+#include "render/RDevice.h"
 
 namespace rush
 {
@@ -70,7 +70,7 @@ namespace rush
 
     RBindGroup::RBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable)
     {
-        m_BindGroup = MakeBindGroup(RenderContext::device, layout->m_Layout, entriesInitializer);
+        m_BindGroup = MakeBindGroup(RDevice::instance().GetDevice(), layout->m_Layout, entriesInitializer);
         m_BindLayout = layout;
     }
 

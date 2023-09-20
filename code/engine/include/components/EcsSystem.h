@@ -185,8 +185,11 @@ namespace rush
     inline Entity Entity::Create(const StringView& name)
     {
         auto id = EcsSystem::registry.create();
-        EcsSystem::entitiesNameMap[String(name)] = id;
-        EcsSystem::entitiesIDMap[id] = String(name);
+        if (name != "")
+        {
+            EcsSystem::entitiesNameMap[String(name)] = id;
+            EcsSystem::entitiesIDMap[id] = String(name);
+        }
         return Entity(id);
     }
 

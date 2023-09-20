@@ -2,6 +2,8 @@
 #define Window_h__
 
 #include "InputDefne.h"
+#include "render/RSurface.h"
+#include "render/Renderer.h"
 
 namespace rush
 {
@@ -26,12 +28,11 @@ namespace rush
         bool resizable = true;
         bool alwaysTop = true;
         bool visible = true;
+        bool vsync = true;
     };
 
     typedef void* WindowHandle;
     typedef void* DisplayHandle;
-
-    class RenderContext;
 
     class Window
     {
@@ -49,7 +50,7 @@ namespace rush
         uint32_t GetMouseX() const { return m_MouseX; }
         uint32_t GetMouseY() const { return m_MouseY; }
 
-        Ref<RenderContext> GetRenderer() const { return m_Renderer; }
+        Ref<RSurface> GetSurface() { return m_Surface; }
 
         bool ShouldClose() const;
         static void MessgeLoop();
@@ -81,7 +82,7 @@ namespace rush
     protected:
         struct Impl;
         Ref<Impl> m_Impl;
-        Ref<RenderContext> m_Renderer;
+        Ref<RSurface> m_Surface;
 
         String m_Title;
         uint32_t m_Width = 1024;

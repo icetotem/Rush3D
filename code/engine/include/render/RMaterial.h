@@ -14,8 +14,10 @@ namespace rush
     public:
         virtual bool Load(const StringView& path) override;
 
+        Ref<RPipeline> GetPipeline() const { return m_Pipeline; }
+
     protected:
-        friend class SceneRenderer;
+        friend class SceneManager;
         friend class RMaterialInst;
 
         Ref<RPipeline> m_Pipeline;
@@ -30,8 +32,12 @@ namespace rush
 
         static Ref<RUniformBuffer> GetGlobalUniformBuffer() { return s_GlobalUniformBuffer; }
 
+        Ref<RMaterial> GetMaterial() const { return m_Material; }
+
+        Ref<RBindGroup> GetBindGroup() const { return m_BindGroup; }
+
     protected:
-        friend class SceneRenderer;
+        friend class SceneManager;
 
         Ref<RMaterial> m_Material;
         Ref<RUniformBuffer> m_UniformBuffer;

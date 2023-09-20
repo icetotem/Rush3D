@@ -25,7 +25,7 @@ namespace rush
         MeshRenderer::Primitive* GetPart(int slot);
 
     protected:
-        friend class SceneRenderer;
+        friend class SceneManager;
         DArray<Primitive> m_Primitives;
     };
 

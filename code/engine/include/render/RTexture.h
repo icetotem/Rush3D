@@ -12,7 +12,7 @@ namespace rush
     class RSampler
     {
     public:
-        friend class RenderContext;
+        friend class Renderer;
         friend class RPass;
 
         RSampler(const char* lable = nullptr);
@@ -40,22 +40,16 @@ namespace rush
 
         const wgpu::Texture& GetTexture() const { return m_Texture; }
 
-        uint32_t GetWidth() const { return m_Width; }
-        uint32_t GetHeight() const { return m_Height; }
-        uint32_t GetDepth() const { return m_Depth; }
-        uint32_t GetMips() const { return m_Mips; }
-        TextureFormat GetFormat() const { return m_Format; }
+        uint32_t GetWidth() const { return m_Texture.GetWidth(); }
+        uint32_t GetHeight() const { return m_Texture.GetHeight(); }
+        uint32_t GetDepth() const { return m_Texture.GetDepthOrArrayLayers(); }
+        uint32_t GetMips() const { return m_Texture.GetMipLevelCount(); }
+        TextureFormat GetFormat() const { return m_Texture.GetFormat(); }
+        TextureDimension GetDim() const { return m_Texture.GetDimension(); }
 
     private:
-        friend class RenderContext;
+        friend class Renderer;
         friend class RPass;
-
-        TextureFormat m_Format = TextureFormat::RGBA8Unorm;
-        TextureDimension m_Dim = TextureDimension::e2D;
-        uint32_t m_Width = 1;
-        uint32_t m_Height = 1;
-        uint32_t m_Depth = 1;
-        uint32_t m_Mips = 1;
         wgpu::Texture m_Texture;
     };
 

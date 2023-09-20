@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "render/RPipeline.h"
-#include "render/RenderContext.h"
+#include "render/RDevice.h"
 
 namespace rush
 {
@@ -24,7 +24,7 @@ namespace rush
 
         wgpu::RenderPipelineDescriptor descriptor = {};
         descriptor.label = lable;
-        descriptor.layout = RenderContext::device.CreatePipelineLayout(&layoutDesc);
+        descriptor.layout = RDevice::instance().GetDevice().CreatePipelineLayout(&layoutDesc);
 
         // Setup vertex state.
         std::array<wgpu::VertexBufferLayout, kMaxVertexBuffers> cBuffers;
@@ -130,7 +130,7 @@ namespace rush
 //             multisample->alphaToCoverageEnabled = false;
 //         }
 
-        m_Pipeline = RenderContext::device.CreateRenderPipeline(&descriptor);
+        m_Pipeline = RDevice::instance().GetDevice().CreateRenderPipeline(&descriptor);
     }
 
 }

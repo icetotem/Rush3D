@@ -3,7 +3,7 @@
 #include "render/RTexture.h"
 #include "BundleManager.h"
 #include "ImageCodec.h"
-#include "render/RenderContext.h"
+#include "render/RDevice.h"
 
 namespace rush
 {
@@ -12,7 +12,7 @@ namespace rush
     {
         wgpu::SamplerDescriptor desc = {};
         desc.label = lable;
-        m_Sampler = RenderContext::device.CreateSampler(&desc);
+        m_Sampler = RDevice::instance().GetDevice().CreateSampler(&desc);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -69,22 +69,16 @@ namespace rush
 
     RTexture::RTexture(uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth/* = 1*/, TextureDimension dim, const char* lable/* = nullptr*/)
     {
-        m_Width = width;
-        m_Height = height;
-        m_Depth = depth;
-        m_Mips = mips;
-        m_Format = format;
-        m_Dim = dim;
         wgpu::TextureDescriptor descriptor;
-        descriptor.dimension = m_Dim;
-        descriptor.size.width = m_Width;
-        descriptor.size.height = m_Height;
-        descriptor.size.depthOrArrayLayers = m_Depth;
+        descriptor.dimension = dim;
+        descriptor.size.width = width;
+        descriptor.size.height = height;
+        descriptor.size.depthOrArrayLayers = depth;
         descriptor.sampleCount = 1;
-        descriptor.format = m_Format;
-        descriptor.mipLevelCount = m_Mips;
+        descriptor.format = format;
+        descriptor.mipLevelCount = mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
-        m_Texture = RenderContext::device.CreateTexture(&descriptor);
+        m_Texture = RDevice::instance().GetDevice().CreateTexture(&descriptor);
     }
 
     bool RTexture::Load(const StringView& path)
@@ -106,21 +100,21 @@ namespace rush
             return false;
         }
 
-        m_Width = rawData.width;
-        m_Height = rawData.height;
-        m_Dim = TextureDimension::e2D;
-        m_Depth = 1;
-        m_Mips = 1;
-
-        if (m_Dim == TextureDimension::e2D)
+        auto width = rawData.width;
+        auto height = rawData.height;
+        auto dim = TextureDimension::e2D;
+        auto depth = 1;
+        auto mips = 1;
+        TextureFormat format;
+        if (dim == TextureDimension::e2D)
         {
             if (compress)
             {
-                m_Format = TextureFormat::BC3RGBAUnorm;
+                format = TextureFormat::BC3RGBAUnorm;
             }
             else
             {
-                m_Format = TextureFormat::RGBA8Unorm;
+                format = TextureFormat::RGBA8Unorm;
             }
         }
         else
@@ -131,24 +125,24 @@ namespace rush
 
         wgpu::TextureDescriptor descriptor;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
-        descriptor.dimension = m_Dim;
-        descriptor.size.width = m_Width;
-        descriptor.size.height = m_Height;
-        descriptor.size.depthOrArrayLayers = m_Depth;
+        descriptor.dimension = dim;
+        descriptor.size.width = width;
+        descriptor.size.height = height;
+        descriptor.size.depthOrArrayLayers = depth;
         descriptor.sampleCount = 1;
-        descriptor.format = m_Format;
-        descriptor.mipLevelCount = m_Mips;
+        descriptor.format = format;
+        descriptor.mipLevelCount = mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
-        m_Texture = RenderContext::device.CreateTexture(&descriptor);
+        m_Texture = RDevice::instance().GetDevice().CreateTexture(&descriptor);
 
         if (compress)
         {
             TextureInfo texInfo;
-            ImageCodec::GetTextureInfo(&texInfo, m_Width, m_Height, m_Depth, false, m_Mips > 1, 1, m_Format);
+            ImageCodec::GetTextureInfo(&texInfo, width, height, depth, false, mips > 1, 1, format);
             int compressedBlockSize = texInfo.storageSize;
             uint8_t* compressData = new uint8_t[compressedBlockSize];
             memset(compressData, 0, compressedBlockSize);
-            ImageCodec::EncodeDTX(m_Format, compressData, rawData.data, m_Width, m_Height, m_Depth, ImageQuality::Fastest);
+            ImageCodec::EncodeDTX(format, compressData, rawData.data, width, height, depth, ImageQuality::Fastest);
             UpdateData(compressData, compressedBlockSize);
             delete[] compressData;
         }
@@ -172,14 +166,14 @@ namespace rush
 
     void RTexture::UpdateData(const void* data, uint64_t size)
     {
-        wgpu::Buffer stagingBuffer = CreateBufferFromData(RenderContext::device, data, size, wgpu::BufferUsage::CopySrc);
-        wgpu::ImageCopyBuffer imageCopyBuffer = CreateImageCopyBuffer(stagingBuffer, 0, m_Width * 4); // TODO: calculate bytesPerRow
+        wgpu::Buffer stagingBuffer = CreateBufferFromData(RDevice::instance().GetDevice(), data, size, wgpu::BufferUsage::CopySrc);
+        wgpu::ImageCopyBuffer imageCopyBuffer = CreateImageCopyBuffer(stagingBuffer, 0, GetWidth() * 4); // TODO: calculate bytesPerRow
         wgpu::ImageCopyTexture imageCopyTexture = CreateImageCopyTexture(m_Texture, 0, {0, 0, 0});
-        wgpu::Extent3D copySize = { m_Width, m_Height, m_Depth };
-        wgpu::CommandEncoder encoder = RenderContext::device.CreateCommandEncoder();
+        wgpu::Extent3D copySize = { GetWidth(), GetHeight(), GetDepth() };
+        wgpu::CommandEncoder encoder = RDevice::instance().GetDevice().CreateCommandEncoder();
         encoder.CopyBufferToTexture(&imageCopyBuffer, &imageCopyTexture, &copySize);
         wgpu::CommandBuffer copy = encoder.Finish();
-        RenderContext::queue.Submit(1, &copy);
+        RDevice::instance().GetCmdQueue().Submit(1, &copy);
     }
 
 }

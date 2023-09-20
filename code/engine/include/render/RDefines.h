@@ -1,22 +1,9 @@
 #ifndef RDefines_h__
 #define RDefines_h__
 
-
-#ifdef RUSH_PLATFORM_WINDOWS
-#define DAWN_ENABLE_BACKEND_D3D12
-#elif (defined(RUSH_PLATFORM_LINUX) || defined(RUSH_PLATFORM_ANDROID))
-#define DAWN_ENABLE_BACKEND_VULKAN
-#elif (defined(RUSH_PLATFORM_MAC) || defined(RUSH_PLATFORM_IOS))
-#define DAWN_ENABLE_BACKEND_METAL
-#endif
-
 #include <dawn/webgpu_cpp.h>
-
-#define WGPU_RELEASE_RESOURCE(Type, Name)                                      \
-  if (Name) {                                                                  \
-    wgpu##Type##Release(Name);                                                 \
-    Name = NULL;                                                               \
-  }
+#include <dawn/webgpu_cpp_print.h>
+#include <dawn/native/DawnNative.h>
 
 namespace rush
 {

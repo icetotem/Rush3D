@@ -20,7 +20,7 @@ namespace rush
         ShaderStage GetType() const { return m_ShaderType; }
 
     protected:
-        friend class RenderContext;
+        friend class Renderer;
         friend class RPipeline;
 
         ShaderStage m_ShaderType = ShaderStage::None;

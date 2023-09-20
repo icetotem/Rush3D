@@ -22,7 +22,7 @@ namespace rush
             Ref<RIndexBuffer> indexBuffer;
         };
 
-        List<Primitive> m_Primitives;
+        List<Primitive> primitives;
     };
 
 }

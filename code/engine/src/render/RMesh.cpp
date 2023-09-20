@@ -138,7 +138,7 @@ namespace rush
             }
         }
 
-        auto& subMesh = m_Primitives.emplace_back();
+        auto& subMesh = primitives.emplace_back();
         subMesh.vertexBuffers.push_back(positionBuffer);
         subMesh.vertexBuffers.push_back(texcoordBuffer);
         subMesh.indexBuffer = indexBuffer;

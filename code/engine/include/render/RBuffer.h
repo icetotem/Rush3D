@@ -29,7 +29,7 @@ namespace rush
         RBuffer(wgpu::BufferUsage usage, uint64_t size, const void* data, const char* lable);
 
     protected:
-        friend class RenderContext;
+        friend class Renderer;
         uint64_t m_Size = 0;
         wgpu::Buffer m_Buffer;
     };
@@ -65,7 +65,7 @@ namespace rush
         uint64_t GetSize() const { return m_Size; }
 
     protected:
-        friend class RenderContext;
+        friend class Renderer;
 
         uint64_t m_VertCount = 0;
         uint32_t m_Stride = 0;
@@ -86,7 +86,7 @@ namespace rush
         uint64_t GetSize() const { return m_Size; }
 
     protected:
-        friend class RenderContext;
+        friend class Renderer;
 
         uint64_t m_IndexCount = 0;
         IndexFormat m_Type = IndexFormat::Uint16;

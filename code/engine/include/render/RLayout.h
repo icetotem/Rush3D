@@ -42,7 +42,7 @@ namespace rush
         const wgpu::BindGroupLayout& GetLayout() const { return m_Layout; }
 
     private:
-        friend class RenderContext;
+        friend class Renderer;
         friend class RPipeline;
         friend class RBindGroup;
 

@@ -2,10 +2,9 @@
 #define Engine_h__
 
 #include "core/Common.h"
-#include "render/RenderContext.h"
+#include "render/Renderer.h"
 #include "Window.h"
 #include "SceneManager.h"
-#include "SceneRenderer.h"
 #include "AssetManager.h"
 #include "BundleManager.h"
 
@@ -15,17 +14,18 @@ namespace rush
     class Engine : public Singleton<Engine>
     {
     public:
-        BundleManager m_BundleManager;
-        AssetsManager m_AssetsManager;
-        SceneManager m_SceneManager;
-        SceneRenderer m_RenderManager;
+        BundleManager bundleManager;
+        AssetsManager assetsManager;
+        SceneManager sceneManager;
 
     public:
         Engine();
 
         void Init();
 
-        Ref<Window> CreateRenderWindow(const WindowDesc& desc, const RendererDesc& rendererDesc);
+        Ref<Window> CreateRenderWindow(const WindowDesc& desc);
+
+        Ref<Renderer> CreateRenderer(uint32_t width, uint32_t height);
 
         void Update();
 

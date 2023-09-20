@@ -2,7 +2,7 @@
 #define Camera_h__
 
 #include "components/EcsSystem.h"
-#include "render/RenderContext.h"
+#include "render/Renderer.h"
 
 namespace rush
 {
@@ -12,8 +12,7 @@ namespace rush
     public:
         Camera(Entity owner);
 
-        void SetRenderer(Ref<RenderContext> renderer);
-        Ref<RenderContext> GetRenderer() const { return m_Renderer; }
+        void Update(Ref<Renderer> renderer);
 
         void SetFov(float fov);
         void SetClip(float nearClip, float farClip);
@@ -55,13 +54,13 @@ namespace rush
         void UpdateAspect();
 
     protected:
-        Ref<RenderContext> m_Renderer;
         Vector4 m_ClearColor = { 0.2f, 0.2f, 0.2f, 1.0f };
         Vector4 m_Viewport = {0.0f, 0.0f, 1.0f, 1.0f};
         float m_ClearDepth = 1.0f;
         uint8_t m_Stencil = 0;
         float m_Fov, m_Aspect, m_NearClip, m_FarClip;
         Matrix4 m_ViewMatrix, m_ProjMatrix;
+        uint32_t m_Width, m_Height;
     };
 }
 

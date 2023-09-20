@@ -46,7 +46,7 @@ solution "Rush3D"
         defines { "RUSH_PLATFORM_LINUX" }
 
 include "3rdparty"
-include "code/Engine"
+include "code/engine"
 
 group "samples"
-include "code/samples"
+include "code/samples/basic_framework"

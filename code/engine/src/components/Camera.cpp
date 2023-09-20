@@ -7,35 +7,33 @@ namespace rush
 
     Camera::Camera(Entity owner)
         : Component(owner)
-        , m_Fov(60.0f), m_Aspect(1.33333f), m_NearClip(0.1f), m_FarClip(1000.0f)
+        , m_Fov(60.0f), m_Aspect(1.33333f), m_NearClip(0.1f), m_FarClip(1000.0f), m_Width(1024), m_Height(768)
     {
-        UpdateProjMatrix();
-        UpdateViewMatrix();
     }
 
-    void Camera::SetRenderer(Ref<RenderContext> renderer)
+    void Camera::Update(Ref<Renderer> renderer)
     {
-        m_Renderer = renderer;
+        m_Width = renderer->GetWidth();
+        m_Height = renderer->GetHeight();
         UpdateAspect();
+        UpdateProjMatrix();
+        UpdateViewMatrix();
     }
 
     void Camera::SetFov(float fov)
     {
         m_Fov = fov;
-        UpdateProjMatrix();
     }
 
     void Camera::SetClip(float nearClip, float farClip)
     {
         m_NearClip = nearClip;
         m_FarClip = farClip;
-        UpdateProjMatrix();
     }
 
     void Camera::SetViewport(float x, float y, float width, float height)
     {
         m_Viewport = { x, y, width, height };
-        UpdateAspect();
     }
 
     void Camera::UpdateAspect()
@@ -43,7 +41,6 @@ namespace rush
         uint32_t width, height;
         GetViewSize(width, height);
         m_Aspect = (float)width / (float)height;
-        UpdateProjMatrix();
     }
 
     void Camera::UpdateProjMatrix()
@@ -103,21 +100,13 @@ namespace rush
 
     void Camera::GetViewSize(uint32_t& width, uint32_t& height) const
     {
-        if (m_Renderer)
-        {
-            width = m_Renderer->GetWidth() * (m_Viewport.z - m_Viewport.x);
-            height = m_Renderer->GetHeight() * (m_Viewport.w - m_Viewport.y);
-        }
-        else
-        {
-            width = 0;
-            height = 0;
-        }
+        width = m_Width * (m_Viewport.z - m_Viewport.x);
+        height = m_Height * (m_Viewport.w - m_Viewport.y);
     }
 
     void Camera::GetViewCorner(uint32_t& x, uint32_t& y) const
     {
-        x = m_Renderer->GetWidth() * m_Viewport.x;
-        y = m_Renderer->GetHeight() * m_Viewport.y;
+        x = m_Width * m_Viewport.x;
+        y = m_Height * m_Viewport.y;
     }
 }

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "components/MeshRenderer.h"
-#include "render/RenderContext.h"
+#include "render/Renderer.h"
 
 namespace rush
 {  

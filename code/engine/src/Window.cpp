@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Window.h"
-#include "render/RenderContext.h"
+#include "render/Renderer.h"
 
 #if defined(RUSH_PLATFORM_WINDOWS) || defined(RUSH_PLATFORM_MAC) || defined(RUSH_PLATFORM_LINUX) // GLFW implementation
 
@@ -14,6 +14,7 @@
 
 #include <glfw/glfw3.h>
 #include <glfw/include/GLFW/glfw3native.h>
+#include "render/RDevice.h"
 
 namespace rush
 {
@@ -91,7 +92,7 @@ namespace rush
         m_Height = desc.height;
         m_Title = desc.title;
 
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Do not use OpenGL
         glfwWindowHint(GLFW_RESIZABLE, desc.resizable ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, desc.transparent ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_DECORATED, desc.frameless ? GLFW_FALSE : GLFW_TRUE);
@@ -110,7 +111,6 @@ namespace rush
 
         if (desc.windowMode == WindowMode::Maximized)
         {
-            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         }
 
         m_Impl->handle = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr);
@@ -122,6 +122,8 @@ namespace rush
 
         m_Handle = GetNativeWindowHandle(m_Impl->handle);
         m_Display = GetDisplay();
+
+        m_Surface = RSurface::Construct(m_Width, m_Height, desc.vsync, m_Handle, m_Display);
 
         // input callbacks
         glfwSetWindowUserPointer(m_Impl->handle, (void*)this);
@@ -290,7 +292,7 @@ namespace rush
 
     void Window::Present()
     {
-        m_Renderer->Present();
+        m_Surface->Present();
     }
 
     void Window::BindKeyCallback(std::function<bool(InputButtonState, KeyCode)> callback)

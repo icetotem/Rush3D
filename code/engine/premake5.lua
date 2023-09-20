@@ -5,6 +5,7 @@ project "Rush3D_Engine"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++17"
+    characterset "MBCS"
 	exceptionhandling "Off"
 	rtti "Off"
 
