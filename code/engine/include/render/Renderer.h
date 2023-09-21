@@ -15,19 +15,26 @@ namespace rush
 
     struct FrameBufferAttachment
     {
-        RTexture* texture = nullptr;
-        uint32_t mipLevel = 0;
-        Vector4 clearColor;
+        String texture;
+        Vector4 clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
     };
 
-    struct FrameBufferInfo
+    struct FrameBuffer
     {
         std::string lable;
-        uint32_t width = 0;
-        uint32_t height = 0;
+
         std::vector<FrameBufferAttachment> colorAttachment;
-        std::optional<FrameBufferAttachment> depthAttachment;
+        std::optional<String> depthStencilTexture;
         std::optional<float> clearDepth;
+        std::optional<float> clearStencil;
+    };
+
+    struct FrameTexture
+    {
+        Ref<RTexture> texture;
+        TextureFormat format;
+        float widthScale = 1.0f;
+        float heightScale = 1.0f;
     };
 
     /// <summary>
@@ -41,15 +48,11 @@ namespace rush
         uint32_t GetWidth() const { return m_Width; }
         uint32_t GetHeight() const { return m_Height; }  
 
-        void BeginDraw();
-        void DrawScene(Ref<RenderQueue> renderQueue, const FrameBufferInfo& frameBuffer);
-        void DrawQuad(const FrameBufferInfo& frameBuffer, Ref<RMaterialInst> material);
-        void DrawSurface(RSurface& surface, const StringView& renderTexture);
-        void EndDraw();
+        void Render(Ref<RenderQueue> renderQueue, Ref<RSurface> surface);
 
         void Resize(uint32_t width, uint32_t height);
 
-        Ref<RTexture> GetRenderTexture(const StringView& name) const;
+        Ref<RTexture> GetFGTexture(const StringView& name);
 
     protected:
         friend class Engine;
@@ -63,6 +66,12 @@ namespace rush
 
         void CreateFullScreenQuad();
 
+        void RegisterFGTexture(const StringView& name, TextureFormat format, float widthScale, float heightScale);
+
+        void BeginDraw(Ref<RSurface> surface);
+        void DrawScene(Ref<RenderQueue> renderQueue, const FrameBuffer& outputBuffers);
+        void DrawQuad(Ref<RMaterialInst> material, const FrameBuffer& outputBuffers);
+        void EndDraw();
 
     protected:
         wgpu::CommandEncoder encoder;
@@ -74,7 +83,10 @@ namespace rush
         Ref<RVertexBuffer> m_QuadVB;
         Ref<RPipeline> m_FinalPassPipeline;
         Ref<RBindGroup> m_FinalPassBindGroup;
-        HMap<String, Ref<RTexture>> m_RenderTextures;
+        Ref<RSurface> m_Surface;
+        // frame graph resources
+        HMap<String, FrameTexture> m_RenderTextures;
+
     };
 
 }

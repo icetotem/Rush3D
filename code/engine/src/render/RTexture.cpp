@@ -67,7 +67,7 @@ namespace rush
 
     //////////////////////////////////////////////////////////////////////////
 
-    RTexture::RTexture(uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth/* = 1*/, TextureDimension dim, const char* lable/* = nullptr*/)
+    RTexture::RTexture(uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth/* = 1*/, TextureDimension dim, TextureUsage usage, const char* lable/* = nullptr*/)
     {
         wgpu::TextureDescriptor descriptor;
         descriptor.dimension = dim;
@@ -77,7 +77,7 @@ namespace rush
         descriptor.sampleCount = 1;
         descriptor.format = format;
         descriptor.mipLevelCount = mips;
-        descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
+        descriptor.usage = wgpu::TextureUsage::CopyDst | usage;
         m_Texture = RDevice::instance().GetDevice().CreateTexture(&descriptor);
     }
 

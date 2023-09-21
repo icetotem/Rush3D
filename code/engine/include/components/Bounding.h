@@ -16,6 +16,8 @@ namespace rush
         AABB m_AABB;
         OBB m_InitOBB;
         OBB m_OBB;
+
+        void Update();
     };
 
 }

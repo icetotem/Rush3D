@@ -14,7 +14,7 @@ namespace rush
     public:
         virtual bool Load(const StringView& path) override;
 
-        Ref<RPipeline> GetPipeline() const { return m_Pipeline; }
+        const wgpu::RenderPipeline& GetPipeline() const { return m_Pipeline->GetPipeline(); }
 
     protected:
         friend class SceneManager;
@@ -34,7 +34,7 @@ namespace rush
 
         Ref<RMaterial> GetMaterial() const { return m_Material; }
 
-        Ref<RBindGroup> GetBindGroup() const { return m_BindGroup; }
+        const wgpu::BindGroup& GetBindGroup() const { return m_BindGroup->GetBindGroup(); }
 
     protected:
         friend class SceneManager;

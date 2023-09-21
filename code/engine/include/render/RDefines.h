@@ -27,6 +27,7 @@ namespace rush
     using IndexFormat = wgpu::IndexFormat;
     using AddressMode = wgpu::AddressMode;
     using FilterMode = wgpu::FilterMode;
+    using TextureUsage = wgpu::TextureUsage;
 
 }
 

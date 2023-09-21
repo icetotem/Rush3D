@@ -29,7 +29,7 @@ namespace rush
     {
     public:
         RTexture() = default;
-        RTexture(uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth, TextureDimension dim = TextureDimension::e2D, const char* lable = nullptr);
+        RTexture(uint32_t width, uint32_t height, TextureFormat format, uint32_t mips, uint32_t depth, TextureDimension dim = TextureDimension::e2D, TextureUsage usage = TextureUsage::TextureBinding, const char* lable = nullptr);
         ~RTexture() = default;
 
         bool Load(const StringView& path) override;

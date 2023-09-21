@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "components/Frustum.h"
+#include "components/Transform.h"
+#include "components/Camera.h"
 
 namespace rush
 {
@@ -74,5 +76,26 @@ namespace rush
         return FrustumCullResult::Inside;
     }
 
+
+    void Frustum::UpdateFromCamera(Entity camEntity)
+    {
+        auto transform = camEntity.Get<Transform>();
+        auto camera = camEntity.Get<Camera>();
+        const auto& position = transform->GetPosition();
+        const auto& front = transform->GetForward();
+        const auto& left = transform->GetLeft();
+        const auto& up = transform->GetUp();
+
+        const float halfVSide = camera->GetFarClip() * tanf(degToRad(camera->GetFov()) * 0.5f);
+        const float halfHSide = halfVSide * camera->GetAspect();
+        const Vector3 frontMultFar = camera->GetFarClip() * front;
+
+        SetPlane(FrustumSide::FS_Near, Plane(front, position + camera->GetNearClip() * front)); // near
+        SetPlane(FrustumSide::FS_Far, Plane(-front, position + frontMultFar)); // far
+        SetPlane(FrustumSide::FS_Right, Plane(cross(frontMultFar + left * halfHSide, up), position)); // right
+        SetPlane(FrustumSide::FS_Left, Plane(cross(up, frontMultFar - left * halfHSide), position)); // left
+        SetPlane(FrustumSide::FS_Bottom, Plane(cross(frontMultFar - up * halfVSide, left), position)); // bottom
+        SetPlane(FrustumSide::FS_Top, Plane(cross(left, frontMultFar + up * halfVSide), position)); // top
+    }
 
 }

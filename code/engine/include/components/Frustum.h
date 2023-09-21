@@ -39,6 +39,8 @@ namespace rush
 
 		void SetPlane(FrustumSide side, const Plane& plane) { m_Planes[(int)side] = plane; }
 
+		void UpdateFromCamera(Entity camEntity);
+
     private:
 		Plane m_Planes[(int)FrustumSide::Count];
 	};

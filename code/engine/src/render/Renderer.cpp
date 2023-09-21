@@ -15,7 +15,11 @@ namespace rush
     {
         m_Width = width;
         m_Height = height;
-        CreateFullScreenQuad();
+        
+        //CreateFullScreenQuad();
+
+        RegisterFGTexture("SceneColorTexture", TextureFormat::BGRA8Unorm, 1.0f, 1.0f);
+        RegisterFGTexture("SceneDepthTexture", TextureFormat::Depth24PlusStencil8, 1.0f, 1.0f);
     }
 
     void Renderer::CreateFullScreenQuad()
@@ -52,10 +56,9 @@ namespace rush
 
         float const verts[] =
         {
-            -1.f,  1.f, // TL
-            -1.f, -1.f, // BL
-             1.f,  1.f, // TR
-             1.f, -1.f, // BR
+            -1.f, -1.f,   // TL
+            -1.f,  3.f,   // BL
+             3.f, -1.f,   // TR
         };
 
         m_QuadVB = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(verts), verts, "screen_quad_vb");
@@ -66,12 +69,12 @@ namespace rush
         pipeDesc.colorFormat = TextureFormat::BGRA8Unorm;
 
         VertexAttribute vertAttr;
-        vertAttr.format = VertexFormat::Float32x3;
+        vertAttr.format = VertexFormat::Float32x2;
         vertAttr.offset = 0;
         vertAttr.shaderLocation = 0;
 
         auto& vLayout0 = pipeDesc.vertexLayouts.emplace_back();
-        vLayout0.stride = sizeof(float) * 3;
+        vLayout0.stride = sizeof(float) * 2;
         vLayout0.attributes = &vertAttr;
         vLayout0.attributeCount = 1;
 
@@ -88,209 +91,61 @@ namespace rush
         pipeDesc.primitiveType = PrimitiveTopology::TriangleList;
         pipeDesc.frontFace = FrontFace::CW;
         pipeDesc.cullModel = CullMode::Back;
-
-        Ref<RTexture> tex;
-        auto layout = {
-            BindingInitializationHelper(1, CreateRef<RSampler>()),
-            BindingInitializationHelper(2, tex)
-        };
-
         m_FinalPassPipeline = CreateRef<RPipeline>(pipeDesc);
+
+        Ref<RTexture> tex = CreateRef<RTexture>(m_Width, m_Height, TextureFormat::RGBA8Unorm, 1, 1, TextureDimension::e2D, TextureUsage::RenderAttachment, "FinalPass Texture Buffer");
+        auto layout = {
+            BindingInitializationHelper(0, CreateRef<RSampler>()),
+            BindingInitializationHelper(1, tex)
+        };
         m_FinalPassBindGroup = CreateRef<RBindGroup>(bindingLayout, layout, "FinalPass BindGroup");
     }
 
 
-//     Ref<RScreenQuad> RenderContext::CreateScreenQuad(Ref<RShader> fs, Ref<RBindGroup> bindGroup)
-//     {
-//         Ref<RScreenQuad> sQuad = CreateRef<RScreenQuad>();
-//         if (m_QuadVS == nullptr)
-//         {
-//             const char screen_quad_vs[] = R"(
-// 	            struct VertexIn {
-// 		            @location(0) aPos : vec2<f32>
-// 	            }
-// 	            struct VertexOut {
-// 		            @location(0) vUV  : vec2<f32>,
-// 		            @builtin(position) Position : vec4<f32>
-// 	            }
-// 	            @vertex
-// 	            fn main(input : VertexIn) -> VertexOut {
-// 		            var output : VertexOut;
-// 		            output.Position = vec4<f32>(input.aPos, 1.0, 1.0);
-//                     var uv = (input.aPos + 1.0) * 0.5;
-// 		            output.vUV = vec2<f32>(uv.x, 1.0 - uv.y);
-// 		            return output;
-// 	            }
-//             )";
-//             m_QuadVS = CreateRef<RShader>(ShaderStage::Vertex, screen_quad_vs, "screen_quad_vs");
-//         }
-// 
-//         if (m_QuadVB == nullptr) 
-//         {
-//             float const verts[] =
-//             {
-//                 -1.f,  1.f, // TL
-//                 -1.f, -1.f, // BL
-//                  1.f,  1.f, // TR
-//                  1.f, -1.f, // BR
-//             };
-// 
-//             m_QuadVB = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(verts), verts, "screen_quad_vb");
-//         }
-// 
-//         PipelineDesc pipeDesc = {};
-//         pipeDesc.depthWrite = false;
-//         pipeDesc.depthTest = false;
-//         pipeDesc.colorFormat = TextureFormat::BGRA8Unorm;
-// 
-//         VertexAttribute vertAttrs[2];
-//         vertAttrs[0].format = VertexFormat::Float32x2;
-//         vertAttrs[0].offset = 0;
-//         vertAttrs[0].shaderLocation = 0;
-// 
-//         auto& vLayout = pipeDesc.vertexLayouts.emplace_back();
-//         vLayout.stride = sizeof(float) * 2;
-//         vLayout.attributes = &vertAttrs[0];
-//         vLayout.attributeCount = 1;
-// 
-//         pipeDesc.vs = m_QuadVS;
-//         pipeDesc.fs = fs;
-//         pipeDesc.writeMask = ColorWriteMask::All;
-// 
-//         pipeDesc.bindLayout = bindGroup->GetBindLayout();
-//         pipeDesc.primitiveType = PrimitiveTopology::TriangleStrip;
-//         pipeDesc.frontFace = FrontFace::CCW;
-//         pipeDesc.cullModel = CullMode::Back;
-// 
-//         sQuad->pipeline = CreateRef<RPipeline>(pipeDesc, "screen_quad_pipeline");
-//         sQuad->bindGroup = bindGroup;
-//         return sQuad;
-//     }
+    void Renderer::RegisterFGTexture(const StringView& name, TextureFormat format, float widthScale, float heightScale)
+    {
+        FrameTexture ft;
+        ft.format = format;
+        ft.widthScale = widthScale;
+        ft.heightScale = heightScale;
+        m_RenderTextures.insert({String(name), ft});
+    }
 
-
-
-//     void RenderContext::DrawOffScreenPass(Ref<RPass> renderPass, Ref<RenderQueue> content)
-//     {
-//         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPass->m_RenderPassDesc);
-//         pass.SetScissorRect(m_Viewport.x * m_Width, m_Viewport.y * m_Height, (m_Viewport.z - m_Viewport.x) * m_Width, (m_Viewport.w - m_Viewport.y) * m_Height);
-//         for (const auto batch : content->m_Batches)
-//         {
-//             pass.SetPipeline(batch->pipeline->GetPipeline());
-//             pass.SetBindGroup(0, batch->bindGroup->GetBindGroup());
-//             int vbIdx = 0;
-//             for (auto vb : batch->vertexBuffers)
-//             {
-//                 pass.SetVertexBuffer(vbIdx, vb->m_Buffer);
-//                 ++vbIdx;
-//             }
-//             pass.SetIndexBuffer(batch->indexBuffer->m_Buffer, batch->indexBuffer->GetType());
-//             pass.DrawIndexed(batch->indexBuffer->GetIndexCount(), batch->instanceCount, 0, 0);
-//         }
-//         pass.End();
-//     }
-// 
-//     void RenderContext::DrawOffScreenQuad(Ref<RPass> renderPass, Ref<RScreenQuad> sQuad)
-//     {
-//         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPass->m_RenderPassDesc);
-//         pass.SetPipeline(sQuad->pipeline->GetPipeline());
-//         pass.SetBindGroup(0, sQuad->bindGroup->GetBindGroup());
-//         pass.SetVertexBuffer(0, m_QuadVB->m_Buffer);
-//         pass.Draw(4);
-//         pass.End();
-//     }
-// 
-//     void RenderContext::DrawFinalScreenQuad(Ref<RScreenQuad> sQuad)
-//     {
-//         wgpu::TextureView backbufferView = swapChain.GetCurrentTextureView();
-//         wgpu::RenderPassDescriptor renderPassDesc = {};
-//         wgpu::RenderPassColorAttachment attachment = {};
-//         attachment.view = backbufferView;
-//         attachment.resolveTarget = nullptr;
-//         attachment.loadOp = wgpu::LoadOp::Clear;
-//         attachment.storeOp = wgpu::StoreOp::Store;
-//         attachment.clearValue = { m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a };
-//         renderPassDesc.colorAttachmentCount = 1;
-//         renderPassDesc.colorAttachments = &attachment;
-//         renderPassDesc.depthStencilAttachment = nullptr;
-// 
-//         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
-//         pass.SetPipeline(sQuad->pipeline->GetPipeline());
-//         pass.SetBindGroup(0, sQuad->bindGroup->GetBindGroup());
-//         pass.SetVertexBuffer(0, m_QuadVB->m_Buffer);
-//         pass.Draw(4);
-//         pass.End();
-//     }
-// 
-//     void RenderContext::DrawFinalPass(Ref<RenderQueue> content)
-//     {
-//         wgpu::TextureView backbufferView = swapChain.GetCurrentTextureView();
-//         wgpu::RenderPassDescriptor renderPassDesc = {};
-//         wgpu::RenderPassColorAttachment attachment = {};
-//         attachment.view = backbufferView;
-//         attachment.resolveTarget = nullptr;
-//         attachment.loadOp = wgpu::LoadOp::Clear;
-//         attachment.storeOp = wgpu::StoreOp::Store;
-//         attachment.clearValue = { m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a };
-//         renderPassDesc.colorAttachmentCount = 1;
-//         renderPassDesc.colorAttachments = &attachment;
-// 
-//         wgpu::RenderPassDepthStencilAttachment depthStencilDesc;
-//         depthStencilDesc.view = depthStencilView;
-//         depthStencilDesc.depthReadOnly = false;
-//         depthStencilDesc.stencilReadOnly = false;
-//         depthStencilDesc.depthClearValue = 1.0f;
-//         depthStencilDesc.stencilClearValue = 0;
-//         depthStencilDesc.depthLoadOp = wgpu::LoadOp::Clear;
-//         depthStencilDesc.depthStoreOp = wgpu::StoreOp::Store;
-//         depthStencilDesc.stencilLoadOp = wgpu::LoadOp::Clear;
-//         depthStencilDesc.stencilStoreOp = wgpu::StoreOp::Store;
-//         renderPassDesc.depthStencilAttachment = &depthStencilDesc; 
-// 
-//         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
-//         for (const auto batch : content->m_Batches)
-//         {
-//             pass.SetPipeline(batch->pipeline->GetPipeline());
-//             pass.SetBindGroup(0, batch->bindGroup->GetBindGroup());
-//             int vbIdx = 0;
-//             for (auto vb : batch->vertexBuffers)
-//             {
-//                 pass.SetVertexBuffer(vbIdx, vb->m_Buffer);
-//                 ++vbIdx;
-//             }
-//             pass.SetIndexBuffer(batch->indexBuffer->m_Buffer, batch->indexBuffer->GetType());
-//             pass.DrawIndexed(batch->indexBuffer->GetIndexCount(), batch->instanceCount, 0, 0);
-//         }
-//         pass.End();
-//     }
-
-    void Renderer::BeginDraw()
+    void Renderer::BeginDraw(Ref<RSurface> surface)
     {
         dawn::native::InstanceProcessEvents(RDevice::instance().GetDawnInstance().Get());
         encoder = RDevice::instance().GetDevice().CreateCommandEncoder();
+        m_Surface = surface;
     }
 
-    void Renderer::DrawScene(Ref<RenderQueue> renderQueue, const FrameBufferInfo& frameBuffer)
+    void Renderer::DrawScene(Ref<RenderQueue> renderQueue, const FrameBuffer& outputBuffers)
     {
         wgpu::RenderPassDescriptor renderPassDesc = {};
-        renderPassDesc.label = frameBuffer.lable.c_str();
+        renderPassDesc.label = outputBuffers.lable.c_str();
 
         wgpu::RenderPassColorAttachment attachments[8] = {};
         wgpu::RenderPassDepthStencilAttachment depthStencilDesc;
 
         bool useBackbuffer = false;
-        if (frameBuffer.colorAttachment.size() > 0)
+        if (outputBuffers.colorAttachment.size() > 0)
         {
-            for (int i = 0; i < frameBuffer.colorAttachment.size(); ++i)
+            for (int i = 0; i < outputBuffers.colorAttachment.size(); ++i)
             {
-                attachments[i].view = frameBuffer.colorAttachment[i].texture->GetTexture().CreateView();
+                auto rt = GetFGTexture(outputBuffers.colorAttachment[i].texture);
+                if (rt == nullptr)
+                {
+                    LOG_ERROR("Render texture {} is not registered", outputBuffers.colorAttachment[i].texture);
+                    continue;
+                }
+                attachments[i].view = rt->GetTexture().CreateView();
                 attachments[i].resolveTarget = nullptr;
                 attachments[i].loadOp = wgpu::LoadOp::Clear;
                 attachments[i].storeOp = wgpu::StoreOp::Store;
 
-                const auto& color = frameBuffer.colorAttachment[i].clearColor;
+                const auto& color = outputBuffers.colorAttachment[i].clearColor;
                 attachments[i].clearValue = { color.r, color.g, color.b, color.a };
             }
-            renderPassDesc.colorAttachmentCount = frameBuffer.colorAttachment.size();
+            renderPassDesc.colorAttachmentCount = outputBuffers.colorAttachment.size();
             renderPassDesc.colorAttachments = attachments;
 
             useBackbuffer = true;
@@ -300,20 +155,26 @@ namespace rush
             renderPassDesc.colorAttachments = nullptr;
         }
 
-        if (frameBuffer.depthAttachment.has_value())
+        if (outputBuffers.depthStencilTexture.has_value())
         {
-            auto depthTexture = frameBuffer.depthAttachment->texture;
-            RUSH_ASSERT(depthTexture);
-            depthStencilDesc.view = depthTexture->GetTexture().CreateView();
-            depthStencilDesc.depthReadOnly = false;
-            depthStencilDesc.stencilReadOnly = false;
-            depthStencilDesc.depthClearValue = frameBuffer.clearDepth.has_value() ? frameBuffer.clearDepth.value() : 1.0f;
-            depthStencilDesc.stencilClearValue = 0;
-            depthStencilDesc.depthLoadOp = wgpu::LoadOp::Clear;
-            depthStencilDesc.depthStoreOp = wgpu::StoreOp::Store;
-            depthStencilDesc.stencilLoadOp = wgpu::LoadOp::Clear;
-            depthStencilDesc.stencilStoreOp = wgpu::StoreOp::Store;
-            renderPassDesc.depthStencilAttachment = &depthStencilDesc;
+            auto rt = GetFGTexture(outputBuffers.depthStencilTexture.value());
+            if (rt != nullptr)
+            {
+                depthStencilDesc.view = rt->GetTexture().CreateView();
+                depthStencilDesc.depthReadOnly = false;
+                depthStencilDesc.stencilReadOnly = false;
+                depthStencilDesc.depthClearValue = outputBuffers.clearDepth.has_value() ? outputBuffers.clearDepth.value() : 1.0f;
+                depthStencilDesc.stencilClearValue = outputBuffers.clearStencil.has_value() ? outputBuffers.clearStencil.value() : 0.0f;
+                depthStencilDesc.depthLoadOp = wgpu::LoadOp::Clear;
+                depthStencilDesc.depthStoreOp = wgpu::StoreOp::Store;
+                depthStencilDesc.stencilLoadOp = wgpu::LoadOp::Clear;
+                depthStencilDesc.stencilStoreOp = wgpu::StoreOp::Store;
+                renderPassDesc.depthStencilAttachment = &depthStencilDesc;
+            }
+            else
+            {
+                LOG_ERROR("Render texture {} is not registered", outputBuffers.depthStencilTexture.value());
+            }
 
             useBackbuffer = true;
         }
@@ -324,7 +185,19 @@ namespace rush
 
         if (!useBackbuffer)
         {
-            LOG_WARN("Framebuffer {} does not cantain any frame texutre", frameBuffer.lable);
+            wgpu::TextureView backbufferView = m_Surface->GetSwapChain().GetCurrentTextureView();
+            attachments[0].view = backbufferView;
+            attachments[0].resolveTarget = nullptr;
+            attachments[0].loadOp = wgpu::LoadOp::Clear;
+            attachments[0].storeOp = wgpu::StoreOp::Store;
+            attachments[0].clearValue = { 0, 0, 0, 0 };
+            renderPassDesc.colorAttachmentCount = 1;
+            renderPassDesc.colorAttachments = attachments;
+        }
+        else if (m_Surface == nullptr)
+        {
+            LOG_WARN("Framebuffer {} does not assign any render target", outputBuffers.lable);
+            return;
         }
 
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
@@ -349,64 +222,63 @@ namespace rush
         pass.End();
     }
 
-    void Renderer::DrawQuad(const FrameBufferInfo& frameBuffer, Ref<RMaterialInst> material)
+    void Renderer::DrawQuad(Ref<RMaterialInst> material, const FrameBuffer& outputBuffers)
     {
         wgpu::RenderPassDescriptor renderPassDesc = {};
-        renderPassDesc.label = frameBuffer.lable.c_str();
-        wgpu::RenderPassColorAttachment attachment[8] = {};
-        if (frameBuffer.colorAttachment.size() > 0)
-        {
-            for (int i = 0; i < frameBuffer.colorAttachment.size(); ++i)
-            {
-                attachment[i].view = frameBuffer.colorAttachment[i].texture->GetTexture().CreateView();
-                attachment[i].resolveTarget = nullptr;
-                attachment[i].loadOp = wgpu::LoadOp::Clear;
-                attachment[i].storeOp = wgpu::StoreOp::Store;
+        renderPassDesc.label = outputBuffers.lable.c_str();
+        renderPassDesc.depthStencilAttachment = nullptr;
 
-                const auto& color = frameBuffer.colorAttachment[i].clearColor;
-                attachment[i].clearValue = { color.r, color.g, color.b, color.a };
+        wgpu::RenderPassColorAttachment attachments[8] = {};
+        bool useBackbuffer = false;
+        if (outputBuffers.colorAttachment.size() > 0)
+        {
+            for (int i = 0; i < outputBuffers.colorAttachment.size(); ++i)
+            {
+                auto rt = GetFGTexture(outputBuffers.colorAttachment[i].texture);
+                if (rt == nullptr)
+                {
+                    LOG_ERROR("Render texture {} is not registered", outputBuffers.colorAttachment[i].texture);
+                    continue;
+                }
+                attachments[i].view = rt->GetTexture().CreateView();
+                attachments[i].resolveTarget = nullptr;
+                attachments[i].loadOp = wgpu::LoadOp::Clear;
+                attachments[i].storeOp = wgpu::StoreOp::Store;
+
+                const auto& color = outputBuffers.colorAttachment[i].clearColor;
+                attachments[i].clearValue = { color.r, color.g, color.b, color.a };
+
+                useBackbuffer = true;
             }
-            renderPassDesc.colorAttachmentCount = frameBuffer.colorAttachment.size();
-            renderPassDesc.colorAttachments = attachment;
+            renderPassDesc.colorAttachmentCount = outputBuffers.colorAttachment.size();
+            renderPassDesc.colorAttachments = attachments;
         }
 
-        renderPassDesc.depthStencilAttachment = nullptr;
+        if (!useBackbuffer)
+        {
+            wgpu::TextureView backbufferView = m_Surface->GetSwapChain().GetCurrentTextureView();
+            attachments[0].view = backbufferView;
+            attachments[0].resolveTarget = nullptr;
+            attachments[0].loadOp = wgpu::LoadOp::Clear;
+            attachments[0].storeOp = wgpu::StoreOp::Store;
+            attachments[0].clearValue = { 0, 0, 0, 0 };
+            renderPassDesc.colorAttachmentCount = 1;
+            renderPassDesc.colorAttachments = attachments;
+        }
 
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
         if (material)
         {
-            pass.SetPipeline(material->GetMaterial()->GetPipeline()->GetPipeline());
-            pass.SetBindGroup(0, material->GetBindGroup()->GetBindGroup());
+            pass.SetPipeline(material->GetMaterial()->GetPipeline());
+            pass.SetBindGroup(0, material->GetBindGroup());
             pass.SetVertexBuffer(0, m_QuadVB->m_Buffer);
-            pass.Draw(4);
+            pass.Draw(3);
         }
         else
         {
-            LOG_WARN("Frame buffer {} render quad does not have any material", frameBuffer.lable);
+            LOG_WARN("Frame buffer {} render quad does not have any material", outputBuffers.lable);
         }
 
-        pass.End();
-    }
-
-    void Renderer::DrawSurface(RSurface& surface, const StringView& renderTexture)
-    {
-        wgpu::RenderPassDescriptor renderPassDesc = {};
-        wgpu::RenderPassColorAttachment attachment = {};
-        wgpu::TextureView backbufferView = surface.GetSwapChain().GetCurrentTextureView();
-        attachment.view = backbufferView;
-        attachment.resolveTarget = nullptr;
-        attachment.loadOp = wgpu::LoadOp::Clear;
-        attachment.storeOp = wgpu::StoreOp::Store;
-        attachment.clearValue = { 0, 0, 0, 0 };
-        renderPassDesc.colorAttachmentCount = 1;
-        renderPassDesc.colorAttachments = &attachment;
-        renderPassDesc.depthStencilAttachment = nullptr;
-
-        wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
-        pass.SetPipeline(m_FinalPassPipeline->GetPipeline());
-        pass.SetBindGroup(0, m_FinalPassBindGroup->GetBindGroup());
-        pass.SetVertexBuffer(0, m_QuadVB->m_Buffer);
-        pass.Draw(4);
         pass.End();
     }
 
@@ -416,23 +288,55 @@ namespace rush
         RDevice::instance().GetCmdQueue().Submit(1, &commands);
     }
 
+    void Renderer::Render(Ref<RenderQueue> renderQueue, Ref<RSurface> surface)
+    {
+        BeginDraw(surface);
+
+        // forward pass
+        if (1)
+        {
+            FrameBuffer info;
+            info.lable = "Forward Pass";
+            info.colorAttachment.push_back({ "SceneColorTexture", {0.1f, 0.1f, 0.1f, 1.0f} });
+            FrameBufferAttachment depth;
+            info.depthStencilTexture = "SceneDepthTexture";
+            info.clearDepth = 1.0f;
+            DrawScene(renderQueue, info);
+        }
+        // final pass
+        if (1)
+        {
+            FrameBuffer info;
+
+            DrawQuad(nullptr, info);          
+        }        
+
+        EndDraw();
+    }
+
     void Renderer::Resize(uint32_t width, uint32_t height)
     {
         m_Width = width;
         m_Height = height;
     }
 
-    Ref<RTexture> Renderer::GetRenderTexture(const StringView& name) const
+    Ref<RTexture> Renderer::GetFGTexture(const StringView& name)
     {
         auto iter = m_RenderTextures.find(String(name));
         if (iter == m_RenderTextures.end())
         {
-            Ref<RTexture> newTexture = CreateRef<RTexture>();
+            return nullptr;
+        }
+        else if (iter->second.texture == nullptr)
+        {
+            const FrameTexture& info = iter->second;
+            Ref<RTexture> newTexture = CreateRef<RTexture>(m_Width * info.widthScale, m_Height * info.heightScale, info.format, 1, 1, TextureDimension::e2D, TextureUsage::RenderAttachment, String(name).c_str());
+            iter->second.texture = newTexture;
             return newTexture;
         }
         else
         {
-            return iter->second;
+            return iter->second.texture;
         }
     }
 

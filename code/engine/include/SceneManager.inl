@@ -53,24 +53,10 @@ namespace rush
         // update cameras and frustums 
         {
             auto view = EcsSystem::registry.view<Camera, Frustum, Transform, Tag>();
-            for (auto [entity, camera, frustm, transform, tag] : view.each())
+            for (auto [entity, camera, frustum, transform, tag] : view.each())
             {
-                // update frustums
-                const auto& position = transform.GetPosition();
-                const auto& front = transform.GetForward();
-                const auto& left = transform.GetLeft();
-                const auto& up = transform.GetUp();
-
-                const float halfVSide = camera.GetFarClip() * tanf(degToRad(camera.GetFov()) * 0.5f);
-                const float halfHSide = halfVSide * camera.GetAspect();
-                const Vector3 frontMultFar = camera.GetFarClip() * front;
-
-                frustm.SetPlane(FrustumSide::FS_Near, Plane(front, position + camera.GetNearClip() * front)); // near
-                frustm.SetPlane(FrustumSide::FS_Far, Plane(-front, position + frontMultFar)); // far
-                frustm.SetPlane(FrustumSide::FS_Right, Plane(cross(frontMultFar + left * halfHSide, up), position)); // right
-                frustm.SetPlane(FrustumSide::FS_Left, Plane(cross(up, frontMultFar - left * halfHSide), position)); // left
-                frustm.SetPlane(FrustumSide::FS_Bottom, Plane(cross(frontMultFar - up * halfVSide, left), position)); // bottom
-                frustm.SetPlane(FrustumSide::FS_Top, Plane(cross(left, frontMultFar + up * halfVSide), position)); // top
+                camera.Update(renderer);
+                frustum.UpdateFromCamera(Entity::Find(entity));
             }
         }
 
@@ -79,8 +65,7 @@ namespace rush
             auto view = EcsSystem::registry.view<Transform, Bounding, Tag>();
             for (auto [entity, transform, bounding, tag] : view.each())
             {
-                bounding.m_AABB = AABB::Transform(bounding.m_InitAABB, transform.GetWorldMatrix());
-                bounding.m_OBB = OBB::Transform(bounding.m_InitOBB, transform.GetWorldMatrix());
+                bounding.Update();
             }
         }
 
@@ -96,7 +81,7 @@ namespace rush
         // clear cull flags
         {
             auto view = EcsSystem::registry.view<InFrustumFlag, Tag>();
-            for (auto [entity, flag, Tag] : view.each())
+            for (auto [entity, flag, tag] : view.each())
             {
                 Entity ent = Entity::Find(entity);
                 ent.Remove<InFrustumFlag>();
@@ -171,17 +156,7 @@ namespace rush
         // render
         for (auto& [cam, renderQueue] : renderContent)
         {
-            renderer->BeginDraw();
-            // TODO:
-//             FrameBufferInfo info;
-//             renderer->DrawQuad(info, nullptr);
-
-            if (surface)
-            {
-                renderer->DrawSurface(*surface, "SurfaceTexture");
-            }
-
-            renderer->EndDraw();
+            renderer->Render(renderQueue, surface);
         }
     }
 
