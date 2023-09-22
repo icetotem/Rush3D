@@ -133,4 +133,11 @@ namespace rush
         m_Pipeline = RDevice::instance().GetDevice().CreateRenderPipeline(&descriptor);
     }
 
+    static 
+
+    wgpu::RenderPipeline GetPipeline(Ref<RGeometry>, Ref<RMaterial> material)
+    {
+
+    }
+
 }

@@ -1,6 +1,18 @@
 #include "stdafx.h"
 #include "render/RMaterial.h"
 #include "AssetManager.h"
+#include "core/Common.h"
+
+namespace std
+{
+    template <> struct hash<rush::RMaterial> {
+        std::size_t operator()(const rush::Ref<rush::RMaterial> material) const noexcept {
+            std::size_t h{0};
+            rush::hashCombine(h, material->blendMode);
+            return h;
+        }
+    };
+}
 
 namespace rush
 {

@@ -20,8 +20,21 @@ namespace rush
         const wgpu::RenderPipeline GetPipeline() const;
 
     protected:
+        friend struct std::hash<rush::RMaterial>;
         CullMode cullModel = CullMode::Back;
         BlendMode blendMode = BlendMode::Opaque;
+        ColorWriteMask writeMask = ColorWriteMask::All;
+        bool depthTest = true;
+        bool depthWrite = true;
+        CompareFunction depthCompare = CompareFunction::LessEqual;
+        bool stencilTest = false;
+        bool stencilWrite = false;
+        BlendOperation opColor = BlendOperation::Add;
+        BlendFactor srcColor = BlendFactor::Src;
+        BlendFactor dstColor = BlendFactor::Dst;
+        BlendOperation opAlpha = BlendOperation::Add;
+        BlendFactor srcAlpha = BlendFactor::SrcAlpha;
+        BlendFactor dstAlpha = BlendFactor::DstAlpha;
     };
 
     //////////////////////////////////////////////////////////////////////////

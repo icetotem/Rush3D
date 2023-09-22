@@ -76,6 +76,12 @@ namespace rush
         wgpu::RenderPipeline m_Pipeline;
     };
 
+
+    class RGeometry;
+    class RMaterial;
+
+    wgpu::RenderPipeline GetPipeline(Ref<RGeometry>, Ref<RMaterial> material);
+
 }
 
 #endif // RPipeline_h__
