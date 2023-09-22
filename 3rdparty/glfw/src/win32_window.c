@@ -1764,7 +1764,7 @@ void _glfwRequestWindowAttentionWin32(_GLFWwindow* window)
 
 void _glfwFocusWindowWin32(_GLFWwindow* window)
 {
-    BringWindowToTop(window->win32.handle);
+    //BringWindowToTop(window->win32.handle);
     SetForegroundWindow(window->win32.handle);
     SetFocus(window->win32.handle);
 }

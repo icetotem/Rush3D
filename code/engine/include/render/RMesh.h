@@ -4,6 +4,7 @@
 #include "core/Core.h"
 #include "Asset.h"
 #include "RBuffer.h"
+#include "RGeometry.h"
 
 namespace rush
 {
@@ -14,15 +15,18 @@ namespace rush
     class RMesh : public Asset
     {
     public:
-        virtual bool Load(const StringView& path);
-
-        struct Primitive
+        struct SubMesh
         {
-            List<Ref<RVertexBuffer>> vertexBuffers;
-            Ref<RIndexBuffer> indexBuffer;
+            Ref<RGeometry> geometry;
+            String material;
         };
 
-        List<Primitive> primitives;
+        virtual bool Load(const StringView& path);
+        
+        const List<RMesh::SubMesh>& GetSubmeshes() const { return m_Submeshes; }
+
+    private:
+        List<SubMesh> m_Submeshes;
     };
 
 }

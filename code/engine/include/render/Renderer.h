@@ -9,6 +9,7 @@
 #include "Window.h"
 #include <optional>
 #include "RSurface.h"
+#include "RShader.h"
 
 namespace rush
 {
@@ -70,7 +71,7 @@ namespace rush
 
         void BeginDraw(Ref<RSurface> surface);
         void DrawScene(Ref<RenderQueue> renderQueue, const FrameBuffer& outputBuffers);
-        void DrawQuad(Ref<RMaterialInst> material, const FrameBuffer& outputBuffers);
+        void DrawQuad(Ref<RMaterial> material, const FrameBuffer& outputBuffers);
         void EndDraw();
 
     protected:
@@ -81,8 +82,8 @@ namespace rush
         Ref<RShader> m_QuadFSFinal;
         Ref<RShader> m_QuadVS;
         Ref<RVertexBuffer> m_QuadVB;
-        Ref<RPipeline> m_FinalPassPipeline;
-        Ref<RBindGroup> m_FinalPassBindGroup;
+//         Ref<RPipeline> m_FinalPassPipeline;
+//         Ref<RBindGroup> m_FinalPassBindGroup;
         Ref<RSurface> m_Surface;
         // frame graph resources
         HMap<String, FrameTexture> m_RenderTextures;

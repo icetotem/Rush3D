@@ -21,9 +21,10 @@ namespace rush
         device.Create(wgpu::BackendType::D3D12);
     }
 
-    void Engine::Init()
+    void Engine::Init(const WindowDesc& mainWndDesc)
     {
-
+        m_MainWindow = CreateRenderWindow(mainWndDesc);
+        m_MainRenderer = CreateRenderer(mainWndDesc.width, mainWndDesc.height);
     }
 
     Ref<Window> Engine::CreateRenderWindow(const WindowDesc& desc)
@@ -41,7 +42,10 @@ namespace rush
     void Engine::Update()
     {
         Timer::Tick();
+        Window::MessgeLoop();
+        m_SceneManager.Update<MainSceneTag>(m_MainRenderer, m_MainWindow->GetSurface());
         Entity::ClearRecycle();
+        m_MainWindow->Present();
     }
 
     void Engine::Shutdown()

@@ -111,8 +111,6 @@ namespace rush
     template <class Tag>
     void SceneManager::Render(Ref<Renderer> renderer, Ref<RSurface> surface)
     {
-        using namespace rush;
-
         HMap<Camera*, Ref<RenderQueue>> renderContent;
 
         // fetch culled results
@@ -126,8 +124,7 @@ namespace rush
             Ref<RenderQueue> renderQueue;
             if (iter == renderContent.end())
             {
-                renderQueue = CreateRef<RenderQueue>();
-                renderQueue->camera = flag.camera;
+                renderQueue = CreateRef<RenderQueue>(flag.camera);
                 renderContent.insert({ cam, renderQueue });
             }
             else
@@ -137,25 +134,19 @@ namespace rush
 
             RUSH_ASSERT(renderQueue != nullptr);
 
-            // update global uniforms
-            auto globalUniforms = RMaterialInst::GetGlobalUniformBuffer();
+//             // update global uniforms
+//             auto globalUniforms = RMaterialInst::GetGlobalUniformBuffer();
+// 
+//             Matrix4 buff[] = { cam->GetViewMatrix(), cam->GetProjMatrix() };
+//             globalUniforms->UpdateData(buff, sizeof(Matrix4) * 2);
 
-            Matrix4 buff[] = { cam->GetViewMatrix(), cam->GetProjMatrix() };
-            globalUniforms->UpdateData(buff, sizeof(Matrix4) * 2);
-
-            for (const auto& part : meshRdr.m_Primitives)
-            {
-                auto batch = renderQueue->NewBatch();
-                batch->indexBuffer = part.indexBuffer;
-                batch->vertexBuffers = part.vertexBuffers;
-                batch->pipeline = part.material->m_Material->m_Pipeline;
-                batch->bindGroup = part.material->m_BindGroup;
-            }
+            meshRdr.SubmitRenderQueue(renderQueue);
         }
 
         // render
         for (auto& [cam, renderQueue] : renderContent)
         {
+            renderQueue->MergeBatch();
             renderer->Render(renderQueue, surface);
         }
     }

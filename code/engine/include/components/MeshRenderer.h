@@ -4,6 +4,8 @@
 #include "components/EcsSystem.h"
 #include "render/RBuffer.h"
 #include "render/RMaterial.h"
+#include "render/RGeometry.h"
+#include "render/RenderQueue.h"
 
 namespace rush
 {
@@ -13,16 +15,22 @@ namespace rush
     public:
         struct Primitive
         {
-            List<Ref<RVertexBuffer>> vertexBuffers;
-            Ref<RIndexBuffer> indexBuffer;
-            Ref<RMaterialInst> material;
+            Ref<RGeometry> geometry;
+            Ref<RMaterial> material;
         };
 
         MeshRenderer(Entity owner);
         ~MeshRenderer();
 
-        int AddPart();
-        MeshRenderer::Primitive* GetPart(int slot);
+        void AddMesh(const StringView& meshPath);
+
+        int GetPartCount() const { return m_Primitives.size(); }
+
+        void SetMaterial(int part, const StringView& material);
+
+        void SubmitRenderQueue(Ref<RenderQueue> renderQueue);
+
+    protected:
 
     protected:
         friend class SceneManager;

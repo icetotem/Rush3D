@@ -4,4 +4,9 @@
 namespace rush
 {
     
+    SceneManager::SceneManager()
+    {
+        m_MainScene = CreateScene<MainSceneTag>();
+    }
+
 }

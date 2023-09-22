@@ -5,7 +5,6 @@
 namespace rush
 {
 
-    Ref<RUniformBuffer> RMaterialInst::s_GlobalUniformBuffer;
 
     bool RMaterial::Load(const StringView& path)
     {
@@ -13,6 +12,18 @@ namespace rush
         return true;
     }
 
+    const wgpu::BindGroup RMaterial::GetBindGroup() const
+    {
+
+    }
+
+    const wgpu::RenderPipeline RMaterial::GetPipeline() const
+    {
+
+    }
+
+#if 0
+    Ref<RUniformBuffer> RMaterialInst::s_GlobalUniformBuffer;
 
     bool RMaterialInst::Load(const StringView& path)
     {
@@ -131,4 +142,5 @@ namespace rush
 
         return true;
     }
+    #endif
 }

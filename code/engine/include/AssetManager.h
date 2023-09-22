@@ -39,13 +39,11 @@ namespace rush
 
         void LoadMaterial(const StringView& path, std::function<void(AssetLoadResult result, Ref<RMaterial>, void* param)> callback, void* param = nullptr);
 
-        void LoadMaterialInst(const StringView& path, std::function<void(AssetLoadResult result, Ref<RMaterialInst>, void* param)> callback, void* param = nullptr);
 
     private:
         HMap<String, Ref<RMesh>> m_Meshes;
         HMap<String, Ref<RTexture>> m_Textures;
         HMap<String, Ref<RMaterial>> m_Materials;
-        HMap<String, Ref<RMaterialInst>> m_MaterialInstances;
     };
 
 }

@@ -41,19 +41,22 @@ namespace rush
             return false;
         }
 
-        Ref<RVertexBuffer> positionBuffer, texcoordBuffer;
-        Ref<RIndexBuffer> indexBuffer;
-
         // 遍历模型的所有网格
-        for (size_t i = 0; i < model.meshes.size(); ++i) {
+        for (size_t i = 0; i < model.meshes.size(); ++i) 
+        {
+            Ref<RVertexBuffer> positionBuffer, texcoordBuffer;
+            Ref<RIndexBuffer> indexBuffer;
+
             const tinygltf::Mesh& mesh = model.meshes[i];
 
             // 遍历每个网格的子网格（primitive）
-            for (size_t j = 0; j < mesh.primitives.size(); ++j) {
+            for (size_t j = 0; j < mesh.primitives.size(); ++j) 
+            {
                 const tinygltf::Primitive& primitive = mesh.primitives[j];
 
                 // 访问顶点坐标
-                if (primitive.attributes.find("POSITION") != primitive.attributes.end()) {
+                if (primitive.attributes.find("POSITION") != primitive.attributes.end()) 
+                {
                     int accessorIdx = primitive.attributes.at("POSITION");
                     const tinygltf::Accessor& accessor = model.accessors[accessorIdx];
                     const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
@@ -68,7 +71,8 @@ namespace rush
                 }
 
                 // 访问法线数据
-                if (primitive.attributes.find("NORMAL") != primitive.attributes.end()) {
+                if (primitive.attributes.find("NORMAL") != primitive.attributes.end()) 
+                {
                     int accessorIdx = primitive.attributes.at("NORMAL");
                     const tinygltf::Accessor& accessor = model.accessors[accessorIdx];
                     const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
@@ -79,7 +83,8 @@ namespace rush
                 }
 
                 // 访问切线数据
-                if (primitive.attributes.find("TANGENT") != primitive.attributes.end()) {
+                if (primitive.attributes.find("TANGENT") != primitive.attributes.end())
+                {
                     int tangentAccessorIdx = primitive.attributes.at("TANGENT");
                     const tinygltf::Accessor& tangentAccessor = model.accessors[tangentAccessorIdx];
                     const tinygltf::BufferView& tangentBufferView = model.bufferViews[tangentAccessor.bufferView];
@@ -90,7 +95,8 @@ namespace rush
                 }
 
                 // 访问纹理坐标数据
-                if (primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end()) {
+                if (primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end()) 
+                {
                     int accessorIdx = primitive.attributes.at("TEXCOORD_0");
                     const tinygltf::Accessor& accessor = model.accessors[accessorIdx];
                     const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
@@ -105,7 +111,8 @@ namespace rush
 
                 // 访问骨骼索引和权重数据
                 if (primitive.attributes.find("JOINTS_0") != primitive.attributes.end() &&
-                    primitive.attributes.find("WEIGHTS_0") != primitive.attributes.end()) {
+                    primitive.attributes.find("WEIGHTS_0") != primitive.attributes.end()) 
+                {
                     int jointsAccessorIdx = primitive.attributes.at("JOINTS_0");
                     int weightsAccessorIdx = primitive.attributes.at("WEIGHTS_0");
 
@@ -124,7 +131,8 @@ namespace rush
                 }
 
                 // 获取子网格的索引缓冲区
-                if (primitive.indices >= 0) {
+                if (primitive.indices >= 0) 
+                {
                     const tinygltf::Accessor& accessor = model.accessors[primitive.indices];
                     const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
                     const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
@@ -136,46 +144,15 @@ namespace rush
                     indexBuffer = CreateRef<RIndexBuffer>(numIndices, IndexFormat::Uint16, indices, "index");
                 }
             }
+
+            auto& geo = CreateRef<RGeometry>();
+            geo->vertexBuffers.push_back(positionBuffer);
+            geo->vertexBuffers.push_back(texcoordBuffer);
+            geo->indexBuffer = indexBuffer;
+            auto& subMesh = m_Submeshes.emplace_back();
+            subMesh.geometry = geo;
+            subMesh.material = "default_mat";
         }
-
-        auto& subMesh = primitives.emplace_back();
-        subMesh.vertexBuffers.push_back(positionBuffer);
-        subMesh.vertexBuffers.push_back(texcoordBuffer);
-        subMesh.indexBuffer = indexBuffer;
-
-//         // create the buffers (x, y)
-//         float const vertData0[] = {
-//             -0.8f, -0.8f, // BL
-//              0.8f, -0.8f, // BR
-//              0.8f,  0.8f, // TR
-//             -0.8f,  0.8f, // TL
-//         };
-// 
-//         // create the buffers (r, g, b)
-//         float const vertData1[] = {
-//             0.0f, 1.0f, // BL
-//             1.0f, 1.0f, // BR
-//             1.0f, 0.0f, // TR
-//             0.0f, 0.0f, // TL
-//         };
-// 
-//         uint16_t const indxData[] = {
-//             0, 1, 2, 0, 2, 3
-//         };
-// 
-//         Ref<RVertexBuffer> vb0 = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(vertData0), "vb0");
-//         vb0->UpdateData(vertData0, sizeof(vertData0));
-// 
-//         Ref<RVertexBuffer> vb1 = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(vertData1), "vb1");
-//         vb1->UpdateData(vertData1, sizeof(vertData1));
-// 
-//         Ref<RIndexBuffer> ib = CreateRef<RIndexBuffer>(6, false, "ib0");
-//         ib->UpdateData(indxData, sizeof(indxData));
-// 
-//         subMesh.vertexBuffers.push_back(vb0);
-//         subMesh.vertexBuffers.push_back(vb1);
-//         subMesh.indexBuffer = ib;
-
         return true;
     }
 

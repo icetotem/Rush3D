@@ -8,16 +8,25 @@
 #include "components/Transform.h"
 #include "components/Bounding.h"
 #include "components/CommonComponents.h"
+#include "components/MeshRenderer.h"
 #include "render/RMaterial.h"
 
 namespace rush
 {
+    
+    struct MainSceneTag : public Component
+    {
+    public:
+        MainSceneTag(Entity owner) 
+            : Component(owner) 
+        {}
+    };
 
     template <class Tag>
     class Scene
     {
     public:
-        Scene() = default;
+        Scene();
         ~Scene();
 
         Entity CreateEntity(const StringView& name = "");
@@ -30,15 +39,27 @@ namespace rush
 
         void Unload();
 
+        Entity GetMainCamera() const { return m_MainCamera; }
+
     protected:
+        Entity m_MainCamera;
     };
 
-
+    template <class Tag>
+    rush::Scene<Tag>::Scene()
+    {
+        m_MainCamera = CreateEntity("MainCamera");
+        auto transform = m_MainCamera.Add<Transform>();
+        transform->SetPosition(-5, 0, -5);
+        transform->LookAt(0, 0, 0);
+        m_MainCamera.Add<Camera>();
+        m_MainCamera.Add<Frustum>();
+    }
 
     class SceneManager
     {
     public:
-        SceneManager() = default;
+        SceneManager();
         ~SceneManager() = default;
 
         template <class Tag>
@@ -47,6 +68,8 @@ namespace rush
         template <class Tag>
         void Update(Ref<Renderer> renderer, Ref<RSurface> surface);
 
+        Ref<Scene<MainSceneTag>> GetMainScene() { return m_MainScene; }
+
     protected:
         template <class Tag>
         void Cull();
@@ -54,6 +77,8 @@ namespace rush
         template <class Tag>
         void Render(Ref<Renderer> renderer, Ref<RSurface> surface);
 
+    private:
+        Ref<Scene<MainSceneTag>> m_MainScene;
     };
 
 }

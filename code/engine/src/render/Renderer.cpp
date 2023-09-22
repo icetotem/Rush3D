@@ -57,48 +57,48 @@ namespace rush
         float const verts[] =
         {
             -1.f, -1.f,   // TL
-            -1.f,  3.f,   // BL
              3.f, -1.f,   // TR
+            -1.f,  3.f,   // BL
         };
 
         m_QuadVB = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(verts), verts, "screen_quad_vb");
 
-        PipelineDesc pipeDesc = {};
-        pipeDesc.depthWrite = false;
-        pipeDesc.depthTest = false;
-        pipeDesc.colorFormat = TextureFormat::BGRA8Unorm;
-
-        VertexAttribute vertAttr;
-        vertAttr.format = VertexFormat::Float32x2;
-        vertAttr.offset = 0;
-        vertAttr.shaderLocation = 0;
-
-        auto& vLayout0 = pipeDesc.vertexLayouts.emplace_back();
-        vLayout0.stride = sizeof(float) * 2;
-        vLayout0.attributes = &vertAttr;
-        vLayout0.attributeCount = 1;
-
-        auto l = {
-            BindingLayoutHelper(0, ShaderStage::Fragment, SamplerBindingType::Filtering),
-            BindingLayoutHelper(1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D)
-        };
-        Ref<BindingLayout> bindingLayout = CreateRef<BindingLayout>(l);
-
-        pipeDesc.vs = m_QuadVS;
-        pipeDesc.fs = m_QuadFSFinal;
-        pipeDesc.writeMask = ColorWriteMask::All;
-        pipeDesc.bindLayout = bindingLayout;
-        pipeDesc.primitiveType = PrimitiveTopology::TriangleList;
-        pipeDesc.frontFace = FrontFace::CW;
-        pipeDesc.cullModel = CullMode::Back;
-        m_FinalPassPipeline = CreateRef<RPipeline>(pipeDesc);
-
-        Ref<RTexture> tex = CreateRef<RTexture>(m_Width, m_Height, TextureFormat::RGBA8Unorm, 1, 1, TextureDimension::e2D, TextureUsage::RenderAttachment, "FinalPass Texture Buffer");
-        auto layout = {
-            BindingInitializationHelper(0, CreateRef<RSampler>()),
-            BindingInitializationHelper(1, tex)
-        };
-        m_FinalPassBindGroup = CreateRef<RBindGroup>(bindingLayout, layout, "FinalPass BindGroup");
+//         PipelineDesc pipeDesc = {};
+//         pipeDesc.depthWrite = false;
+//         pipeDesc.depthTest = false;
+//         pipeDesc.colorFormat = TextureFormat::BGRA8Unorm;
+// 
+//         VertexAttribute vertAttr;
+//         vertAttr.format = VertexFormat::Float32x2;
+//         vertAttr.offset = 0;
+//         vertAttr.shaderLocation = 0;
+// 
+//         auto& vLayout0 = pipeDesc.vertexLayouts.emplace_back();
+//         vLayout0.stride = sizeof(float) * 2;
+//         vLayout0.attributes = &vertAttr;
+//         vLayout0.attributeCount = 1;
+// 
+//         auto l = {
+//             BindingLayoutHelper(0, ShaderStage::Fragment, SamplerBindingType::Filtering),
+//             BindingLayoutHelper(1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D)
+//         };
+//         Ref<BindingLayout> bindingLayout = CreateRef<BindingLayout>(l);
+// 
+//         pipeDesc.vs = m_QuadVS;
+//         pipeDesc.fs = m_QuadFSFinal;
+//         pipeDesc.writeMask = ColorWriteMask::All;
+//         pipeDesc.bindLayout = bindingLayout;
+//         pipeDesc.primitiveType = PrimitiveTopology::TriangleList;
+//         pipeDesc.frontFace = FrontFace::CCW;
+//         pipeDesc.cullModel = CullMode::Back;
+//         m_FinalPassPipeline = CreateRef<RPipeline>(pipeDesc);
+// 
+//         Ref<RTexture> tex = CreateRef<RTexture>(m_Width, m_Height, TextureFormat::RGBA8Unorm, 1, 1, TextureDimension::e2D, TextureUsage::RenderAttachment, "FinalPass Texture Buffer");
+//         auto layout = {
+//             BindingInitializationHelper(0, CreateRef<RSampler>()),
+//             BindingInitializationHelper(1, tex)
+//         };
+//         m_FinalPassBindGroup = CreateRef<RBindGroup>(bindingLayout, layout, "FinalPass BindGroup");
     }
 
 
@@ -201,28 +201,30 @@ namespace rush
         }
 
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
-        RUSH_ASSERT(renderQueue->camera.Valid());
-        auto camera = renderQueue->camera.Get<Camera>();
+        RUSH_ASSERT(renderQueue->GetCamera().Valid());
+        auto camera = renderQueue->GetCamera().Get<Camera>();
         RUSH_ASSERT(camera);
         const auto& viewport = camera->GetViewport();        
         pass.SetViewport(viewport.x * m_Width, viewport.y * m_Height, (viewport.z - viewport.x) * m_Width, (viewport.w - viewport.y) * m_Height, 0.0f, 1.0f);
-        for (const auto batch : renderQueue->m_Batches)
+        for (const auto& batch : renderQueue->GetBatches())
         {
-            pass.SetPipeline(batch->pipeline->GetPipeline());
-            pass.SetBindGroup(0, batch->bindGroup->GetBindGroup());
+            auto geo = batch.renderable.geometry;
+            auto mat = batch.renderable.material;
+            pass.SetPipeline(mat->GetPipeline());
+            pass.SetBindGroup(0, mat->GetBindGroup());
             int vbIdx = 0;
-            for (auto vb : batch->vertexBuffers)
+            for (auto vb : geo->vertexBuffers)
             {
                 pass.SetVertexBuffer(vbIdx, vb->m_Buffer);
                 ++vbIdx;
             }
-            pass.SetIndexBuffer(batch->indexBuffer->m_Buffer, batch->indexBuffer->GetType());
-            pass.DrawIndexed(batch->indexBuffer->GetIndexCount(), batch->instanceCount, 0, 0);
+            pass.SetIndexBuffer(geo->indexBuffer->m_Buffer, geo->indexBuffer->GetType());
+            pass.DrawIndexed(geo->indexBuffer->GetIndexCount(), batch.instanceCount, 0, 0);
         }
         pass.End();
     }
 
-    void Renderer::DrawQuad(Ref<RMaterialInst> material, const FrameBuffer& outputBuffers)
+    void Renderer::DrawQuad(Ref<RMaterial> material, const FrameBuffer& outputBuffers)
     {
         wgpu::RenderPassDescriptor renderPassDesc = {};
         renderPassDesc.label = outputBuffers.lable.c_str();
@@ -269,7 +271,7 @@ namespace rush
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
         if (material)
         {
-            pass.SetPipeline(material->GetMaterial()->GetPipeline());
+            pass.SetPipeline(material->GetPipeline());
             pass.SetBindGroup(0, material->GetBindGroup());
             pass.SetVertexBuffer(0, m_QuadVB->m_Buffer);
             pass.Draw(3);

@@ -109,10 +109,6 @@ namespace rush
             glfwWindowHint(GLFW_POSITION_Y, desc.posY);
         }
 
-        if (desc.windowMode == WindowMode::Maximized)
-        {
-        }
-
         m_Impl->handle = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr);
         if (m_Impl->handle == nullptr)
         {
@@ -124,6 +120,21 @@ namespace rush
         m_Display = GetDisplay();
 
         m_Surface = RSurface::Construct(m_Width, m_Height, desc.vsync, m_Handle, m_Display);
+
+        if (desc.windowMode == WindowMode::Maximized)
+        {
+            glfwMaximizeWindow(m_Impl->handle);
+        }
+        else if (desc.windowMode == WindowMode::Fullscreen)
+        {
+            // 获取屏幕的宽度和高度
+            const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            int screenWidth = mode->width;
+            int screenHeight = mode->height;
+
+            // 切换到全屏模式
+            glfwSetWindowMonitor(m_Impl->handle, glfwGetPrimaryMonitor(), 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
+        }
 
         // input callbacks
         glfwSetWindowUserPointer(m_Impl->handle, (void*)this);
@@ -204,11 +215,12 @@ namespace rush
 
         glfwSetMouseButtonCallback(m_Impl->handle, [](GLFWwindow* window, int button, int action, int mods)
         {
-            Window* rd = (Window*)glfwGetWindowUserPointer(window);
+            Window* rd = (Window*)glfwGetWindowUserPointer(window);            
             switch (action)
             {
             case GLFW_PRESS:
             {
+                glfwFocusWindow(window); // focus window when click
                 for (auto iter : rd->m_MouseButtonCallbacks)
                 {
                     std::function<bool(InputButtonState, MouseCode, uint32_t mouseX, uint32_t mouseY)> function = iter;

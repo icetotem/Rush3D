@@ -14,14 +14,9 @@ namespace rush
     class Engine : public Singleton<Engine>
     {
     public:
-        BundleManager bundleManager;
-        AssetsManager assetsManager;
-        SceneManager sceneManager;
-
-    public:
         Engine();
 
-        void Init();
+        void Init(const WindowDesc& mainWndDesc);
 
         Ref<Window> CreateRenderWindow(const WindowDesc& desc);
 
@@ -31,7 +26,22 @@ namespace rush
 
         void Shutdown();
 
+        Ref<Window> GetMainWindow() const { return m_MainWindow; }
+
+        Ref<Renderer> GetMainRenderer() const { return m_MainRenderer; }
+
+        BundleManager& GetBundleManager() { return m_BundleManager; }
+
+        AssetsManager& GetAssetsManager() { return m_AssetsManager; }
+
+        SceneManager& GetSceneManager() { return m_SceneManager; }
+
     private:    
+        Ref<Window> m_MainWindow;
+        Ref<Renderer> m_MainRenderer;
+        BundleManager m_BundleManager;
+        AssetsManager m_AssetsManager;
+        SceneManager m_SceneManager;
     };
 
 }

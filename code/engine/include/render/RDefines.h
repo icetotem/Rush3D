@@ -29,6 +29,13 @@ namespace rush
     using FilterMode = wgpu::FilterMode;
     using TextureUsage = wgpu::TextureUsage;
 
+    enum class BlendMode
+    {
+        Opaque,
+        AlphaBlend,
+        AlphaTest,
+    };
+
 }
 
 #endif // RDefines_h__

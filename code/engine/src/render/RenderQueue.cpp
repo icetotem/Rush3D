@@ -4,11 +4,26 @@
 namespace rush
 {
 
-    Ref<Renderable> RenderQueue::NewBatch()
+    RenderQueue::RenderQueue(Entity camera)
+        : m_Camera(camera)
     {
-        auto batch = CreateRef<Renderable>();
-        m_Batches.push_back(batch);
-        return batch;
+    }
+
+    void RenderQueue::Add(Ref<RGeometry> geometry, Ref<RMaterial> material)
+    {
+        auto& renderable = m_Renderables.emplace_back();
+        renderable.geometry = geometry;
+        renderable.material = material;
+    }
+
+    void RenderQueue::MergeBatch()
+    {
+        for (const auto& renderable : m_Renderables)
+        {
+            auto& batch = m_Batches.emplace_back();
+            batch.renderable = renderable;
+            batch.instanceCount = 1;
+        }
     }
 
 }

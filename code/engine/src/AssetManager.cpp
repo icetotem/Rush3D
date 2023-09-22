@@ -85,23 +85,5 @@ namespace rush
         }
     }
 
-    void AssetsManager::LoadMaterialInst(const StringView& path, std::function<void(AssetLoadResult result, Ref<RMaterialInst>, void* param)> callback, void* param /*= nullptr*/)
-    {
-        auto iter = m_MaterialInstances.find(String(path));
-        if (iter == m_MaterialInstances.end())
-        {
-            // TODO: async
-            RUSH_ASSERT(callback);
-            auto newMat = CreateRef<RMaterialInst>();
-            newMat->Load(path);
-            m_MaterialInstances.insert({ String(path), newMat });
-            callback(AssetLoadResult::Success, newMat, param);
-        }
-        else
-        {
-            callback(AssetLoadResult::Success, iter->second, param);
-        }
-    }
-
 
 }

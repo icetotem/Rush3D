@@ -26,9 +26,10 @@ namespace rush
         bool transparent = false;
         bool frameless = false;
         bool resizable = true;
-        bool alwaysTop = true;
+        bool alwaysTop = false;
         bool visible = true;
         bool vsync = true;
+        void* parentHwnd = nullptr;
     };
 
     typedef void* WindowHandle;
