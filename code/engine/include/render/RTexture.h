@@ -17,7 +17,7 @@ namespace rush
 
         RSampler(const char* lable = nullptr);
 
-        const wgpu::Sampler& GetSampler() const { return m_Sampler; }
+        const wgpu::Sampler GetSampler() const { return m_Sampler; }
 
     private:
         wgpu::Sampler m_Sampler;
@@ -38,19 +38,19 @@ namespace rush
 
         void UpdateData(const void* data, uint64_t size);
 
-        const wgpu::Texture& GetTexture() const { return m_Texture; }
+        const wgpu::Texture GetTextureHandle() const { return m_TextureHandle; }
 
-        uint32_t GetWidth() const { return m_Texture.GetWidth(); }
-        uint32_t GetHeight() const { return m_Texture.GetHeight(); }
-        uint32_t GetDepth() const { return m_Texture.GetDepthOrArrayLayers(); }
-        uint32_t GetMips() const { return m_Texture.GetMipLevelCount(); }
-        TextureFormat GetFormat() const { return m_Texture.GetFormat(); }
-        TextureDimension GetDim() const { return m_Texture.GetDimension(); }
+        uint32_t GetWidth() const { return m_TextureHandle.GetWidth(); }
+        uint32_t GetHeight() const { return m_TextureHandle.GetHeight(); }
+        uint32_t GetDepth() const { return m_TextureHandle.GetDepthOrArrayLayers(); }
+        uint32_t GetMips() const { return m_TextureHandle.GetMipLevelCount(); }
+        TextureFormat GetFormat() const { return m_TextureHandle.GetFormat(); }
+        TextureDimension GetDim() const { return m_TextureHandle.GetDimension(); }
 
     private:
         friend class Renderer;
         friend class RPass;
-        wgpu::Texture m_Texture;
+        wgpu::Texture m_TextureHandle;
     };
 
 }

@@ -22,18 +22,16 @@ namespace rush
         MeshRenderer(Entity owner);
         ~MeshRenderer();
 
-        void AddMesh(const StringView& meshPath);
+        void AddModel(const StringView& meshPath);
 
-        int GetPartCount() const { return m_Primitives.size(); }
+        int GetPrimitiveCount() const { return m_Primitives.size(); }
 
         void SetMaterial(int part, const StringView& material);
 
         void SubmitRenderQueue(Ref<RenderQueue> renderQueue);
 
-    protected:
 
     protected:
-        friend class SceneManager;
         DArray<Primitive> m_Primitives;
     };
 

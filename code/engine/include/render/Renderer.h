@@ -79,9 +79,10 @@ namespace rush
         wgpu::CommandBuffer commands;
         uint32_t m_Width;
         uint32_t m_Height;
-        Ref<RShader> m_QuadFSFinal;
-        Ref<RShader> m_QuadVS;
-        Ref<RVertexBuffer> m_QuadVB;
+//         Ref<RShader> m_QuadFSFinal;
+//         Ref<RShader> m_QuadVS;
+//         Ref<RVertexBuffer> m_QuadVB;
+        Ref<RGeometry> m_ScreenQuadGeo;
 //         Ref<RPipeline> m_FinalPassPipeline;
 //         Ref<RBindGroup> m_FinalPassBindGroup;
         Ref<RSurface> m_Surface;

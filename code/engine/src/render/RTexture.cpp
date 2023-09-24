@@ -78,7 +78,7 @@ namespace rush
         descriptor.format = format;
         descriptor.mipLevelCount = mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | usage;
-        m_Texture = RDevice::instance().GetDevice().CreateTexture(&descriptor);
+        m_TextureHandle = RDevice::instance().GetDevice().CreateTexture(&descriptor);
     }
 
     bool RTexture::Load(const StringView& path)
@@ -133,7 +133,7 @@ namespace rush
         descriptor.format = format;
         descriptor.mipLevelCount = mips;
         descriptor.usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding;
-        m_Texture = RDevice::instance().GetDevice().CreateTexture(&descriptor);
+        m_TextureHandle = RDevice::instance().GetDevice().CreateTexture(&descriptor);
 
         if (compress)
         {
@@ -156,19 +156,19 @@ namespace rush
 
     bool RTexture::IsValid() const
     {
-        return (bool)m_Texture;
+        return (bool)m_TextureHandle;
     }
 
     void RTexture::Destroy()
     {
-        m_Texture = {};
+        m_TextureHandle = {};
     }
 
     void RTexture::UpdateData(const void* data, uint64_t size)
     {
         wgpu::Buffer stagingBuffer = CreateBufferFromData(RDevice::instance().GetDevice(), data, size, wgpu::BufferUsage::CopySrc);
         wgpu::ImageCopyBuffer imageCopyBuffer = CreateImageCopyBuffer(stagingBuffer, 0, GetWidth() * 4); // TODO: calculate bytesPerRow
-        wgpu::ImageCopyTexture imageCopyTexture = CreateImageCopyTexture(m_Texture, 0, {0, 0, 0});
+        wgpu::ImageCopyTexture imageCopyTexture = CreateImageCopyTexture(m_TextureHandle, 0, {0, 0, 0});
         wgpu::Extent3D copySize = { GetWidth(), GetHeight(), GetDepth() };
         wgpu::CommandEncoder encoder = RDevice::instance().GetDevice().CreateCommandEncoder();
         encoder.CopyBufferToTexture(&imageCopyBuffer, &imageCopyTexture, &copySize);

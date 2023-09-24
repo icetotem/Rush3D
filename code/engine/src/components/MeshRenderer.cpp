@@ -2,7 +2,7 @@
 #include "components/MeshRenderer.h"
 #include "render/Renderer.h"
 #include "AssetManager.h"
-#include "render/RMesh.h"
+#include "render/RModel.h"
 
 namespace rush
 {  
@@ -16,21 +16,24 @@ namespace rush
     {
     }
 
-    void MeshRenderer::AddMesh(const StringView& meshPath)
+    void MeshRenderer::AddModel(const StringView& meshPath)
     {
-        AssetsManager::instance().LoadMesh(meshPath, [&](AssetLoadResult result, Ref<RMesh> mesh, void*) {
+        AssetsManager::instance().LoadModel(meshPath, [&](AssetLoadResult result, Ref<RModel> model, void*) {
             if (result == AssetLoadResult::Success)
             {
                 auto& prim = m_Primitives.emplace_back();
-                for (auto& subMesh : mesh->GetSubmeshes())
+                for (const auto& m : model->GeMeshes())
                 {
-                    prim.geometry = subMesh.geometry;
-                    AssetsManager::instance().LoadMaterial(subMesh.material, [&](AssetLoadResult result, Ref<RMaterial> material, void*) {
-                        if (result == AssetLoadResult::Success)
-                        {
-                            prim.material = material;
-                        }
-                    });
+                    for (const auto& p : m.primitives)
+                    {
+                        prim.geometry = p.geometry;
+                        AssetsManager::instance().LoadMaterial(p.material, [&](AssetLoadResult result, Ref<RMaterial> material, void*) {
+                            if (result == AssetLoadResult::Success)
+                            {
+                                prim.material = material;
+                            }
+                        });
+                    }
                 }
             }
         });

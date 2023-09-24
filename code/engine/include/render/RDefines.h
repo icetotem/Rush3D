@@ -7,6 +7,8 @@
 
 namespace rush
 {
+    static constexpr uint8_t kMaxVertexBuffers = 8u;
+    static constexpr uint8_t kMaxVertexAttributes = 16u;
 
     using TextureFormat = wgpu::TextureFormat;
     using TextureDimension = wgpu::TextureDimension;

@@ -1,5 +1,5 @@
-#ifndef RMesh_h__
-#define RMesh_h__
+#ifndef RModel_h__
+#define RModel_h__
 
 #include "core/Core.h"
 #include "Asset.h"
@@ -12,23 +12,27 @@ namespace rush
     /// <summary>
     /// 
     /// </summary>
-    class RMesh : public Asset
+    class RModel : public Asset
     {
     public:
-        struct SubMesh
+        struct Primitive
         {
             Ref<RGeometry> geometry;
             String material;
         };
+        struct Mesh
+        {
+            List<Primitive> primitives;
+        };
 
         virtual bool Load(const StringView& path);
         
-        const List<RMesh::SubMesh>& GetSubmeshes() const { return m_Submeshes; }
+        const List<RModel::Mesh>& GeMeshes() const { return m_Meshes; }
 
     private:
-        List<SubMesh> m_Submeshes;
+        List<Mesh> m_Meshes;
     };
 
 }
 
-#endif // RMesh_h__
+#endif // RModel_h__

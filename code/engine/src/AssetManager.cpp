@@ -31,17 +31,17 @@ namespace rush
 
     }
 
-    void AssetsManager::LoadMesh(const StringView& path, std::function<void(AssetLoadResult result, Ref<RMesh>, void* param)> callback, void* param)
+    void AssetsManager::LoadModel(const StringView& path, std::function<void(AssetLoadResult result, Ref<RModel>, void* param)> callback, void* param)
     {
-        auto iter = m_Meshes.find(String(path));
-        if (iter == m_Meshes.end())
+        auto iter = m_Models.find(String(path));
+        if (iter == m_Models.end())
         {
             // TODO: async
             RUSH_ASSERT(callback);
-            auto newMesh = CreateRef<RMesh>();
-            newMesh->Load(path);
-            m_Meshes.insert({String(path), newMesh});
-            callback(AssetLoadResult::Success, newMesh, param);
+            auto model = CreateRef<RModel>();
+            model->Load(path);
+            m_Models.insert({String(path), model});
+            callback(AssetLoadResult::Success, model, param);
         }
         else
         {

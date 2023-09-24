@@ -38,12 +38,12 @@ namespace rush
         }
         else if (GetTexture())
         {
-            result.textureView = GetTexture()->GetTexture().CreateView();
+            result.textureView = GetTexture()->GetTextureHandle().CreateView();
             entries.push_back(result);
         }
         else if (GetBuffer())
         {
-            result.buffer = GetBuffer()->GetBuffer();
+            result.buffer = GetBuffer()->GetBufferHandle();
             result.offset = GetOffset();
             result.size = GetSize();
             entries.push_back(result);

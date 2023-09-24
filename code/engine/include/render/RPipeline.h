@@ -19,18 +19,18 @@ namespace rush
         BlendFactor dstAlpha = BlendFactor::DstAlpha;
     };
 
-    struct VertexAttribute
+    struct VertexAttribute_t
     {
         VertexFormat format = VertexFormat::Float32;
         uint64_t offset = 0;
         uint32_t shaderLocation = 0;
     };
 
-    struct VertexLayout
+    struct VertexLayout_t
     {
         uint64_t stride = 0;
         uint32_t attributeCount = 0;
-        VertexAttribute* attributes = nullptr;
+        VertexAttribute_t* attributes = nullptr;
     };
 
     /// <summary>
@@ -41,7 +41,7 @@ namespace rush
         Ref<RShader> vs;
         Ref<RShader> fs;
         Ref<BindingLayout> bindLayout;
-        List<VertexLayout> vertexLayouts;
+        List<VertexLayout_t> vertexLayouts;
         PrimitiveTopology primitiveType = PrimitiveTopology::TriangleList;
         FrontFace frontFace = FrontFace::CCW;
         CullMode cullModel = CullMode::Back;
@@ -68,19 +68,14 @@ namespace rush
 
         ~RPipeline() = default;
 
-        const wgpu::RenderPipeline& GetPipeline() const { return m_Pipeline; }
+        const wgpu::RenderPipeline& GetPipelineHandle() const { return m_PipelineHandle; }
 
     protected:
         friend class Renderer;
 
-        wgpu::RenderPipeline m_Pipeline;
+        wgpu::RenderPipeline m_PipelineHandle;
     };
 
-
-    class RGeometry;
-    class RMaterial;
-
-    wgpu::RenderPipeline GetPipeline(Ref<RGeometry>, Ref<RMaterial> material);
 
 }
 

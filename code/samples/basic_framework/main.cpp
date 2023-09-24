@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
         trans->SetPosition(0, 0, 0);
 
         auto meshRenderer = ent0.Add<MeshRenderer>();
-        meshRenderer->AddMesh("assets/monkey.glb");
+        meshRenderer->AddModel("assets/monkey.glb");
 
         auto bonding = ent0.Add<Bounding>();
     }

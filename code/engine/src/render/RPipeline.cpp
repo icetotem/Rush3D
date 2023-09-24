@@ -5,8 +5,7 @@
 
 namespace rush
 {
-    static constexpr uint8_t kMaxVertexBuffers = 8u;
-    static constexpr uint8_t kMaxVertexAttributes = 16u;
+
 
     RPipeline::RPipeline(const PipelineDesc& desc, const char* lable /*= nullptr*/)
     {
@@ -130,14 +129,7 @@ namespace rush
 //             multisample->alphaToCoverageEnabled = false;
 //         }
 
-        m_Pipeline = RDevice::instance().GetDevice().CreateRenderPipeline(&descriptor);
-    }
-
-    static 
-
-    wgpu::RenderPipeline GetPipeline(Ref<RGeometry>, Ref<RMaterial> material)
-    {
-
+        m_PipelineHandle = RDevice::instance().GetDevice().CreateRenderPipeline(&descriptor);
     }
 
 }

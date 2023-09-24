@@ -19,7 +19,7 @@ namespace rush
         bool IsValid() const;
         void Destroy();
 
-        const wgpu::Buffer& GetBuffer() const { return m_Buffer; }
+        const wgpu::Buffer GetBufferHandle() const { return m_BufferHandle; }
 
         void UpdateData(const void* data, uint64_t size = 0, uint64_t offset = 0);
 
@@ -31,7 +31,7 @@ namespace rush
     protected:
         friend class Renderer;
         uint64_t m_Size = 0;
-        wgpu::Buffer m_Buffer;
+        wgpu::Buffer m_BufferHandle;
     };
 
     //////////////////////////////////////////////////////////////////////////

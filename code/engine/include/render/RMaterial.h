@@ -8,21 +8,23 @@
 namespace rush
 {
 
+    class RGeometry;
+
     class RMaterial : public Asset
     {
     public:
         virtual bool Load(const StringView& path) override;
 
+        const wgpu::BindGroup& GetBindGroup() const { return m_BindGroup; }
 
-    private:
-        friend class Renderer;
-        const wgpu::BindGroup GetBindGroup() const;
-        const wgpu::RenderPipeline GetPipeline() const;
+        static const wgpu::RenderPipeline GetPipeline(Ref<RGeometry> geometry, Ref<RMaterial> material);
+
+        uint64_t GetHash() const { return m_Hash; }
 
     protected:
-        friend struct std::hash<rush::RMaterial>;
-        CullMode cullModel = CullMode::Back;
+        uint64_t m_Hash;
         BlendMode blendMode = BlendMode::Opaque;
+        CullMode cullModel = CullMode::Back;
         ColorWriteMask writeMask = ColorWriteMask::All;
         bool depthTest = true;
         bool depthWrite = true;
@@ -35,6 +37,10 @@ namespace rush
         BlendOperation opAlpha = BlendOperation::Add;
         BlendFactor srcAlpha = BlendFactor::SrcAlpha;
         BlendFactor dstAlpha = BlendFactor::DstAlpha;
+        String m_VertexShader;
+        String m_FragmentShader;
+        wgpu::BindGroup m_BindGroup;
+        static Map<uint64_t, wgpu::RenderPipeline> s_PipelineCache;
     };
 
     //////////////////////////////////////////////////////////////////////////

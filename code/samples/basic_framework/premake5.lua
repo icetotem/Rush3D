@@ -14,7 +14,7 @@ project "BasicFramework"
 		"__STDC_FORMAT_MACROS", "SPDLOG_NO_EXCEPTIONS" 
 	}
 		
-	debugdir "../../Bin/%{cfg.buildcfg}"
+	debugdir "../../../Bin/%{cfg.buildcfg}"
 		
 	files
 	{

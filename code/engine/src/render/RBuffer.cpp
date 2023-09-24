@@ -14,18 +14,18 @@ namespace rush
         descriptor.label = lable;
         descriptor.size = size;
         descriptor.usage = usage | wgpu::BufferUsage::CopyDst;
-        m_Buffer = RDevice::instance().GetDevice().CreateBuffer(&descriptor);
+        m_BufferHandle = RDevice::instance().GetDevice().CreateBuffer(&descriptor);
         UpdateData(data, m_Size, 0);
     }
 
     bool RBuffer::IsValid() const
     {
-        return (bool)m_Buffer;
+        return (bool)m_BufferHandle;
     }
 
     void RBuffer::Destroy()
     {
-        m_Buffer = {};
+        m_BufferHandle = {};
     }
 
     void RBuffer::UpdateData(const void* data, uint64_t size, uint64_t offset /*= 0*/)
@@ -34,11 +34,11 @@ namespace rush
         {
             if (size > 0 && offset + size <= m_Size)
             {
-                RDevice::instance().GetCmdQueue().WriteBuffer(m_Buffer, offset, data, size);
+                RDevice::instance().GetCmdQueue().WriteBuffer(m_BufferHandle, offset, data, size);
             }
             else if (size <= 0)
             {
-                RDevice::instance().GetCmdQueue().WriteBuffer(m_Buffer, offset, data, m_Size);
+                RDevice::instance().GetCmdQueue().WriteBuffer(m_BufferHandle, offset, data, m_Size);
             }
         }
     }

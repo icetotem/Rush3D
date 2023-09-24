@@ -6,6 +6,7 @@
 #include "render/RShader.h"
 #include "render/RDevice.h"
 #include "components/Camera.h"
+#include "render/RPipeline.h"
 
 
 namespace rush
@@ -24,35 +25,35 @@ namespace rush
 
     void Renderer::CreateFullScreenQuad()
     {
-        const char screen_quad_vs[] = R"(
-	            struct VertexIn {
-		            @location(0) aPos : vec2<f32>
-	            }
-	            struct VertexOut {
-		            @location(0) vUV  : vec2<f32>,
-		            @builtin(position) Position : vec4<f32>
-	            }
-	            @vertex
-	            fn main(input : VertexIn) -> VertexOut {
-		            var output : VertexOut;
-		            output.Position = vec4<f32>(input.aPos, 1.0, 1.0);
-                    var uv = (input.aPos + 1.0) * 0.5;
-		            output.vUV = vec2<f32>(uv.x, 1.0 - uv.y);
-		            return output;
-	            })";
-
-        m_QuadVS = CreateRef<RShader>(ShaderStage::Vertex, screen_quad_vs, "screen_quad_vs");
-
-        const char final_quad_fs[] = R"(
-        	    @group(0) @binding(0) var mySampler : sampler;
-			    @group(0) @binding(1) var myTexture : texture_2d<f32>;
-	            @fragment
-	            fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4<f32> {
-		            var color = textureSample(myTexture, mySampler, vUV);
-                    return color;
-	            })";
-
-        m_QuadFSFinal = CreateRef<RShader>(ShaderStage::Vertex, final_quad_fs, "final_quad_fs");
+//         const char screen_quad_vs[] = R"(
+// 	            struct VertexIn {
+// 		            @location(0) aPos : vec2<f32>
+// 	            }
+// 	            struct VertexOut {
+// 		            @location(0) vUV  : vec2<f32>,
+// 		            @builtin(position) Position : vec4<f32>
+// 	            }
+// 	            @vertex
+// 	            fn main(input : VertexIn) -> VertexOut {
+// 		            var output : VertexOut;
+// 		            output.Position = vec4<f32>(input.aPos, 1.0, 1.0);
+//                     var uv = (input.aPos + 1.0) * 0.5;
+// 		            output.vUV = vec2<f32>(uv.x, 1.0 - uv.y);
+// 		            return output;
+// 	            })";
+// 
+//         m_QuadVS = CreateRef<RShader>(ShaderStage::Vertex, screen_quad_vs, "screen_quad_vs");
+// 
+//         const char final_quad_fs[] = R"(
+//         	    @group(0) @binding(0) var mySampler : sampler;
+// 			    @group(0) @binding(1) var myTexture : texture_2d<f32>;
+// 	            @fragment
+// 	            fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4<f32> {
+// 		            var color = textureSample(myTexture, mySampler, vUV);
+//                     return color;
+// 	            })";
+// 
+//         m_QuadFSFinal = CreateRef<RShader>(ShaderStage::Vertex, final_quad_fs, "final_quad_fs");
 
         float const verts[] =
         {
@@ -61,7 +62,16 @@ namespace rush
             -1.f,  3.f,   // BL
         };
 
-        m_QuadVB = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(verts), verts, "screen_quad_vb");
+        //m_QuadVB = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(verts), verts, "screen_quad_vb");
+
+        VertexLayout vlayouts[kMaxVertexBuffers];
+        vlayouts[0].attribteCount = 1;
+        vlayouts[0].stride = 2 * sizeof(float);
+        vlayouts[0].attributes[0].format = wgpu::VertexFormat::Float32x2;
+        vlayouts[0].attributes[0].location = 0;
+        vlayouts[0].attributes[0].offset = 0;
+        m_ScreenQuadGeo = CreateRef<RGeometry>(PrimitiveTopology::TriangleStrip, 1, vlayouts, 3, 0, "FullSceenQuad");
+        m_ScreenQuadGeo->UpdateVertexBuffer(0, verts, sizeof(verts));
 
 //         PipelineDesc pipeDesc = {};
 //         pipeDesc.depthWrite = false;
@@ -137,7 +147,7 @@ namespace rush
                     LOG_ERROR("Render texture {} is not registered", outputBuffers.colorAttachment[i].texture);
                     continue;
                 }
-                attachments[i].view = rt->GetTexture().CreateView();
+                attachments[i].view = rt->GetTextureHandle().CreateView();
                 attachments[i].resolveTarget = nullptr;
                 attachments[i].loadOp = wgpu::LoadOp::Clear;
                 attachments[i].storeOp = wgpu::StoreOp::Store;
@@ -160,7 +170,7 @@ namespace rush
             auto rt = GetFGTexture(outputBuffers.depthStencilTexture.value());
             if (rt != nullptr)
             {
-                depthStencilDesc.view = rt->GetTexture().CreateView();
+                depthStencilDesc.view = rt->GetTextureHandle().CreateView();
                 depthStencilDesc.depthReadOnly = false;
                 depthStencilDesc.stencilReadOnly = false;
                 depthStencilDesc.depthClearValue = outputBuffers.clearDepth.has_value() ? outputBuffers.clearDepth.value() : 1.0f;
@@ -210,16 +220,14 @@ namespace rush
         {
             auto geo = batch.renderable.geometry;
             auto mat = batch.renderable.material;
-            pass.SetPipeline(mat->GetPipeline());
+            pass.SetPipeline(RMaterial::GetPipeline(geo, mat));
             pass.SetBindGroup(0, mat->GetBindGroup());
-            int vbIdx = 0;
-            for (auto vb : geo->vertexBuffers)
+            for (uint32_t vb = 0; vb < geo->GetVBCount(); ++vb)
             {
-                pass.SetVertexBuffer(vbIdx, vb->m_Buffer);
-                ++vbIdx;
+                pass.SetVertexBuffer(vb, geo->GetVB(vb)->GetBufferHandle());
             }
-            pass.SetIndexBuffer(geo->indexBuffer->m_Buffer, geo->indexBuffer->GetType());
-            pass.DrawIndexed(geo->indexBuffer->GetIndexCount(), batch.instanceCount, 0, 0);
+            pass.SetIndexBuffer(geo->GetIB()->GetBufferHandle(), geo->GetIB()->GetType());
+            pass.DrawIndexed(geo->GetIB()->GetIndexCount(), batch.instanceCount, 0, 0);
         }
         pass.End();
     }
@@ -242,7 +250,7 @@ namespace rush
                     LOG_ERROR("Render texture {} is not registered", outputBuffers.colorAttachment[i].texture);
                     continue;
                 }
-                attachments[i].view = rt->GetTexture().CreateView();
+                attachments[i].view = rt->GetTextureHandle().CreateView();
                 attachments[i].resolveTarget = nullptr;
                 attachments[i].loadOp = wgpu::LoadOp::Clear;
                 attachments[i].storeOp = wgpu::StoreOp::Store;
@@ -271,9 +279,9 @@ namespace rush
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
         if (material)
         {
-            pass.SetPipeline(material->GetPipeline());
+            pass.SetPipeline(RMaterial::GetPipeline(m_ScreenQuadGeo, material));
             pass.SetBindGroup(0, material->GetBindGroup());
-            pass.SetVertexBuffer(0, m_QuadVB->m_Buffer);
+            pass.SetVertexBuffer(0, m_ScreenQuadGeo->GetVB(0)->GetBufferHandle());
             pass.Draw(3);
         }
         else
