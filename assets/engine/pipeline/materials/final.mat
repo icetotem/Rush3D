@@ -1,0 +1,4 @@
+[material]
+
+vs = "assets/engine/shaders/screen_quad"
+fs = "assets/engine/shaders/final_pass"

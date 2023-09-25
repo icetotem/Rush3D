@@ -25,6 +25,8 @@ project "Rush3D_Engine"
 		path.join(ENGINE_DIR, "**.hpp"),
 		path.join(ENGINE_DIR, "**.inl"),
 		path.join(ENGINE_DIR, "**.cpp"),
+		path.join(ENGINE_DIR, "**.vert"),
+		path.join(ENGINE_DIR, "**.frag"),
     }
 
 	includedirs
@@ -39,4 +41,3 @@ project "Rush3D_Engine"
 		path.join(DEP_DIR, "stb"),
 		path.join(DEP_DIR, "tracy"),
 	}
-

@@ -9,6 +9,7 @@ namespace rush
 {
 
     class RGeometry;
+    class RShader;
 
     class RMaterial : public Asset
     {
@@ -37,8 +38,8 @@ namespace rush
         BlendOperation opAlpha = BlendOperation::Add;
         BlendFactor srcAlpha = BlendFactor::SrcAlpha;
         BlendFactor dstAlpha = BlendFactor::DstAlpha;
-        String m_VertexShader;
-        String m_FragmentShader;
+        Ref<RShader> m_VertexShader;
+        Ref<RShader> m_FragmentShader;
         wgpu::BindGroup m_BindGroup;
         static Map<uint64_t, wgpu::RenderPipeline> s_PipelineCache;
     };

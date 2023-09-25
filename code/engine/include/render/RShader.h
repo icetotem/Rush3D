@@ -3,6 +3,7 @@
 
 #include "core/Core.h"
 #include "render/RDefines.h"
+#include "Asset.h"
 
 namespace rush
 {
@@ -10,21 +11,22 @@ namespace rush
     /// <summary>
     /// Shader
     /// </summary>
-    class RShader
+    class RShader : public Asset
     {
     public:
+        RShader() = default;
         RShader(ShaderStage type, const char* source, const char* lable = nullptr);
-
         ~RShader() = default;
+
+        virtual bool Load(const StringView& path) override;
 
         ShaderStage GetType() const { return m_ShaderType; }
 
-    protected:
-        friend class Renderer;
-        friend class RPipeline;
+        wgpu::ShaderModule GetModule() const { return m_Module; }
 
+    protected:
         ShaderStage m_ShaderType = ShaderStage::None;
-        Ref<wgpu::ShaderModule> m_Module;
+        wgpu::ShaderModule m_Module;
     };
 
 }

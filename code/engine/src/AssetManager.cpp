@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "AssetManager.h"
+#include "core/Common.h"
 
 namespace rush
 {
@@ -18,7 +19,6 @@ namespace rush
 
     void AssetsManager::Init()
     {
-
     }
 
     void AssetsManager::ClearRecycle()
@@ -31,21 +31,29 @@ namespace rush
 
     }
 
+    void AssetsManager::OnLoadFile(const StringView& path)
+    {
+        if (Path(String(path)).extension() == ".mat")
+        {
+            LoadMaterial(path, nullptr, nullptr);
+        }
+    }
+
     void AssetsManager::LoadModel(const StringView& path, std::function<void(AssetLoadResult result, Ref<RModel>, void* param)> callback, void* param)
     {
         auto iter = m_Models.find(String(path));
         if (iter == m_Models.end())
         {
-            // TODO: async
-            RUSH_ASSERT(callback);
             auto model = CreateRef<RModel>();
             model->Load(path);
             m_Models.insert({String(path), model});
-            callback(AssetLoadResult::Success, model, param);
+            if (callback)
+                callback(AssetLoadResult::Success, model, param);
         }
         else
         {
-            callback(AssetLoadResult::Success, iter->second, param);
+            if (callback)
+                callback(AssetLoadResult::Success, iter->second, param);
         }
     }
 
@@ -54,16 +62,16 @@ namespace rush
         auto iter = m_Textures.find(String(path));
         if (iter == m_Textures.end())
         {
-            // TODO: async
-            RUSH_ASSERT(callback);
             auto newTex = CreateRef<RTexture>();
             newTex->Load(path);
             m_Textures.insert({ String(path), newTex });
-            callback(AssetLoadResult::Success, newTex, param);
+            if (callback)
+                callback(AssetLoadResult::Success, newTex, param);
         }
         else
         {
-            callback(AssetLoadResult::Success, iter->second, param);
+            if (callback)
+                callback(AssetLoadResult::Success, iter->second, param);
         }
     }
 
@@ -72,18 +80,46 @@ namespace rush
         auto iter = m_Materials.find(String(path));
         if (iter == m_Materials.end())
         {
-            // TODO: async
-            RUSH_ASSERT(callback);
             auto newMat = CreateRef<RMaterial>();
             newMat->Load(path);
             m_Materials.insert({ String(path), newMat });
-            callback(AssetLoadResult::Success, newMat, param);
+            if (callback)
+                callback(AssetLoadResult::Success, newMat, param);
         }
         else
         {
-            callback(AssetLoadResult::Success, iter->second, param);
+            if (callback)
+                callback(AssetLoadResult::Success, iter->second, param);
         }
     }
 
+    void AssetsManager::LoadShader(const StringView& path, const StringView& defines, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param /*= nullptr*/)
+    {
+        uint64_t h(0);
+        hash_combine(h, path);
+        hash_combine(h, defines);
+        auto iter = m_Shaders.find(h);
+        if (iter == m_Shaders.end())
+        {
+            auto shader = CreateRef<RShader>();
+            if (shader->Load(path))
+            {
+                
+                m_Shaders.insert({ h, shader });
+                if (callback)
+                    callback(AssetLoadResult::Success, shader, param);
+            }
+            else
+            {
+                if (callback)
+                    callback(AssetLoadResult::ParseFailed, shader, param);
+            }
+        }
+        else
+        {
+            if (callback)
+                callback(AssetLoadResult::Success, iter->second, param);
+        }
+    }
 
 }

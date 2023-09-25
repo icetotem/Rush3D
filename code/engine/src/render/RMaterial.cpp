@@ -6,6 +6,9 @@
 #include "render/RShader.h"
 #include "render/RPipeline.h"
 #include "render/RUniform.h"
+#include "toml/toml++/toml.h"
+#include "BundleManager.h"
+#include "render/RShader.h"
 
 namespace rush
 {
@@ -14,6 +17,27 @@ namespace rush
 
     bool RMaterial::Load(const StringView& path)
     {
+        auto stream = BundleManager::instance().Get(path);
+        if (stream->IsEmpty())
+        {
+            LOG_ERROR("Cannot load material {}", path.data());
+            return false;
+        }
+
+        auto data = toml::parse((const char*)stream->GetData());
+        const auto& mat = data["material"];
+        std::string_view vs = mat["vs"].value_or("");
+        std::string_view fs = mat["fs"].value_or("");
+
+        std::string defines;
+
+        AssetsManager::instance().LoadShader(vs, defines, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+            m_VertexShader = shader;
+        }, nullptr);
+
+        AssetsManager::instance().LoadShader(fs, defines, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+            m_FragmentShader = shader;
+        }, nullptr);
 
         return true;
     }
@@ -29,6 +53,8 @@ namespace rush
         }
         else
         {
+            
+
             static char const triangle_vert_wgsl[] = R"(
 	        struct VertexIn {
 		        @location(0) aPos : vec3<f32>,

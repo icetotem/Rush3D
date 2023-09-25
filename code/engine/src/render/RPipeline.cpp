@@ -30,7 +30,7 @@ namespace rush
         std::array<wgpu::VertexAttribute, kMaxVertexAttributes> cAttributes;
         {
             wgpu::VertexState* vertex = &descriptor.vertex;
-            vertex->module = *desc.vs->m_Module;
+            vertex->module = desc.vs->GetModule();
             vertex->entryPoint = "main";
 
             int i = 0;
@@ -61,7 +61,7 @@ namespace rush
         wgpu::ColorTargetState cTargets = {};
         wgpu::BlendState cBlendState = {};
         {
-            cFragment.module = *desc.fs->m_Module;
+            cFragment.module = desc.fs->GetModule();
             cFragment.entryPoint = "main";
             cFragment.targetCount = 1;
             descriptor.fragment = &cFragment;         
