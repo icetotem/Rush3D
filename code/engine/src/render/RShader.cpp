@@ -41,6 +41,7 @@ namespace rush
         }
         wgpu::ShaderModuleSPIRVDescriptor glslDesc;
         glslDesc.code = (const uint32_t*)stream->GetData();
+        glslDesc.codeSize = stream->GetSize() / 2;
         wgpu::ShaderModuleDescriptor descriptor;
         descriptor.nextInChain = &glslDesc;
         descriptor.label = path.data();

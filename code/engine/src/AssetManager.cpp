@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "AssetManager.h"
 #include "core/Common.h"
+#include "BundleManager.h"
 
 namespace rush
 {
@@ -31,12 +32,26 @@ namespace rush
 
     }
 
-    void AssetsManager::OnLoadFile(const StringView& path)
+    void AssetsManager::DoPreload()
     {
-        if (Path(String(path)).extension() == ".mat")
+        const auto& shaderAssets = BundleManager::instance().GetFileNamesByExt(".spv");
+        for (auto path : shaderAssets)
+        {
+            auto shader = CreateRef<RShader>();
+            if (!shader->Load(path))
+            {
+                LOG_ERROR("Shader load failed {}", path);
+            }
+            String hash = Path(path).stem().string();
+            m_Shaders.insert({path, shader});
+        }
+
+        const auto& materialAssets = BundleManager::instance().GetFileNamesByExt(".mat");
+        for (auto path : materialAssets)
         {
             LoadMaterial(path, nullptr, nullptr);
         }
+
     }
 
     void AssetsManager::LoadModel(const StringView& path, std::function<void(AssetLoadResult result, Ref<RModel>, void* param)> callback, void* param)
@@ -93,26 +108,40 @@ namespace rush
         }
     }
 
-    void AssetsManager::LoadShader(const StringView& path, const StringView& defines, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param /*= nullptr*/)
+    void AssetsManager::LoadOrCompileShader(const StringView& path, const StringView& defines, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param /*= nullptr*/)
     {
         uint64_t h(0);
         hash_combine(h, path);
         hash_combine(h, defines);
-        auto iter = m_Shaders.find(h);
+        auto strHash = std::to_string(h);
+        auto spvPath = "assets/spv/" + strHash + Path(path).extension().string() + ".spv";
+        auto iter = m_Shaders.find(spvPath);
         if (iter == m_Shaders.end())
         {
-            auto shader = CreateRef<RShader>();
-            if (shader->Load(path))
+            auto spvName = "../../assets/spv/" + strHash + Path(path).extension().string() + ".spv";
+            char cmd[1024];
+            sprintf(cmd, "glslc \"%s\" -o \"%s\"", (String("../../") + String(path)).c_str(), spvName.c_str());
+            int result = std::system(cmd);
+            if (result == 0)
             {
-                
-                m_Shaders.insert({ h, shader });
-                if (callback)
-                    callback(AssetLoadResult::Success, shader, param);
+                BundleManager::instance().LoadSingleFile(spvName);
+                auto shader = CreateRef<RShader>();
+                if (shader->Load(spvName))
+                {
+                    m_Shaders.insert({ strHash, shader });
+                    if (callback)
+                        callback(AssetLoadResult::Success, shader, param);
+                }
+                else
+                {
+                    if (callback)
+                        callback(AssetLoadResult::ParseFailed, nullptr, param);
+                }
             }
             else
             {
                 if (callback)
-                    callback(AssetLoadResult::ParseFailed, shader, param);
+                    callback(AssetLoadResult::ParseFailed, nullptr, param);
             }
         }
         else

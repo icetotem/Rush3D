@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "BundleManager.h"
 #include "mio/single_include/mio/mio.hpp"
-#include "AssetManager.h"
 
 namespace rush
 {
@@ -62,27 +61,50 @@ namespace rush
 
     void BundleManager::TraverseFunction(StringView fileNameHash, StringView filePath)
     {
-        auto& resMgr = BundleManager::instance();
+        auto& bundleMgr = BundleManager::instance();
 
         Path path(fileNameHash);
-        const auto& ext = path.extension();
-        //auto type = resMgrGetExtType(str_tolower(ext.string()));
-
-        auto& assetManager = AssetsManager::instance();
-
         auto key = String(fileNameHash);
         Ref<SingleFile> file = CreateRef<SingleFile>();
         std::error_code error;
+        file->mmap = mio::make_mmap_source(String(filePath), 0, 0, error);
         if (!error)
         {
-            file->mmap = mio::make_mmap_source(String(filePath), 0, 0, error);
             file->stream = CreateRef<MemStream>((const uint8_t*)file->mmap.data(), file->mmap.size());
-            resMgr.m_Files.insert({ key, std::static_pointer_cast<File>(file) });
-            assetManager.OnLoadFile(key);
+            bundleMgr.m_Files.insert({ key, std::static_pointer_cast<File>(file) });
+            const auto& ext = path.extension().string();
+            auto& files = bundleMgr.m_FileNamesByExt[ext];
+            files.push_back(key);
         }
         else
         {
             LOG_ERROR("Failed to load file {}", fileNameHash);
+        }
+    }
+
+    List<rush::String> BundleManager::GetFileNamesByExt(StringView ext)
+    {
+        return m_FileNamesByExt[String(ext)];
+    }
+
+    void BundleManager::LoadSingleFile(StringView filePath)
+    {
+        Path path(filePath);
+        auto key = String(filePath);
+        Ref<SingleFile> file = CreateRef<SingleFile>();
+        std::error_code error;
+        file->mmap = mio::make_mmap_source(String(filePath), 0, 0, error);
+        if (!error)
+        {
+            file->stream = CreateRef<MemStream>((const uint8_t*)file->mmap.data(), file->mmap.size());
+            m_Files.insert({ key, std::static_pointer_cast<File>(file) });
+            const auto& ext = path.extension().string();
+            auto& files = m_FileNamesByExt[ext];
+            files.push_back(key);
+        }
+        else
+        {
+            LOG_ERROR("Failed to load file {}", filePath);
         }
     }
 

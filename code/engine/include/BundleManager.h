@@ -35,6 +35,10 @@ namespace rush
 
         static void TraverseFunction(StringView fileHash, StringView filePath);
 
+        List<String> GetFileNamesByExt(StringView ext);
+
+        void LoadSingleFile(StringView filePath);
+
         struct File
         {
             Ref<MemStream> stream;
@@ -42,6 +46,7 @@ namespace rush
 
     protected:
         HMap<String, Ref<File>> m_Files;
+        HMap<String, List<String>> m_FileNamesByExt;
     };
 
 }

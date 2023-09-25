@@ -26,16 +26,16 @@ namespace rush
 
         auto data = toml::parse((const char*)stream->GetData());
         const auto& mat = data["material"];
-        std::string_view vs = mat["vs"].value_or("");
-        std::string_view fs = mat["fs"].value_or("");
+        auto vs = mat["vs"].value_or("");
+        auto fs = mat["fs"].value_or("");
 
         std::string defines;
 
-        AssetsManager::instance().LoadShader(vs, defines, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+        AssetsManager::instance().LoadOrCompileShader(String(vs) + ".vert", defines, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
             m_VertexShader = shader;
         }, nullptr);
 
-        AssetsManager::instance().LoadShader(fs, defines, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+        AssetsManager::instance().LoadOrCompileShader(String(fs) + ".frag", defines, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
             m_FragmentShader = shader;
         }, nullptr);
 

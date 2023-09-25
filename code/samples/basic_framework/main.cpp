@@ -30,6 +30,8 @@ int main(int argc, char* argv[])
 
     engine.GetBundleManager().AddFolder("../../assets");
 
+    engine.GetAssetsManager().DoPreload();
+
     auto mainScene = engine.GetSceneManager().GetMainScene();
     auto mainCamera = mainScene->GetMainCamera();
 
