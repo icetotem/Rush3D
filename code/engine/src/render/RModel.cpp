@@ -224,24 +224,24 @@ namespace rush
                 buffIndex = 0;
                 if (positions)
                 {
-                    geo->UpdateVertexBuffer(buffIndex, positions, numVertices * sizeof(float) * 3);
+                    geo->UpdateVertexBuffer(buffIndex++, positions, numVertices * sizeof(float) * 3);
                 }
                 if (normals)
                 {
-                    geo->UpdateVertexBuffer(buffIndex, normals, numVertices * sizeof(float) * 3);
+                    geo->UpdateVertexBuffer(buffIndex++, normals, numVertices * sizeof(float) * 3);
                 }
                 if (tangents)
                 {
-                    geo->UpdateVertexBuffer(buffIndex, tangents, numVertices * sizeof(float) * 3);
+                    geo->UpdateVertexBuffer(buffIndex++, tangents, numVertices * sizeof(float) * 3);
                 }
                 if (texcoords0)
                 {
-                    geo->UpdateVertexBuffer(buffIndex, texcoords0, numVertices * sizeof(float) * 2);
+                    geo->UpdateVertexBuffer(buffIndex++, texcoords0, numVertices * sizeof(float) * 2);
                 }
                 if (jointIndices && jointWeights)
                 {
-                    geo->UpdateVertexBuffer(buffIndex, jointIndices, numVertices * sizeof(uint16_t) * 4);
-                    geo->UpdateVertexBuffer(buffIndex, jointWeights, numVertices * sizeof(float) * 4);
+                    geo->UpdateVertexBuffer(buffIndex++, jointIndices, numVertices * sizeof(uint16_t) * 4);
+                    geo->UpdateVertexBuffer(buffIndex++, jointWeights, numVertices * sizeof(float) * 4);
                 }
                 if (indices)
                 {

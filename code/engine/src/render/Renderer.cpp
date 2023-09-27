@@ -31,51 +31,19 @@ namespace rush
         RegisterFGTexture("SceneColorTexture", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
         RegisterFGTexture("SceneDepthTexture", wgpu::TextureFormat::Depth24PlusStencil8, Vector2(1.0f, 1.0f));
 
-        m_FrameDataBuffer = CreateRef<RUniformBuffer>(sizeof(m_FrameData), nullptr, "frameData");
+        m_FrameDataBuffer = CreateRef<RUniformBuffer>(sizeof(m_FrameData), nullptr, "FrameData_buffer");
         m_FrameDataGroup.AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer);
-        m_FrameDataGroup.Create("frameData_group");
+        m_FrameDataGroup.Create("FrameData_group");
     }
 
     void Renderer::CreateFullScreenQuad()
     {
-//         const char screen_quad_vs[] = R"(
-// 	            struct VertexIn {
-// 		            @location(0) aPos : vec2<f32>
-// 	            }
-// 	            struct VertexOut {
-// 		            @location(0) vUV  : vec2<f32>,
-// 		            @builtin(position) Position : vec4<f32>
-// 	            }
-// 	            @vertex
-// 	            fn main(input : VertexIn) -> VertexOut {
-// 		            var output : VertexOut;
-// 		            output.Position = vec4<f32>(input.aPos, 1.0, 1.0);
-//                     var uv = (input.aPos + 1.0) * 0.5;
-// 		            output.vUV = vec2<f32>(uv.x, 1.0 - uv.y);
-// 		            return output;
-// 	            })";
-// 
-//         m_QuadVS = CreateRef<RShader>(ShaderStage::Vertex, screen_quad_vs, "screen_quad_vs");
-// 
-//         const char final_quad_fs[] = R"(
-//         	    @group(0) @binding(0) var mySampler : sampler;
-// 			    @group(0) @binding(1) var myTexture : texture_2d<f32>;
-// 	            @fragment
-// 	            fn main(@location(0) vUV : vec2<f32>) -> @location(0) vec4<f32> {
-// 		            var color = textureSample(myTexture, mySampler, vUV);
-//                     return color;
-// 	            })";
-// 
-//         m_QuadFSFinal = CreateRef<RShader>(ShaderStage::Vertex, final_quad_fs, "final_quad_fs");
-
         float const verts[] =
         {
             -1.f, -1.f,   // TL
              3.f, -1.f,   // TR
             -1.f,  3.f,   // BL
         };
-
-        //m_QuadVB = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(verts), verts, "screen_quad_vb");
 
         VertexLayout vlayouts[kMaxVertexBuffers];
         vlayouts[0].attributeCount = 1;
@@ -85,45 +53,7 @@ namespace rush
         vlayouts[0].attributes[0].offset = 0;
         m_ScreenQuadGeo = CreateRef<RGeometry>(PrimitiveTopology::TriangleStrip, 1, vlayouts, 3, 0, "FullSceenQuad");
         m_ScreenQuadGeo->UpdateVertexBuffer(0, verts, sizeof(verts));
-
-//         PipelineDesc pipeDesc = {};
-//         pipeDesc.depthWrite = false;
-//         pipeDesc.depthTest = false;
-//         pipeDesc.colorFormat = TextureFormat::BGRA8Unorm;
-// 
-//         VertexAttribute vertAttr;
-//         vertAttr.format = VertexFormat::Float32x2;
-//         vertAttr.offset = 0;
-//         vertAttr.shaderLocation = 0;
-// 
-//         auto& vLayout0 = pipeDesc.vertexLayouts.emplace_back();
-//         vLayout0.stride = sizeof(float) * 2;
-//         vLayout0.attributes = &vertAttr;
-//         vLayout0.attributeCount = 1;
-// 
-//         auto l = {
-//             BindingLayoutHelper(0, ShaderStage::Fragment, SamplerBindingType::Filtering),
-//             BindingLayoutHelper(1, ShaderStage::Fragment, TextureSampleType::Float, TextureViewDimension::e2D)
-//         };
-//         Ref<BindingLayout> bindingLayout = CreateRef<BindingLayout>(l);
-// 
-//         pipeDesc.vs = m_QuadVS;
-//         pipeDesc.fs = m_QuadFSFinal;
-//         pipeDesc.writeMask = ColorWriteMask::All;
-//         pipeDesc.bindLayout = bindingLayout;
-//         pipeDesc.primitiveType = PrimitiveTopology::TriangleList;
-//         pipeDesc.frontFace = FrontFace::CCW;
-//         pipeDesc.cullModel = CullMode::Back;
-//         m_FinalPassPipeline = CreateRef<RPipeline>(pipeDesc);
-// 
-//         Ref<RTexture> tex = CreateRef<RTexture>(m_Width, m_Height, TextureFormat::RGBA8Unorm, 1, 1, TextureDimension::e2D, TextureUsage::RenderAttachment, "FinalPass Texture Buffer");
-//         auto layout = {
-//             BindingInitializationHelper(0, CreateRef<RSampler>()),
-//             BindingInitializationHelper(1, tex)
-//         };
-//         m_FinalPassBindGroup = CreateRef<RBindGroup>(bindingLayout, layout, "FinalPass BindGroup");
     }
-
 
     void Renderer::RegisterFGTexture(const StringView& name, TextureFormat format, Vector2 viewScale)
     {
@@ -235,7 +165,12 @@ namespace rush
 
         // set frame data
         if (m_FrameDataGroup.GetBindGroupHandle())
+        {
+            m_FrameData.proj = camera->GetProjMatrix();
+            m_FrameData.view = camera->GetViewMatrix();
+            m_FrameDataBuffer->UpdateData(&m_FrameData, sizeof(m_FrameData));
             pass.SetBindGroup(0, m_FrameDataGroup.GetBindGroupHandle());
+        }
 
         for (const auto& batch : renderQueue->GetBatches())
         {

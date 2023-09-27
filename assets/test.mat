@@ -1,5 +1,5 @@
 {
-    "type": "post_process",
+    "type": "surface",
     "shading_model": "default_lit",
     "vs": "assets/engine/shaders/surface.vert",
     "fs": "assets/engine/shaders/surface.frag"

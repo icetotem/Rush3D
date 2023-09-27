@@ -50,7 +50,7 @@ namespace rush
     {
         m_MainCamera = CreateEntity("MainCamera");
         auto transform = m_MainCamera.Add<Transform>();
-        transform->SetPosition(-5, 0, -5);
+        transform->SetPosition(0, 15, 15);
         transform->LookAt(0, 0, 0);
         m_MainCamera.Add<Camera>();
         m_MainCamera.Add<Frustum>();
