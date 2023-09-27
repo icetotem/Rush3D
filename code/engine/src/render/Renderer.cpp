@@ -7,7 +7,10 @@
 #include "render/RDevice.h"
 #include "components/Camera.h"
 #include "render/RPipeline.h"
-
+#include "render/RMaterial.h"
+#include "render/RGeometry.h"
+#include "render/RTexture.h"
+#include "AssetManager.h"
 
 namespace rush
 {
@@ -16,11 +19,21 @@ namespace rush
     {
         m_Width = width;
         m_Height = height;
-        
-        //CreateFullScreenQuad();
+        CreateFullScreenQuad();
 
-        RegisterFGTexture("SceneColorTexture", TextureFormat::BGRA8Unorm, 1.0f, 1.0f);
-        RegisterFGTexture("SceneDepthTexture", TextureFormat::Depth24PlusStencil8, 1.0f, 1.0f);
+        AssetsManager::instance().LoadMaterial("assets/engine/pipeline/materials/final.mat", [&](AssetLoadResult result, Ref<RMaterial> material, void*) {
+            if (result == AssetLoadResult::Success)
+            {
+                m_FinalPassMat = material;
+            }
+        });
+
+        RegisterFGTexture("SceneColorTexture", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
+        RegisterFGTexture("SceneDepthTexture", wgpu::TextureFormat::Depth24PlusStencil8, Vector2(1.0f, 1.0f));
+
+        m_FrameDataBuffer = CreateRef<RUniformBuffer>(sizeof(m_FrameData), nullptr, "frameData");
+        m_FrameDataGroup.AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer);
+        m_FrameDataGroup.Create("frameData_group");
     }
 
     void Renderer::CreateFullScreenQuad()
@@ -65,7 +78,7 @@ namespace rush
         //m_QuadVB = CreateRef<RVertexBuffer>(sizeof(float) * 2, sizeof(verts), verts, "screen_quad_vb");
 
         VertexLayout vlayouts[kMaxVertexBuffers];
-        vlayouts[0].attribteCount = 1;
+        vlayouts[0].attributeCount = 1;
         vlayouts[0].stride = 2 * sizeof(float);
         vlayouts[0].attributes[0].format = wgpu::VertexFormat::Float32x2;
         vlayouts[0].attributes[0].location = 0;
@@ -112,13 +125,16 @@ namespace rush
     }
 
 
-    void Renderer::RegisterFGTexture(const StringView& name, TextureFormat format, float widthScale, float heightScale)
+    void Renderer::RegisterFGTexture(const StringView& name, TextureFormat format, Vector2 viewScale)
     {
-        FrameTexture ft;
-        ft.format = format;
-        ft.widthScale = widthScale;
-        ft.heightScale = heightScale;
-        m_RenderTextures.insert({String(name), ft});
+        auto iter = m_RenderTextures.find(String(name));
+        if (iter == m_RenderTextures.end())
+        {
+            FrameTexture ft;
+            ft.format = format;
+            ft.scale = viewScale;
+            m_RenderTextures.insert({ String(name), ft });
+        }
     }
 
     void Renderer::BeginDraw(Ref<RSurface> surface)
@@ -216,12 +232,18 @@ namespace rush
         RUSH_ASSERT(camera);
         const auto& viewport = camera->GetViewport();        
         pass.SetViewport(viewport.x * m_Width, viewport.y * m_Height, (viewport.z - viewport.x) * m_Width, (viewport.w - viewport.y) * m_Height, 0.0f, 1.0f);
+
+        // set frame data
+        if (m_FrameDataGroup.GetBindGroupHandle())
+            pass.SetBindGroup(0, m_FrameDataGroup.GetBindGroupHandle());
+
         for (const auto& batch : renderQueue->GetBatches())
         {
             auto geo = batch.renderable.geometry;
             auto mat = batch.renderable.material;
-            pass.SetPipeline(RMaterial::GetPipeline(geo, mat));
-            pass.SetBindGroup(0, mat->GetBindGroup());
+            pass.SetPipeline(RMaterial::GetPipeline(this, geo, mat, outputBuffers));
+            if (mat->GetBindGroup() && mat->GetBindGroup()->GetBindGroupHandle())
+                pass.SetBindGroup(1, mat->GetBindGroup()->GetBindGroupHandle());
             for (uint32_t vb = 0; vb < geo->GetVBCount(); ++vb)
             {
                 pass.SetVertexBuffer(vb, geo->GetVB(vb)->GetBufferHandle());
@@ -244,13 +266,21 @@ namespace rush
         {
             for (int i = 0; i < outputBuffers.colorAttachment.size(); ++i)
             {
-                auto rt = GetFGTexture(outputBuffers.colorAttachment[i].texture);
-                if (rt == nullptr)
+                if (outputBuffers.colorAttachment[i].texture == kBackBufferName)
                 {
-                    LOG_ERROR("Render texture {} is not registered", outputBuffers.colorAttachment[i].texture);
-                    continue;
+                    wgpu::TextureView backbufferView = m_Surface->GetSwapChain().GetCurrentTextureView();
+                    attachments[i].view = backbufferView;
                 }
-                attachments[i].view = rt->GetTextureHandle().CreateView();
+                else
+                {
+                    auto rt = GetFGTexture(outputBuffers.colorAttachment[i].texture);
+                    if (rt == nullptr)
+                    {
+                        LOG_ERROR("Render texture {} is not registered", outputBuffers.colorAttachment[i].texture);
+                        continue;
+                    }
+                    attachments[i].view = rt->GetTextureHandle().CreateView();
+                }
                 attachments[i].resolveTarget = nullptr;
                 attachments[i].loadOp = wgpu::LoadOp::Clear;
                 attachments[i].storeOp = wgpu::StoreOp::Store;
@@ -277,10 +307,16 @@ namespace rush
         }
 
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
+
+        // set frame data
+        //if (m_FrameDataGroup.GetBindGroupHandle())
+        //    pass.SetBindGroup(0, m_FrameDataGroup.GetBindGroupHandle());
+
         if (material)
         {
-            pass.SetPipeline(RMaterial::GetPipeline(m_ScreenQuadGeo, material));
-            pass.SetBindGroup(0, material->GetBindGroup());
+            pass.SetPipeline(RMaterial::GetPipeline(this, m_ScreenQuadGeo, material, outputBuffers));
+            if (material->GetBindGroup() && material->GetBindGroup()->GetBindGroupHandle())
+                pass.SetBindGroup(0, material->GetBindGroup()->GetBindGroupHandle());
             pass.SetVertexBuffer(0, m_ScreenQuadGeo->GetVB(0)->GetBufferHandle());
             pass.Draw(3);
         }
@@ -307,9 +343,9 @@ namespace rush
         {
             FrameBuffer info;
             info.lable = "Forward Pass";
-            info.colorAttachment.push_back({ "SceneColorTexture", {0.1f, 0.1f, 0.1f, 1.0f} });
-            FrameBufferAttachment depth;
+            info.colorAttachment.push_back({ "SceneColorTexture", GetFGTextureFormat("SceneColorTexture"), {0.2f, 0.25f, 0.2f, 1.0f} });
             info.depthStencilTexture = "SceneDepthTexture";
+            info.depthStencilFormat = GetFGTextureFormat("SceneDepthTexture");
             info.clearDepth = 1.0f;
             DrawScene(renderQueue, info);
         }
@@ -317,8 +353,9 @@ namespace rush
         if (1)
         {
             FrameBuffer info;
-
-            DrawQuad(nullptr, info);          
+            info.lable = "Final Pass";
+            info.colorAttachment.push_back({ String(kBackBufferName), TextureFormat::BGRA8Unorm, {0.0f, 0.0f, 0.0f, 0.0f} });
+            DrawQuad(m_FinalPassMat, info);
         }        
 
         EndDraw();
@@ -340,13 +377,50 @@ namespace rush
         else if (iter->second.texture == nullptr)
         {
             const FrameTexture& info = iter->second;
-            Ref<RTexture> newTexture = CreateRef<RTexture>(m_Width * info.widthScale, m_Height * info.heightScale, info.format, 1, 1, TextureDimension::e2D, TextureUsage::RenderAttachment, String(name).c_str());
+            Ref<RTexture> newTexture = CreateRef<RTexture>(m_Width * info.scale.x, m_Height * info.scale.y, info.format, 1, 1, TextureDimension::e2D, 
+                                            TextureUsage::RenderAttachment | TextureUsage::TextureBinding, String(name).c_str());
             iter->second.texture = newTexture;
             return newTexture;
         }
         else
         {
             return iter->second.texture;
+        }
+    }
+
+    TextureFormat Renderer::GetFGTextureFormat(const StringView& name)
+    {
+        auto iter = m_RenderTextures.find(String(name));
+        if (iter == m_RenderTextures.end())
+        {
+            return TextureFormat::Undefined;
+        }
+        else if (iter->second.texture == nullptr)
+        {
+            const FrameTexture& info = iter->second;
+            return info.format;
+        }
+        else
+        {
+            return iter->second.format;
+        }
+    }
+
+    Vector2 Renderer::GetFGTextureScale(const StringView& name)
+    {
+        auto iter = m_RenderTextures.find(String(name));
+        if (iter == m_RenderTextures.end())
+        {
+            return Vector2(0);
+        }
+        else if (iter->second.texture == nullptr)
+        {
+            const FrameTexture& info = iter->second;
+            return info.scale;
+        }
+        else
+        {
+            return iter->second.scale;
         }
     }
 

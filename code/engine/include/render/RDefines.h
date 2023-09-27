@@ -9,6 +9,7 @@ namespace rush
 {
     static constexpr uint8_t kMaxVertexBuffers = 8u;
     static constexpr uint8_t kMaxVertexAttributes = 16u;
+    static constexpr uint8_t kMaxFrameBufferss = 4u;
 
     using TextureFormat = wgpu::TextureFormat;
     using TextureDimension = wgpu::TextureDimension;
@@ -38,6 +39,8 @@ namespace rush
         AlphaTest,
     };
 
+    static constexpr uint32_t kFrameBufferGroup = 0;
+    static constexpr StringView kBackBufferName = "BackBuffer";
 }
 
 #endif // RDefines_h__

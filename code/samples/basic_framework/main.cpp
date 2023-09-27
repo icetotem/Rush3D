@@ -26,11 +26,11 @@ int main(int argc, char* argv[])
     wndDesc.windowMode = WindowMode::Windowed;
 
     Engine engine;
-    engine.Init(wndDesc);
 
     engine.GetBundleManager().AddFolder("../../assets");
 
-    engine.GetAssetsManager().DoPreload();
+    engine.Init(wndDesc);
+
 
     auto mainScene = engine.GetSceneManager().GetMainScene();
     auto mainCamera = mainScene->GetMainCamera();
@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
 
         auto meshRenderer = ent0.Add<MeshRenderer>();
         meshRenderer->AddModel("assets/monkey.glb");
+        //meshRenderer->SetMaterial(0, "assets/test.mat");
 
         auto bonding = ent0.Add<Bounding>();
     }

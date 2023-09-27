@@ -27,7 +27,7 @@ namespace rush
                     for (const auto& p : m.primitives)
                     {
                         prim.geometry = p.geometry;
-                        AssetsManager::instance().LoadMaterial(p.material, [&](AssetLoadResult result, Ref<RMaterial> material, void*) {
+                        AssetsManager::instance().LoadMaterial(p.material == "" ? "assets/engine/materials/default_surface.mat" : p.material, [&](AssetLoadResult result, Ref<RMaterial> material, void*) {
                             if (result == AssetLoadResult::Success)
                             {
                                 prim.material = material;

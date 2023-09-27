@@ -23,6 +23,8 @@ namespace rush
 
     void Engine::Init(const WindowDesc& mainWndDesc)
     {
+        m_AssetsManager.DoPreload();
+
         m_MainWindow = CreateRenderWindow(mainWndDesc);
         m_MainRenderer = CreateRenderer(mainWndDesc.width, mainWndDesc.height);
     }

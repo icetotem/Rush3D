@@ -66,9 +66,6 @@ namespace rush
                 const tinygltf::Primitive& primitive = mesh.primitives[j];
                 if (primitive.attributes.find("POSITION") == primitive.attributes.end())
                 {
-                    int accessorIdx = primitive.attributes.at("POSITION");
-                    const tinygltf::Accessor& accessor = model.accessors[accessorIdx];
-                    numVertices = accessor.count;
                     LOG_WARN("mesh {} has no positon data", path);
                     continue;
                 }
@@ -78,6 +75,7 @@ namespace rush
                 {
                     int accessorIdx = primitive.attributes.at("POSITION");
                     const tinygltf::Accessor& accessor = model.accessors[accessorIdx];
+                    numVertices = accessor.count;
                     const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
                     const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
 
@@ -88,7 +86,8 @@ namespace rush
                     }
 
                     positions = reinterpret_cast<const float*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-                    vlayouts[buffIndex].attribteCount = 1;
+                    vlayouts[buffIndex].attributeCount = 1;
+                    vlayouts[buffIndex].stride = 3 * sizeof(float);
                     vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
                     vlayouts[buffIndex].attributes[0].offset = 0;
                     vlayouts[buffIndex].attributes[0].location = buffIndex;
@@ -110,7 +109,8 @@ namespace rush
                     else
                     {
                         normals = reinterpret_cast<const float*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-                        vlayouts[buffIndex].attribteCount = 1;
+                        vlayouts[buffIndex].attributeCount = 1;
+                        vlayouts[buffIndex].stride = 3 * sizeof(float);
                         vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
                         vlayouts[buffIndex].attributes[0].offset = 0;
                         vlayouts[buffIndex].attributes[0].location = buffIndex;
@@ -133,7 +133,8 @@ namespace rush
                     else
                     {
                         tangents = reinterpret_cast<const float*>(&(tangentBuffer.data[accessor.byteOffset + tangentBufferView.byteOffset]));
-                        vlayouts[buffIndex].attribteCount = 1;
+                        vlayouts[buffIndex].attributeCount = 1;
+                        vlayouts[buffIndex].stride = 3 * sizeof(float);
                         vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
                         vlayouts[buffIndex].attributes[0].offset = 0;
                         vlayouts[buffIndex].attributes[0].location = buffIndex;
@@ -157,7 +158,8 @@ namespace rush
                     else
                     {
                         texcoords0 = reinterpret_cast<const float*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-                        vlayouts[buffIndex].attribteCount = 1;
+                        vlayouts[buffIndex].attributeCount = 1;
+                        vlayouts[buffIndex].stride = 2 * sizeof(float);
                         vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x2;
                         vlayouts[buffIndex].attributes[0].offset = 0;
                         vlayouts[buffIndex].attributes[0].location = buffIndex;
@@ -187,15 +189,17 @@ namespace rush
                     else
                     {
                         const uint16_t* jointIndices = reinterpret_cast<const uint16_t*>(&(jointsBuffer.data[jointsAccessor.byteOffset + jointsBufferView.byteOffset]));
-                        vlayouts[buffIndex].attribteCount = 1;
+                        vlayouts[buffIndex].attributeCount = 1;
+                        vlayouts[buffIndex].stride = 4 * sizeof(uint16_t);
                         vlayouts[buffIndex].attributes[0].format = VertexFormat::Uint16x4;
                         vlayouts[buffIndex].attributes[0].offset = 0;
                         vlayouts[buffIndex].attributes[0].location = buffIndex;
                         ++buffIndex;
 
                         const float* jointWeights = reinterpret_cast<const float*>(&(weightsBuffer.data[weightsAccessor.byteOffset + weightsBufferView.byteOffset]));
-                        vlayouts[buffIndex].attribteCount = 1;
-                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
+                        vlayouts[buffIndex].attributeCount = 1;
+                        vlayouts[buffIndex].stride = 4 * sizeof(float);
+                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x4;
                         vlayouts[buffIndex].attributes[0].offset = 0;
                         vlayouts[buffIndex].attributes[0].location = buffIndex;
                         ++buffIndex;
@@ -232,7 +236,7 @@ namespace rush
                 }
                 if (texcoords0)
                 {
-                    geo->UpdateVertexBuffer(buffIndex, texcoords0, numVertices * sizeof(float) * 3);
+                    geo->UpdateVertexBuffer(buffIndex, texcoords0, numVertices * sizeof(float) * 2);
                 }
                 if (jointIndices && jointWeights)
                 {

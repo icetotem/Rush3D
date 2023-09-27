@@ -82,6 +82,7 @@ project "Rush3D_Deps"
         path.join(DEP_DIR, "ois/includes"),
         path.join(DEP_DIR, "bullet3"),
         path.join(DEP_DIR, "box2d/include"),
+        path.join(DEP_DIR, "toml/include"),
         path.join(DEP_DIR, "glm"),
         path.join(DEP_DIR, "lua"),
         path.join(DEP_DIR, "imgui"),

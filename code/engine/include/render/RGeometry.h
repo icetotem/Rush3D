@@ -18,7 +18,7 @@ namespace rush
     struct VertexLayout
     {
         uint64_t stride;
-        uint32_t attribteCount;
+        uint32_t attributeCount;
         VertexAttr attributes[kMaxVertexBuffers];
     };
     
@@ -37,6 +37,8 @@ namespace rush
         Ref<RIndexBuffer> GetIB() { return m_IndexBuffer; }
 
         uint64_t GetLayoutHash() const { return m_LayoutHash; }
+
+        const VertexLayout* GetLayouts() const { return m_Layouts; }
 
     protected:
         PrimitiveTopology m_Type = PrimitiveTopology::TriangleList;

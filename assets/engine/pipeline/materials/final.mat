@@ -1,4 +1,14 @@
-[material]
+{
+    "type": "post_process",
+    "shading_model": "default_lit",
+    "vs": "assets/engine/shaders/screen_quad.vert",
+    "fs": "assets/engine/shaders/final_pass.frag",
+    "depth_write": false,
+    "depth_test": false,
+    "uniforms": [
+        {"binding": 0, "type": "texture", "target": "SceneColorTexture"},
+        {"binding": 1, "type": "sampler"}
+    ]
+}
 
-vs = "assets/engine/shaders/screen_quad"
-fs = "assets/engine/shaders/final_pass"
+

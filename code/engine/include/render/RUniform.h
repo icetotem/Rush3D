@@ -10,62 +10,30 @@
 namespace rush
 {
 
-    //////////////////////////////////////////////////////////////////////////
-
-    class BindingInitializationHelper 
-    {
-    public:
-        BindingInitializationHelper(uint32_t binding, Ref<RTexture> texture);
-
-        BindingInitializationHelper(uint32_t binding, Ref<RSampler> sampler);
-
-        BindingInitializationHelper(uint32_t binding,
-            Ref<RBuffer> buffer,
-            uint64_t offset = 0,
-            uint64_t size = wgpu::kWholeSize);
-
-        BindingInitializationHelper(const BindingInitializationHelper&) = default;
-        ~BindingInitializationHelper() = default;
-
-        void AddBinding(std::vector<wgpu::BindGroupEntry>& entries) const;
-
-        uint32_t GetBinding() const { return m_Binding; }
-        Ref<RTexture> GetTexture() const { return m_Texture; }
-        Ref<RSampler> GetSampler() const { return m_Sampler; }
-        Ref<RBuffer> GetBuffer() const { return m_Buffer; }
-        uint64_t GetSize() const { return m_Size; }
-        uint64_t GetOffset() const { return m_Offset; }
-
-    private:
-        friend class RBindGroup;
-
-        uint32_t m_Binding;
-        Ref<RTexture> m_Texture;
-        Ref<RSampler> m_Sampler;
-        Ref<RBuffer> m_Buffer;
-        uint64_t m_Offset = 0;
-        uint64_t m_Size = 0;
-    };
-
     /// <summary>
     /// BindGroup
     /// </summary>
     class RBindGroup
     {
     public:
-        RBindGroup(Ref<BindingLayout> layout, std::initializer_list<BindingInitializationHelper> entriesInitializer, const char* lable = nullptr);
+        RBindGroup() = default;
+        ~RBindGroup() = default;
 
-        ~RBindGroup();
+        void AddBinding(uint32_t binding, ShaderStage visibility, Ref<RTexture> texture, TextureSampleType textureSampleType, TextureViewDimension viewDimension);
+        void AddBinding(uint32_t binding, ShaderStage visibility, Ref<RSampler> sampler, SamplerBindingType samplerType);
+        void AddBinding(uint32_t binding, ShaderStage visibility, Ref<RBuffer> buffer);
+        void Create(const char* lable = nullptr);
 
-        Ref<BindingLayout> GetBindLayout() const { return m_BindLayout; }
+        const wgpu::BindGroupLayout& GetBindLayoutHandle() const { return m_BindLayout; }
 
-        const wgpu::BindGroup& GetBindGroup() const { return m_BindGroup; }
+        const wgpu::BindGroup& GetBindGroupHandle() const { return m_BindGroup; }
 
     protected:
-        friend class Renderer;
-
-        Ref<BindingLayout> m_BindLayout;
+        wgpu::BindGroupLayout m_BindLayout;
         wgpu::BindGroup m_BindGroup;
+
+        DArray<wgpu::BindGroupLayoutEntry> bgLayoutEntris;
+        DArray<wgpu::BindGroupEntry> bgEntries;
     };
 
 }

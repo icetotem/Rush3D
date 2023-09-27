@@ -37,7 +37,7 @@ namespace rush
         const auto& shaderAssets = BundleManager::instance().GetFileNamesByExt(".spv");
         for (auto path : shaderAssets)
         {
-            auto shader = CreateRef<RShader>();
+            auto shader = CreateRef<RShader>(path);
             if (!shader->Load(path))
             {
                 LOG_ERROR("Shader load failed {}", path);
@@ -96,10 +96,14 @@ namespace rush
         if (iter == m_Materials.end())
         {
             auto newMat = CreateRef<RMaterial>();
-            newMat->Load(path);
-            m_Materials.insert({ String(path), newMat });
-            if (callback)
-                callback(AssetLoadResult::Success, newMat, param);
+            if (newMat->Load(path))
+            {
+                m_Materials.insert({ String(path), newMat });
+                if (callback)
+                    callback(AssetLoadResult::Success, newMat, param);
+            }
+            else if (callback)
+                callback(AssetLoadResult::ParseFailed, newMat, param);
         }
         else
         {
@@ -114,19 +118,19 @@ namespace rush
         hash_combine(h, path);
         hash_combine(h, defines);
         auto strHash = std::to_string(h);
-        auto spvPath = "assets/spv/" + strHash + Path(path).extension().string() + ".spv";
+        auto spvPath = "assets/spv/" + Path(path).filename().string() + "." + strHash + ".spv";
         auto iter = m_Shaders.find(spvPath);
         if (iter == m_Shaders.end())
         {
-            auto spvName = "../../assets/spv/" + strHash + Path(path).extension().string() + ".spv";
+            auto relPath = "../../" + spvPath;
             char cmd[1024];
-            sprintf(cmd, "glslc \"%s\" -o \"%s\"", (String("../../") + String(path)).c_str(), spvName.c_str());
+            sprintf(cmd, "glslc \"%s\" -o \"%s\"", (String("../../") + String(path)).c_str(), relPath.c_str());
             int result = std::system(cmd);
             if (result == 0)
             {
-                BundleManager::instance().LoadSingleFile(spvName);
-                auto shader = CreateRef<RShader>();
-                if (shader->Load(spvName))
+                BundleManager::instance().LoadSingleFile(relPath);
+                auto shader = CreateRef<RShader>(path);
+                if (shader->Load(spvPath))
                 {
                     m_Shaders.insert({ strHash, shader });
                     if (callback)
@@ -140,6 +144,7 @@ namespace rush
             }
             else
             {
+                LOG_ERROR("Compile Shader {} failed", String(path));
                 if (callback)
                     callback(AssetLoadResult::ParseFailed, nullptr, param);
             }

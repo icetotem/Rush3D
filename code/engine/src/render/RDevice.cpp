@@ -79,7 +79,7 @@ namespace rush
         // create device
         // request features when creating device
         WGPUDeviceDescriptor deviceDesc = {};
-        WGPUFeatureName required_features[2] =
+        WGPUFeatureName required_features[1] =
         {
             // for texture compression
 #if defined(RUSH_PLATFORM_WINDOWS)
@@ -89,7 +89,7 @@ namespace rush
 #elif defined(RUSH_PLATFORM_MAC) || defined(RUSH_PLATFORM_IOS)
             WGPUFeatureName_TextureCompressionASTC,
 #endif
-            WGPUFeatureName_BGRA8UnormStorage,
+            //WGPUFeatureName_BGRA8UnormStorage,
         };
         deviceDesc.requiredFeatureCount = (uint32_t)ARRAY_SIZE(required_features);
         deviceDesc.requiredFeatures = required_features;

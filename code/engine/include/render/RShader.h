@@ -15,6 +15,7 @@ namespace rush
     {
     public:
         RShader() = default;
+        RShader(const StringView& label);
         RShader(ShaderStage type, const char* source, const char* lable = nullptr);
         ~RShader() = default;
 
@@ -24,9 +25,13 @@ namespace rush
 
         wgpu::ShaderModule GetModule() const { return m_Module; }
 
+        uint64_t GetHash() const { return m_Hash; }
+
     protected:
         ShaderStage m_ShaderType = ShaderStage::None;
         wgpu::ShaderModule m_Module;
+        uint64_t m_Hash;
+        String m_Label;
     };
 
 }

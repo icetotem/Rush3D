@@ -1,0 +1,6 @@
+{
+    "type": "post_process",
+    "shading_model": "default_lit",
+    "vs": "assets/engine/shaders/surface.vert",
+    "fs": "assets/engine/shaders/surface.frag"
+}

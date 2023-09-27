@@ -18,6 +18,11 @@ namespace rush
         m_Module = RDevice::instance().GetDevice().CreateShaderModule(&descriptor);
     }
 
+    RShader::RShader(const StringView& label)
+    {
+        m_Label = label;
+    }
+
     bool RShader::Load(const StringView& path)
     {
         if (path.find(".vert.") != path.npos)
@@ -41,11 +46,25 @@ namespace rush
         }
         wgpu::ShaderModuleSPIRVDescriptor glslDesc;
         glslDesc.code = (const uint32_t*)stream->GetData();
-        glslDesc.codeSize = stream->GetSize() / 2;
+        glslDesc.codeSize = stream->GetSize() / sizeof(uint32_t);
         wgpu::ShaderModuleDescriptor descriptor;
         descriptor.nextInChain = &glslDesc;
-        descriptor.label = path.data();
+        descriptor.label = m_Label.c_str();
         m_Module = RDevice::instance().GetDevice().CreateShaderModule(&descriptor);
+
+        // xxx.vert.hashxxxxx.spv
+        auto strHash = Path(path).stem().string();
+        DArray<String> strArray;
+        splitStr(strHash, ".", strArray);
+        RUSH_ASSERT(strArray.size() == 3);
+        m_Hash = std::stoull(strArray[2]);
+
+        if (!m_Module)
+        {   
+            LOG_ERROR("Compile Spv failed {}", String(path));
+            return false;
+        }
+
         return true;
     }
 

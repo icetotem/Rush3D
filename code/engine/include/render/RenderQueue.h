@@ -3,11 +3,11 @@
 
 #include "core/Core.h"
 #include "components/EcsSystem.h"
-#include "RGeometry.h"
-#include "RMaterial.h"
 
 namespace rush
 {
+    class RMaterial;
+    class RGeometry;
 
     struct Renderable
     {
