@@ -6,7 +6,7 @@ layout (location = 2) in vec2 a_texcoord0;
 
 layout (location = 0) out vec2 v_texcoord0;
 
-layout(set = 0, binding = 0) uniform  FrameData
+layout(set = 0, binding = 0) uniform FrameData
 {
     mat4 proj;
     mat4 view;

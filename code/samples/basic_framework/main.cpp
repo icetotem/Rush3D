@@ -35,6 +35,29 @@ int main(int argc, char* argv[])
     auto mainScene = engine.GetSceneManager().GetMainScene();
     auto mainCamera = mainScene->GetMainCamera();
 
+    // directional light
+    {
+        auto dirLight = mainScene->CreateEntity("dirLight");
+        auto light = dirLight.Add<Light>();
+        light->SetType(LightType::LT_Directional);
+        light->SetColor(Vector3(0.15f, 0.15f, 0.15f));
+        light->SetIntensity(1.0f);
+        auto transform = dirLight.Add<Transform>();
+        transform->SetPosition(1, 1, 1);
+        transform->LookAt(0, 0, 0);
+    }
+    // point light #1
+    {
+        auto pointLight = mainScene->CreateEntity("pointLight#1");
+        auto light = pointLight.Add<Light>();
+        light->SetType(LightType::LT_Point);
+        light->SetColor(Vector3(0.15f, 0.15f, 0.15f));
+        light->SetIntensity(1.0f);
+        light->SetRadius(1.0f);
+        auto transform = pointLight.Add<Transform>();
+        transform->SetPosition(0, 0, 0);
+    }
+
     CameraCtrlFirstPerson firstPersonCtrl;
     firstPersonCtrl.Setup(engine.GetMainWindow(), mainCamera);
 

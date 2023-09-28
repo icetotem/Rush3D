@@ -9,7 +9,7 @@
 #include "components/Bounding.h"
 #include "components/CommonComponents.h"
 #include "components/MeshRenderer.h"
-#include "render/RMaterial.h"
+#include "components/Light.h"
 
 namespace rush
 {

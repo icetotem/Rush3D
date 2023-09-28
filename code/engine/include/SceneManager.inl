@@ -69,6 +69,14 @@ namespace rush
             }
         }
 
+        {
+            auto view = EcsSystem::registry.view<Transform, Light, Tag>();
+            for (auto [entity, transform, light, tag] : view.each())
+            {
+                light.UpdateBoundings();
+            }
+        }
+
         Cull<Tag>();
         Render<Tag>(renderer, surface);
     }
@@ -104,6 +112,17 @@ namespace rush
                         flag->camera = Entity::Find(entity1);
                     }
                 }
+
+                auto view3 = EcsSystem::registry.view<Transform, Light, Tag>();
+                for (auto [entity2, transform, light, tag] : view3.each())
+                {
+                    if (frustum.CullAABB(light.GetAABB()) == FrustumCullResult::Inside)
+                    {
+                        Entity ent = Entity::Find(entity2);
+                        auto flag = ent.Add<InFrustumFlag>();
+                        flag->camera = Entity::Find(entity1);
+                    }
+                }
             }
         }
     }
@@ -114,33 +133,42 @@ namespace rush
         HMap<Camera*, Ref<RenderQueue>> renderContent;
 
         // fetch culled results
-        auto view = EcsSystem::registry.view<InFrustumFlag, MeshRenderer>();
-        for (auto [entity, flag, meshRdr] : view.each())
         {
-            Entity ent = Entity::Find(entity);
-            auto cam = flag.camera.Get<Camera>();
-            cam->Update(renderer);
-            auto iter = renderContent.find(cam);
-            Ref<RenderQueue> renderQueue;
-            if (iter == renderContent.end())
+            auto view = EcsSystem::registry.view<InFrustumFlag, MeshRenderer>();
+            for (auto [entity, flag, meshRdr] : view.each())
             {
-                renderQueue = CreateRef<RenderQueue>(flag.camera);
-                renderContent.insert({ cam, renderQueue });
+                Entity ent = Entity::Find(entity);
+                auto cam = flag.camera.Get<Camera>();
+                cam->Update(renderer);
+                auto iter = renderContent.find(cam);
+                Ref<RenderQueue> renderQueue;
+                if (iter == renderContent.end())
+                {
+                    renderQueue = CreateRef<RenderQueue>(flag.camera);
+                    renderContent.insert({ cam, renderQueue });
+                }
+                else
+                {
+                    renderQueue = iter->second;
+                }
+
+                RUSH_ASSERT(renderQueue != nullptr);
+
+                meshRdr.SubmitRenderQueue(renderQueue);
             }
-            else
+        }
+        // lights
+        {
+            auto view = EcsSystem::registry.view<InFrustumFlag, Light>();
+            for (auto [entity, flag, light] : view.each())
             {
-                renderQueue = iter->second;
+                Entity ent = Entity::Find(entity);
+                auto cam = flag.camera.Get<Camera>();
+                auto iter = renderContent.find(cam);
+                RUSH_ASSERT(iter != renderContent.end());
+                Ref<RenderQueue> renderQueue = iter->second;
+                renderQueue->AddLight(&light);
             }
-
-            RUSH_ASSERT(renderQueue != nullptr);
-
-//             // update global uniforms
-//             auto globalUniforms = RMaterialInst::GetGlobalUniformBuffer();
-// 
-//             Matrix4 buff[] = { cam->GetViewMatrix(), cam->GetProjMatrix() };
-//             globalUniforms->UpdateData(buff, sizeof(Matrix4) * 2);
-
-            meshRdr.SubmitRenderQueue(renderQueue);
         }
 
         // render

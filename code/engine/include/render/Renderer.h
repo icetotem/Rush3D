@@ -22,11 +22,28 @@ namespace rush
         Matrix4 viewProj;
     };
 
+    struct DirectLightData
+    {
+        Vector3 direction;
+        float pointLightCount;
+        Vector4 color;
+    };
+
+    static constexpr uint32_t kMaxPointLights = 16u;
+
+    struct PointLightData
+    {
+        Vector3 position;
+        float radius;
+        Vector3 direction;
+        float angle;
+        Vector4 color;
+    };
+
     struct FrameBufferAttachment
     {
         String texture;
         TextureFormat format;
-        //Vector2 scale = { 1.0f, 1.0f };
         Vector4 clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
     };
 
@@ -37,7 +54,6 @@ namespace rush
         std::vector<FrameBufferAttachment> colorAttachment;
         std::optional<String> depthStencilTexture;
         std::optional<TextureFormat> depthStencilFormat;
-        //std::optional<Vector2> scale;
         std::optional<float> clearDepth;
         std::optional<float> clearStencil;
     };
@@ -69,6 +85,7 @@ namespace rush
         Vector2 GetFGTextureScale(const StringView& name);
 
         const Ref<RBindGroup> GetFrameDataGroup() const { return m_FrameDataGroup; }
+        const Ref<RBindGroup> GetLightDataGroup() const { return m_LightingDataGroup; }
 
     protected:
         friend class Engine;
@@ -100,10 +117,17 @@ namespace rush
         HMap<String, FrameTexture> m_RenderTextures;
         Ref<RMaterial> m_FinalPassMat;
 
-        // uniforms
+        // FrameData
         Ref<RBuffer> m_FrameDataBuffer;
         FrameData m_FrameData;
         Ref<RBindGroup> m_FrameDataGroup;
+
+        // Lighting Data
+        Ref<RBuffer> m_DirectionalLightBuffer;
+        Ref<RBuffer> m_PointLightsBuffer;
+        DirectLightData m_DirectionalLightData;
+        DArray<PointLightData> m_PointLightsData;
+        Ref<RBindGroup> m_LightingDataGroup;
     };
 
 }

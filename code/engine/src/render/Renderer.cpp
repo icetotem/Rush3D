@@ -6,11 +6,13 @@
 #include "render/RShader.h"
 #include "render/RDevice.h"
 #include "components/Camera.h"
+#include "components/Light.h"
 #include "render/RMaterial.h"
 #include "render/RGeometry.h"
 #include "render/RTexture.h"
 #include "render/RBindGroup.h"
 #include "AssetManager.h"
+#include "components/Transform.h"
 
 namespace rush
 {
@@ -35,6 +37,13 @@ namespace rush
         m_FrameDataGroup = CreateRef<RBindGroup>();
         m_FrameDataGroup->AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer);
         m_FrameDataGroup->Create("FrameData_group");
+
+        m_DirectionalLightBuffer = CreateRef<RUniformBuffer>(sizeof(m_DirectionalLightData), &m_DirectionalLightData, "DirectionalLightData_buffer");
+        m_PointLightsBuffer = CreateRef<RUniformBuffer>(sizeof(PointLightData) * kMaxPointLights, &m_PointLightsData, "PointLightData_buffer");
+        m_LightingDataGroup = CreateRef<RBindGroup>();
+        m_LightingDataGroup->AddBinding(0, ShaderStage::Fragment, m_DirectionalLightBuffer);
+        m_LightingDataGroup->AddBinding(1, ShaderStage::Fragment, m_PointLightsBuffer);
+        m_LightingDataGroup->Create("LightingData_group");
     }
 
     void Renderer::CreateFullScreenQuad()
@@ -174,13 +183,45 @@ namespace rush
             pass.SetBindGroup(0, m_FrameDataGroup->GetBindGroupHandle());
         }
 
+        // set light data
+        {
+            m_PointLightsData.clear();
+            for (auto light : renderQueue->GetLights())
+            {
+                if (light->GetType() == LightType::LT_Directional)
+                {
+                    m_DirectionalLightData.color = Vector4(light->GetColor(), light->GetIntensity());
+                    m_DirectionalLightData.direction = light->Get<Transform>()->GetForward();
+                }
+                else if (light->GetType() == LightType::LT_Point || light->GetType() == LightType::LT_Spot)
+                {
+                    if (m_PointLightsData.size() < kMaxPointLights)
+                    {
+                        PointLightData& data = m_PointLightsData.emplace_back();
+                        data.color = Vector4(light->GetColor(), light->GetIntensity());
+                        data.position = light->Get<Transform>()->GetPosition();
+                        data.radius = light->GetRaidus();
+                        data.direction = light->Get<Transform>()->GetForward();
+                        data.angle = light->GetSpotAngle();
+                    }
+                }
+            }
+            m_DirectionalLightData.pointLightCount = (float)m_PointLightsData.size();
+            m_DirectionalLightBuffer->UpdateData(&m_DirectionalLightData, sizeof(m_DirectionalLightData));
+            if (m_DirectionalLightData.pointLightCount > 0)
+            {
+                m_PointLightsBuffer->UpdateData(&m_PointLightsData[0], sizeof(PointLightData) * m_DirectionalLightData.pointLightCount);
+            }
+            pass.SetBindGroup(1, m_LightingDataGroup->GetBindGroupHandle());
+        }
+
         for (const auto& batch : renderQueue->GetBatches())
         {
             auto geo = batch.renderable.geometry;
             auto mat = batch.renderable.material;
             pass.SetPipeline(RMaterial::GetPipeline(this, geo, mat, outputBuffers));
             if (mat->GetBindGroup() && mat->GetBindGroup()->GetBindGroupHandle())
-                pass.SetBindGroup(1, mat->GetBindGroup()->GetBindGroupHandle());
+                pass.SetBindGroup(2, mat->GetBindGroup()->GetBindGroupHandle());
             for (uint32_t vb = 0; vb < geo->GetVBCount(); ++vb)
             {
                 pass.SetVertexBuffer(vb, geo->GetVB(vb)->GetBufferHandle());

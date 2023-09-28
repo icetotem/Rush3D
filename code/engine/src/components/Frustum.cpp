@@ -92,10 +92,10 @@ namespace rush
 
         SetPlane(FrustumSide::FS_Near, Plane(front, position + camera->GetNearClip() * front)); // near
         SetPlane(FrustumSide::FS_Far, Plane(-front, position + frontMultFar)); // far
-        SetPlane(FrustumSide::FS_Right, Plane(cross(frontMultFar + left * halfHSide, up), position)); // right
-        SetPlane(FrustumSide::FS_Left, Plane(cross(up, frontMultFar - left * halfHSide), position)); // left
-        SetPlane(FrustumSide::FS_Bottom, Plane(cross(frontMultFar - up * halfVSide, left), position)); // bottom
-        SetPlane(FrustumSide::FS_Top, Plane(cross(left, frontMultFar + up * halfVSide), position)); // top
+        SetPlane(FrustumSide::FS_Right, Plane(cross(frontMultFar - left * halfHSide, up), position)); // right
+        SetPlane(FrustumSide::FS_Left, Plane(cross(up, frontMultFar + left * halfHSide), position)); // left
+        SetPlane(FrustumSide::FS_Bottom, Plane(cross(left, frontMultFar - up * halfVSide), position)); // bottom
+        SetPlane(FrustumSide::FS_Top, Plane(cross(frontMultFar + up * halfVSide, left), position)); // top
     }
 
 }

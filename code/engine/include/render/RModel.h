@@ -31,6 +31,7 @@ namespace rush
 
     private:
         List<Mesh> m_Meshes;
+        AABB m_AABB;
     };
 
 }

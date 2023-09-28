@@ -16,6 +16,11 @@ namespace rush
         renderable.material = material;
     }
 
+    void RenderQueue::AddLight(Light* light)
+    {
+        m_Lights.push_back(light);
+    }
+
     void RenderQueue::MergeBatch()
     {
         for (const auto& renderable : m_Renderables)
