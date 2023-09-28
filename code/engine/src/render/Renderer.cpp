@@ -6,10 +6,10 @@
 #include "render/RShader.h"
 #include "render/RDevice.h"
 #include "components/Camera.h"
-#include "render/RPipeline.h"
 #include "render/RMaterial.h"
 #include "render/RGeometry.h"
 #include "render/RTexture.h"
+#include "render/RBindGroup.h"
 #include "AssetManager.h"
 
 namespace rush
@@ -31,18 +31,19 @@ namespace rush
         RegisterFGTexture("SceneColorTexture", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
         RegisterFGTexture("SceneDepthTexture", wgpu::TextureFormat::Depth24PlusStencil8, Vector2(1.0f, 1.0f));
 
-        m_FrameDataBuffer = CreateRef<RUniformBuffer>(sizeof(m_FrameData), nullptr, "FrameData_buffer");
-        m_FrameDataGroup.AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer);
-        m_FrameDataGroup.Create("FrameData_group");
+        m_FrameDataBuffer = CreateRef<RUniformBuffer>(sizeof(m_FrameData), &m_FrameData, "FrameData_buffer");
+        m_FrameDataGroup = CreateRef<RBindGroup>();
+        m_FrameDataGroup->AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer);
+        m_FrameDataGroup->Create("FrameData_group");
     }
 
     void Renderer::CreateFullScreenQuad()
     {
         float const verts[] =
         {
-            -1.f, -1.f,   // TL
-             3.f, -1.f,   // TR
             -1.f,  3.f,   // BL
+             3.f, -1.f,   // TR
+            -1.f, -1.f,   // TL
         };
 
         VertexLayout vlayouts[kMaxVertexBuffers];
@@ -164,12 +165,13 @@ namespace rush
         pass.SetViewport(viewport.x * m_Width, viewport.y * m_Height, (viewport.z - viewport.x) * m_Width, (viewport.w - viewport.y) * m_Height, 0.0f, 1.0f);
 
         // set frame data
-        if (m_FrameDataGroup.GetBindGroupHandle())
+        if (m_FrameDataGroup->GetBindGroupHandle())
         {
             m_FrameData.proj = camera->GetProjMatrix();
             m_FrameData.view = camera->GetViewMatrix();
+            m_FrameData.viewProj = m_FrameData.proj * m_FrameData.view;
             m_FrameDataBuffer->UpdateData(&m_FrameData, sizeof(m_FrameData));
-            pass.SetBindGroup(0, m_FrameDataGroup.GetBindGroupHandle());
+            pass.SetBindGroup(0, m_FrameDataGroup->GetBindGroupHandle());
         }
 
         for (const auto& batch : renderQueue->GetBatches())

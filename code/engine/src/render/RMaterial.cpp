@@ -4,11 +4,10 @@
 #include "core/Common.h"
 #include "render/RGeometry.h"
 #include "render/RShader.h"
-#include "render/RPipeline.h"
-#include "render/RUniform.h"
 #include "BundleManager.h"
 #include "render/RShader.h"
 #include "render/RDevice.h"
+#include "render/RBindGroup.h"
 #include "Core/json.h"
 
 namespace rush
@@ -22,6 +21,8 @@ namespace rush
         String fs;
         bool depth_write = true;
         bool depth_test = true;
+        String front_face = "cw"; // cw
+        String cull_mode = "back"; // "front" "none"
 
         struct Binding
         {
@@ -29,11 +30,15 @@ namespace rush
             String type;
             String target;
             String path;
-            RUSH_DEFINE_PROPERTIES_NON_INTRUSIVE_WITH_DEFAULT(Binding, binding, type, target, path);
+            String address = "repeat";
+            String mag = "nearest";
+            String min = "nearest";
+            String mip = "nearest";
+            RUSH_DEFINE_PROPERTIES_NON_INTRUSIVE_WITH_DEFAULT(Binding, binding, type, target, path, address, mag, min, mip);
         };
         DArray<Binding> uniforms;
 
-        RUSH_DEFINE_PROPERTIES_NON_INTRUSIVE_WITH_DEFAULT(MaterialParse, type, shading_model, vs, fs, depth_write, depth_test, uniforms);
+        RUSH_DEFINE_PROPERTIES_NON_INTRUSIVE_WITH_DEFAULT(MaterialParse, type, shading_model, vs, fs, depth_write, depth_test, front_face, cull_mode, uniforms);
     };
 
 
@@ -74,6 +79,28 @@ namespace rush
         depthTest = matData.depth_test;
         depthWrite = matData.depth_write;
 
+        if (matData.front_face == "cw")
+        {
+            frontFace = FrontFace::CW;
+        }
+        else if (matData.front_face == "ccw")
+        {
+            frontFace = FrontFace::CCW;
+        }
+
+        if (matData.cull_mode == "none")
+        {
+            cullMode = CullMode::None;
+        }
+        else if (matData.cull_mode == "front")
+        {
+            cullMode = CullMode::Front;
+        }
+        else if (cullMode == CullMode::Back)
+        {
+            cullMode = CullMode::Back;
+        }
+
         std::string defines;
 
         RUSH_ASSERT(matData.vs != "" && matData.fs != "");
@@ -113,6 +140,10 @@ namespace rush
                     auto& info = m_BindInfos.emplace_back();
                     info.binding = uniform.binding;
                     info.type = BindingType::Sampler;
+                    info.address = uniform.address;
+                    info.mag = uniform.mag;
+                    info.min = uniform.min;
+                    info.mip = uniform.mip;
                 }
                 else if (uniform.type == "uniform")
                 {
@@ -165,7 +196,7 @@ namespace rush
 
             if (material->GetType() == MaterialType::Surface)
             {
-                bindingGroupLayouts.push_back(renderer->GetFrameDataGroup().GetBindLayoutHandle());
+                bindingGroupLayouts.push_back(renderer->GetFrameDataGroup()->GetBindLayoutHandle());
             }
 
             if (material->m_BindInfos.size() > 0)
@@ -191,8 +222,57 @@ namespace rush
                     }
                     else if (info.type == BindingType::Sampler)
                     {
-                        static auto samp = CreateRef<RSampler>();
-                        material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, samp, wgpu::SamplerBindingType::Filtering);
+                        AddressMode address;
+                        if (info.address == "repeat")
+                        {
+                            address = AddressMode::Repeat;
+                        }
+                        else if (info.address == "mirror")
+                        {
+                            address = AddressMode::MirrorRepeat;
+                        }
+                        else if (info.address == "edge")
+                        {
+                            address = AddressMode::ClampToEdge;
+                        }
+
+                        FilterMode mag, min;
+                        MipmapFilterMode mip;
+                        if (info.mag == "linear")
+                        {
+                            mag = FilterMode::Linear;
+                        }
+                        else if (info.mag == "nearest")
+                        {
+                            mag = FilterMode::Nearest;
+                        }
+                        if (info.min == "linear")
+                        {
+                            min = FilterMode::Linear;
+                        }
+                        else if (info.min == "nearest")
+                        {
+                            min = FilterMode::Nearest;
+                        }
+                        if (info.mip == "linear")
+                        {
+                            mip = MipmapFilterMode::Linear;
+                        }
+                        else if (info.mip == "nearest")
+                        {
+                            mip = MipmapFilterMode::Nearest;
+                        }
+
+                        wgpu::SamplerDescriptor desc = {};
+                        desc.addressModeU = address;
+                        desc.addressModeV = address;
+                        desc.addressModeW = address;
+                        desc.magFilter = mag;
+                        desc.minFilter = min;
+                        desc.mipmapFilter = mip;
+                        desc.maxAnisotropy = 1;
+                        auto sampler = RDevice::instance().GetDevice().CreateSampler(&desc);
+                        material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, sampler, wgpu::SamplerBindingType::Filtering);
                     }
                 }
 
@@ -272,7 +352,7 @@ namespace rush
             {
                 wgpu::PrimitiveState* primitive = &descriptor.primitive;
                 primitive->topology = geometry->GetPrimitiveType();
-                primitive->frontFace = FrontFace::CCW;
+                primitive->frontFace = material->frontFace;
                 primitive->cullMode = material->cullMode;
                 primitive->stripIndexFormat = wgpu::IndexFormat::Undefined;
             }

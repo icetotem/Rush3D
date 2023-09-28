@@ -7,7 +7,7 @@
     "depth_test": false,
     "uniforms": [
         {"binding": 0, "type": "texture", "target": "SceneColorTexture"},
-        {"binding": 1, "type": "sampler"}
+        {"binding": 1, "type": "sampler", "address": "repeat", "mag": "nearest", "min": "nearest", "mip": "nearest"}
     ]
 }
 

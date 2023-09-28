@@ -49,6 +49,10 @@ namespace rush
         BindingType type;
         std::optional<String> target;
         std::optional<String> path;
+        std::optional<String> address;
+        std::optional<String> mag;
+        std::optional<String> min;
+        std::optional<String> mip;
     };
 
     class RMaterial : public Asset
@@ -83,6 +87,7 @@ namespace rush
         MaterialType m_Type = MaterialType::Surface;
         ShadingModel m_ShadingModel = ShadingModel::DefaultLit;
         BlendMode blendMode = BlendMode::Opaque;
+        FrontFace frontFace = FrontFace::CW;
         CullMode cullMode = CullMode::Back;
         ColorWriteMask writeMask = ColorWriteMask::All;
         bool depthTest = true;

@@ -18,8 +18,7 @@ namespace rush
         {
             RUSH_ASSERT(type == PrimitiveTopology::LineList || type == PrimitiveTopology::TriangleList);
             auto idxFormat = indexCount >= (uint64_t)0xffffffff ? IndexFormat::Uint32 : IndexFormat::Uint16;
-            auto idxStride = idxFormat == IndexFormat::Uint16 ? sizeof(uint16_t) : sizeof(uint32_t);
-            m_IndexBuffer = CreateRef<RIndexBuffer>(indexCount * idxStride, idxFormat);
+            m_IndexBuffer = CreateRef<RIndexBuffer>(indexCount, idxFormat);
         }
         else
         {

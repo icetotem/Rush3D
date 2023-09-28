@@ -245,7 +245,7 @@ namespace rush
                 }
                 if (indices)
                 {
-                    geo->UpdateIndexBuffer(indices, numIndices, 0);
+                    geo->UpdateIndexBuffer(indices, numIndices * sizeof(uint16_t), 0);
                 }
 
                 inner_primitive.geometry = geo;

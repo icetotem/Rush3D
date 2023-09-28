@@ -8,15 +8,6 @@
 namespace rush
 {
 
-    RSampler::RSampler(const char* lable)
-    {
-        wgpu::SamplerDescriptor desc = {};
-        desc.label = lable;
-        m_Sampler = RDevice::instance().GetDevice().CreateSampler(&desc);
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-
     static wgpu::Buffer CreateBufferFromData(const wgpu::Device& device,
         const void* data,
         uint64_t size,

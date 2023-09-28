@@ -30,6 +30,7 @@ namespace rush
     using IndexFormat = wgpu::IndexFormat;
     using AddressMode = wgpu::AddressMode;
     using FilterMode = wgpu::FilterMode;
+    using MipmapFilterMode = wgpu::MipmapFilterMode;
     using TextureUsage = wgpu::TextureUsage;
 
     enum class BlendMode
@@ -39,7 +40,6 @@ namespace rush
         AlphaTest,
     };
 
-    static constexpr uint32_t kFrameBufferGroup = 0;
     static constexpr StringView kBackBufferName = "BackBuffer";
 }
 

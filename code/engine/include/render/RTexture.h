@@ -9,22 +9,6 @@
 namespace rush
 {
 
-    class RSampler
-    {
-    public:
-        friend class Renderer;
-        friend class RPass;
-
-        RSampler(const char* lable = nullptr);
-
-        const wgpu::Sampler GetSampler() const { return m_Sampler; }
-
-    private:
-        wgpu::Sampler m_Sampler;
-    };
-
-    //////////////////////////////////////////////////////////////////////////
-
     class RTexture : public Asset
     {
     public:

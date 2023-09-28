@@ -1,24 +1,25 @@
 #ifndef Renderer_h__
 #define Renderer_h__
 
+#include <optional>
 #include "core/Core.h"
 #include "render/RDefines.h"
 #include "render/RenderQueue.h"
 #include "Window.h"
-#include <optional>
 #include "RSurface.h"
-#include "RShader.h"
-#include "RUniform.h"
 
 namespace rush
 {
 
     class RTexture;
+    class RBindGroup;
+    class RBuffer;
 
     struct FrameData
     {
-        Matrix4 view;
         Matrix4 proj;
+        Matrix4 view;
+        Matrix4 viewProj;
     };
 
     struct FrameBufferAttachment
@@ -67,7 +68,7 @@ namespace rush
         TextureFormat GetFGTextureFormat(const StringView& name);
         Vector2 GetFGTextureScale(const StringView& name);
 
-        const RBindGroup& GetFrameDataGroup() const { return m_FrameDataGroup; }
+        const Ref<RBindGroup> GetFrameDataGroup() const { return m_FrameDataGroup; }
 
     protected:
         friend class Engine;
@@ -102,7 +103,7 @@ namespace rush
         // uniforms
         Ref<RBuffer> m_FrameDataBuffer;
         FrameData m_FrameData;
-        RBindGroup m_FrameDataGroup;
+        Ref<RBindGroup> m_FrameDataGroup;
     };
 
 }

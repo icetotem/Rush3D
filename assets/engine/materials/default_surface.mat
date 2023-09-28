@@ -2,5 +2,9 @@
     "type": "surface",
     "shading_model": "default_lit",
     "vs": "assets/engine/shaders/surface.vert",
-    "fs": "assets/engine/shaders/surface.frag"
+    "fs": "assets/engine/shaders/surface.frag",
+    "uniforms": [
+        {"binding": 0, "type": "texture", "path": "assets/Bricks051_2K_Color.jpg"},
+        {"binding": 1, "type": "sampler", "address": "repeat", "mag": "linear", "min": "linear", "mip": "linear"}
+    ]
 }
