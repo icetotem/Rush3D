@@ -93,7 +93,7 @@ namespace rush
         auto key = String(filePath);
         Ref<SingleFile> file = CreateRef<SingleFile>();
         std::error_code error;
-        file->mmap = mio::make_mmap_source(String(filePath), 0, 0, error);
+        file->mmap = mio::make_mmap_source(path.relative_path().string(), 0, 0, error);
         if (!error)
         {
             file->stream = CreateRef<MemStream>((const uint8_t*)file->mmap.data(), file->mmap.size());

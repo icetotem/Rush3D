@@ -130,9 +130,9 @@ namespace rush
             {
                 BundleManager::instance().LoadSingleFile(relPath);
                 auto shader = CreateRef<RShader>(path);
-                if (shader->Load(spvPath))
+                if (shader->Load(relPath))
                 {
-                    m_Shaders.insert({ strHash, shader });
+                    m_Shaders.insert({ spvPath, shader });
                     if (callback)
                         callback(AssetLoadResult::Success, shader, param);
                 }
