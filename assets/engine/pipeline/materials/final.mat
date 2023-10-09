@@ -1,14 +1,15 @@
+material:
 {
-    "type": "post_process",
-    "shading_model": "default_lit",
-    "vs": "assets/engine/shaders/screen_quad.vert",
-    "fs": "assets/engine/shaders/final_pass.frag",
-    "depth_write": false,
-    "depth_test": false,
-    "uniforms": [
-        {"binding": 0, "type": "texture", "target": "GBuffer1"},
-        {"binding": 1, "type": "sampler", "address": "repeat", "mag": "nearest", "min": "nearest", "mip": "nearest"}
-    ]
+    type = "post_process";
+    shading_model="default_lit";
+    vs = "assets/engine/shaders/screen_quad.vert";
+    fs = "assets/engine/shaders/final_pass.frag";
+    depth_write = false;
+    depth_test = false;
+    uniforms = (
+        { binding = 0; type = "texture"; target = "GBuffer1";},
+        { binding = 1; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; }
+    );
 }
 
 

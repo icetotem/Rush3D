@@ -49,10 +49,10 @@ namespace rush
         BindingType type;
         std::optional<String> target;
         std::optional<String> path;
-        std::optional<String> address;
-        std::optional<String> mag;
-        std::optional<String> min;
-        std::optional<String> mip;
+        std::optional<AddressMode> address;
+        std::optional<FilterMode> mag;
+        std::optional<FilterMode> min;
+        std::optional<MipmapFilterMode> mip;
     };
 
     class RMaterial : public Asset

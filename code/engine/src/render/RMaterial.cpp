@@ -8,55 +8,18 @@
 #include "render/RShader.h"
 #include "render/RDevice.h"
 #include "render/RBindGroup.h"
-#include "Core/json.h"
+#include <libconfig/libconfig.h>
 
 namespace rush
 {
-
-    struct MaterialParse
-    {
-        String type;
-        String shading_model;
-        String blend_mode;
-        String vs;
-        String fs;
-        bool depth_write = true;
-        bool depth_test = true;
-        String front_face = "cw"; // cw
-        String cull_mode = "back"; // "front" "none"
-        bool has_color = false;
-        bool has_normal = true;
-        bool has_tangent = false;
-        bool has_texcoord0 = true;
-        bool has_texcoord1 = false;
-        bool is_skined = false;
-        String code;
-
-        struct Binding
-        {
-            uint32_t binding;
-            String type;
-            String target;
-            String path;
-            String address = "repeat";
-            String mag = "nearest";
-            String min = "nearest";
-            String mip = "nearest";
-            RUSH_DEFINE_PROPERTIES_NON_INTRUSIVE_WITH_DEFAULT(Binding, binding, type, target, path, address, mag, min, mip);
-        };
-        DArray<Binding> uniforms;
-
-        RUSH_DEFINE_PROPERTIES_NON_INTRUSIVE_WITH_DEFAULT(MaterialParse, type, shading_model, blend_mode, vs, fs,
-                            depth_write, depth_test, front_face, cull_mode, uniforms,
-                            has_color, has_normal, has_texcoord0, has_texcoord1, is_skined, code);
-    };
-
 
     Map<uint64_t, wgpu::RenderPipeline> RMaterial::s_PipelineCache;
 
     bool RMaterial::Load(const StringView& path)
     {
         m_Path = path;
+        m_Hash = 0;
+        List<String> defines;
 
         auto stream = BundleManager::instance().Get(path);
         if (stream->IsEmpty())
@@ -65,154 +28,264 @@ namespace rush
             return false;
         }
 
-        MaterialParse matData = Json::parse((const char*)stream->GetData(), nullptr, false);
+        //MaterialParse matData = Json::parse((const char*)stream->GetData(), nullptr, false);
+        config_t cfg;
+        config_init(&cfg);
 
-        List<String> defines;
-
-        if (matData.type == "surface")
+        if (CONFIG_TRUE != config_read_string(&cfg, (const char*)stream->GetData()))
         {
-            m_Type = MaterialType::Surface;
-        }
-        else if (matData.type == "post_process")
-        {
-            m_Type = MaterialType::PostProcess;
+            LOG_ERROR("material syntex error {}", path.data());
+            return false;
         }
 
-        if (matData.shading_model == "default_lit")
+        const char* tempStr = nullptr;
+        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.type", &tempStr))
         {
-            m_ShadingModel = ShadingModel::DefaultLit;
-            defines.push_back("SHADING_MODEL=SHADING_MODEL_DEFAULT_LIT");
-        }
-        else if (matData.shading_model == "unlit")
-        {
-            m_ShadingModel = ShadingModel::Unlit;
-            defines.push_back("SHADING_MODEL=SHADING_MODEL_UNLIT");
-        }
-
-        if (matData.blend_mode == "opaque")
-        {
-            blendMode = BlendMode::Opaque;
-            defines.push_back("BLEND_MODE=BLEND_MODE_OPAQUE");
-        }
-        else if (matData.blend_mode == "transparent")
-        {
-            blendMode = BlendMode::Transparent;
-            defines.push_back("BLEND_MODE=BLEND_MODE_TRANSPARENT");
-        }
-        else if (matData.blend_mode == "masked")
-        {
-            blendMode = BlendMode::Masked;
-            defines.push_back("BLEND_MODE=BLEND_MODE_MASKED");
+            if (String(tempStr) == "surface")
+            {
+                m_Type = MaterialType::Surface;
+            }
+            else if (String(tempStr) == "post_process")
+            {
+                m_Type = MaterialType::PostProcess;
+            }
         }
 
-        // vertex flags
-        if (matData.has_color)
+        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.shading_model", &tempStr))
+        {
+            if (String(tempStr) == "default_lit")
+            {
+                m_ShadingModel = ShadingModel::DefaultLit;
+                defines.push_back("SHADING_MODEL=SHADING_MODEL_DEFAULT_LIT");
+            }
+            else if (String(tempStr) == "unlit")
+            {
+                m_ShadingModel = ShadingModel::Unlit;
+                defines.push_back("SHADING_MODEL=SHADING_MODEL_UNLIT");
+            }
+        }
+
+        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.blend_mode", &tempStr))
+        {
+            if (String(tempStr) == "opaque")
+            {
+                blendMode = BlendMode::Opaque;
+                defines.push_back("BLEND_MODE=BLEND_MODE_OPAQUE");
+            }
+            else if (String(tempStr) == "transparent")
+            {
+                blendMode = BlendMode::Transparent;
+                defines.push_back("BLEND_MODE=BLEND_MODE_TRANSPARENT");
+            }
+            else if (String(tempStr) == "masked")
+            {
+                blendMode = BlendMode::Masked;
+                defines.push_back("BLEND_MODE=BLEND_MODE_MASKED");
+            }
+        }
+
+        int tempBool = 0;
+        if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.depth_test", &tempBool))
+        {
+            depthTest = (bool)tempBool;
+        }
+
+        if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.depth_write", &tempBool))
+        {
+            depthWrite = (bool)tempBool;
+        }
+
+        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.front_face", &tempStr))
+        {
+            if (String(tempStr) == "cw")
+            {
+                frontFace = FrontFace::CW;
+            }
+            else if (String(tempStr) == "ccw")
+            {
+                frontFace = FrontFace::CCW;
+            }
+        }
+
+        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.cull_mode", &tempStr))
+        {
+            if (String(tempStr) == "none")
+            {
+                cullMode = CullMode::None;
+            }
+            else if (String(tempStr) == "front")
+            {
+                cullMode = CullMode::Front;
+            }
+            else if (String(tempStr) == "back")
+            {
+                cullMode = CullMode::Back;
+            }
+        }
+
+        if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_color", &tempBool))
         {
             defines.push_back("HAS_COLOR");
         }
-        else if (matData.has_normal)
+        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_normal", &tempBool))
         {
             defines.push_back("HAS_NORMAL");
         }
-        else if (matData.has_tangent)
+        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_tangent", &tempBool))
         {
             defines.push_back("HAS_TANGENTS");
         }
-        else if (matData.has_texcoord0)
+        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_texcoord0", &tempBool))
         {
             defines.push_back("HAS_TEXCOORD0");
         }
-        else if (matData.has_texcoord0)
+        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_texcoord1", &tempBool))
         {
             defines.push_back("HAS_TEXCOORD1");
         }
-        else if (matData.is_skined)
+        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.is_skined", &tempBool))
         {
             defines.push_back("IS_SKINNED");
         }
 
-        depthTest = matData.depth_test;
-        depthWrite = matData.depth_write;
-
-        if (matData.front_face == "cw")
+        String tempCode;
+        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.code", &tempStr))
         {
-            frontFace = FrontFace::CW;
-        }
-        else if (matData.front_face == "ccw")
-        {
-            frontFace = FrontFace::CCW;
+            tempCode = tempStr;
         }
 
-        if (matData.cull_mode == "none")
+        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.vs", &tempStr))
         {
-            cullMode = CullMode::None;
-        }
-        else if (matData.cull_mode == "front")
-        {
-            cullMode = CullMode::Front;
-        }
-        else if (cullMode == CullMode::Back)
-        {
-            cullMode = CullMode::Back;
+            AssetsManager::instance().LoadOrCompileShader(tempStr, defines, "", [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+                m_VertexShader = shader;
+            }, nullptr);
         }
 
-        RUSH_ASSERT(matData.vs != "" && matData.fs != "");
-        AssetsManager::instance().LoadOrCompileShader(matData.vs, defines, "", [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
-            m_VertexShader = shader;
-        }, nullptr);
-
-        AssetsManager::instance().LoadOrCompileShader(matData.fs, defines, matData.code, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
-            m_FragmentShader = shader;
-        }, nullptr);
+        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.fs", &tempStr))
+        {
+            AssetsManager::instance().LoadOrCompileShader(tempStr, defines, tempCode, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+                m_FragmentShader = shader;
+            }, nullptr);
+        }
 
         if (m_VertexShader == nullptr || m_FragmentShader == nullptr)
         {
             return false;
         }
 
-        if (matData.uniforms.size() > 0)
+        auto uniforms = config_lookup(&cfg, "material.uniforms");
+        if (uniforms)
         {
-            for (auto& uniform : matData.uniforms)
+            int count = config_setting_length(uniforms);
+            for (int i = 0; i < count; ++i)
             {
-                if (uniform.type == "texture")
+                auto uniform = config_setting_get_elem(uniforms, i);
+                if (uniform)
                 {
                     auto& info = m_BindInfos.emplace_back();
-                    info.binding = uniform.binding;
-                    info.type = BindingType::Texture;
-                    if (uniform.target != "")
+                    int binding = 0;
+                    if (CONFIG_TRUE != config_setting_lookup_int(uniform, "binding", &binding))
                     {
-                        info.target = uniform.target;
+                        LOG_ERROR("Material uniform must define a binding");
+                        return false;
                     }
-                    else if (uniform.path != "")
+                    info.binding = binding;
+                    const char* type = nullptr;
+                    if (CONFIG_TRUE != config_setting_lookup_string(uniform, "type", &type))
                     {
-                        info.path = uniform.path;
+                        LOG_ERROR("Material uniform must define a type");
+                        return false;
                     }
-                }
-                else if (uniform.type == "sampler")
-                {
-                    auto& info = m_BindInfos.emplace_back();
-                    info.binding = uniform.binding;
-                    info.type = BindingType::Sampler;
-                    info.address = uniform.address;
-                    info.mag = uniform.mag;
-                    info.min = uniform.min;
-                    info.mip = uniform.mip;
-                }
-                else if (uniform.type == "uniform")
-                {
-                    auto& info = m_BindInfos.emplace_back();
-                    info.binding = uniform.binding;
-                    info.type = BindingType::Uniform;
-                }
-                else if (uniform.type == "storage")
-                {
-                    auto& info = m_BindInfos.emplace_back();
-                    info.binding = uniform.binding;
-                    info.type = BindingType::Storage;
+
+                    if (String(type) == "texture")
+                    {
+                        info.type = BindingType::Texture;
+                        const char* target = nullptr;
+                        const char* path = nullptr;
+                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "target", &target))
+                        {
+                            info.target = target;
+                        }
+                        else if (CONFIG_TRUE == config_setting_lookup_string(uniform, "path", &path))
+                        {
+                            info.path = path;
+                        }
+                        else
+                        {
+                            LOG_ERROR("Material texture uniform must define a target or path");
+                            return false;
+                        }
+                    }
+                    else if (String(type) == "sampler")
+                    {
+                        info.type = BindingType::Sampler;
+                        const char* address = nullptr;
+                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "address", &address))
+                        {
+                            if (String(address) == "repeat")
+                            {
+                                info.address = AddressMode::Repeat;
+                            }
+                            else if (String(address) == "mirror")
+                            {
+                                info.address = AddressMode::MirrorRepeat;
+                            }
+                            else if (String(address) == "edge")
+                            {
+                                info.address = AddressMode::ClampToEdge;
+                            }
+                        }
+                        const char* mag = nullptr;
+                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "mag", &mag))
+                        {
+                            if (String(mag) == "linear")
+                            {
+                                info.mag = FilterMode::Linear;
+                            }
+                            else if (String(mag) == "nearest")
+                            {
+                                info.mag = FilterMode::Nearest;
+                            }
+                        }
+                        const char* min = nullptr;
+                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "min", &min))
+                        {
+                            if (String(min) == "linear")
+                            {
+                                info.min = FilterMode::Linear;
+                            }
+                            else if (String(min) == "nearest")
+                            {
+                                info.min = FilterMode::Nearest;
+                            }
+                        }
+                        const char* mip = nullptr;
+                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "mip", &mip))
+                        {
+                            if (String(mip) == "linear")
+                            {
+                                info.mip = MipmapFilterMode::Linear;
+                            }
+                            else if (String(mip) == "nearest")
+                            {
+                                info.mip = MipmapFilterMode::Nearest;
+                            }
+                        }
+                    }
+                    else if (String(type) == "uniform")
+                    {
+                        info.type = BindingType::Uniform;
+                    }
+                    else if (String(type) == "storage")
+                    {
+                        info.type = BindingType::Storage;
+                    }
                 }
             }
         }
 
+
+        config_destroy(&cfg);
 
         // hash
         hash_combine(m_Hash, m_Type);
@@ -279,61 +352,34 @@ namespace rush
                     }
                     else if (info.type == BindingType::Sampler)
                     {
-                        AddressMode address;
-                        if (info.address == "repeat")
-                        {
-                            address = AddressMode::Repeat;
-                        }
-                        else if (info.address == "mirror")
-                        {
-                            address = AddressMode::MirrorRepeat;
-                        }
-                        else if (info.address == "edge")
-                        {
-                            address = AddressMode::ClampToEdge;
-                        }
-
-                        FilterMode mag, min;
-                        MipmapFilterMode mip;
-                        if (info.mag == "linear")
-                        {
-                            mag = FilterMode::Linear;
-                        }
-                        else if (info.mag == "nearest")
-                        {
-                            mag = FilterMode::Nearest;
-                        }
-                        if (info.min == "linear")
-                        {
-                            min = FilterMode::Linear;
-                        }
-                        else if (info.min == "nearest")
-                        {
-                            min = FilterMode::Nearest;
-                        }
-                        if (info.mip == "linear")
-                        {
-                            mip = MipmapFilterMode::Linear;
-                        }
-                        else if (info.mip == "nearest")
-                        {
-                            mip = MipmapFilterMode::Nearest;
-                        }
-
                         wgpu::SamplerDescriptor desc = {};
-                        desc.addressModeU = address;
-                        desc.addressModeV = address;
-                        desc.addressModeW = address;
-                        desc.magFilter = mag;
-                        desc.minFilter = min;
-                        desc.mipmapFilter = mip;
+                        if (info.address.has_value())
+                        {
+                            desc.addressModeU = info.address.value();
+                            desc.addressModeV = info.address.value();
+                            desc.addressModeW = info.address.value();
+                        }
+                        if (info.mag.has_value())
+                        {
+                            desc.magFilter = info.mag.value();
+                        }
+                        if (info.min.has_value())
+                        {
+                            desc.minFilter = info.min.value();
+                        }
+                        if (info.mip.has_value())
+                        {
+                            desc.mipmapFilter = info.mip.value();
+                        }
+     
                         desc.maxAnisotropy = 1;
                         auto sampler = RDevice::instance().GetDevice().CreateSampler(&desc);
                         material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, sampler, wgpu::SamplerBindingType::Filtering);
                     }
                 }
 
-                material->m_BindGroup->Create(lyoutlabel.c_str());
+                auto bindGroupLabel = material->GetPath() + String("_BindGroup_") + std::to_string(material->GetHash());
+                material->m_BindGroup->Create(bindGroupLabel.c_str());
                 bindingGroupLayouts.push_back(material->m_BindGroup->GetBindLayoutHandle());
             }
 

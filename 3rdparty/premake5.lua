@@ -43,6 +43,7 @@ project "Rush3D_Deps"
         path.join(DEP_DIR, "pugixml/**"),
         path.join(DEP_DIR, "bullet3/**"),
         path.join(DEP_DIR, "recast/**"),
+        path.join(DEP_DIR, "libconfig/**"),
 
         path.join(DEP_DIR, "imgui/*.h"),
         path.join(DEP_DIR, "imgui/*.cpp"),
@@ -102,6 +103,7 @@ project "Rush3D_Deps"
         path.join(DEP_DIR, "ozz-animation/include"),
         path.join(DEP_DIR, "ozz-animation/include/ozz"),
         path.join(DEP_DIR, "ozz-animation/src"),
+        path.join(DEP_DIR, "libconfig"),
     }
 
     filter "system:windows"

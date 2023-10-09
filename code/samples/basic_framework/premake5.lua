@@ -32,7 +32,7 @@ project "BasicFramework"
 		
 	links
 	{
-		"Rush3D_Deps", "Rush3D_Engine", "dawn_native", "dawn_proc", "dawncpp"
+		"Rush3D_Deps", "Rush3D_Engine", "dawn_native", "dawn_proc", "dawncpp", "Shlwapi"
 	}
 	links
 	{
