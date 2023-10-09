@@ -6,7 +6,7 @@
     "depth_write": false,
     "depth_test": false,
     "uniforms": [
-        {"binding": 0, "type": "texture", "target": "SceneColorTexture"},
+        {"binding": 0, "type": "texture", "target": "GBuffer1"},
         {"binding": 1, "type": "sampler", "address": "repeat", "mag": "nearest", "min": "nearest", "mip": "nearest"}
     ]
 }

@@ -55,6 +55,7 @@ namespace rush
                 VertexLayout vlayouts[kMaxVertexBuffers];
                 const float* positions = nullptr;
                 const float* normals = nullptr;
+                const float* colors = nullptr;
                 const float* tangents = nullptr;
                 const float* texcoords0 = nullptr;
                 const uint16_t* jointIndices = nullptr;
@@ -92,6 +93,30 @@ namespace rush
                     vlayouts[buffIndex].attributes[0].offset = 0;
                     vlayouts[buffIndex].attributes[0].location = buffIndex;
                     ++buffIndex;
+                }
+
+                // 访问顶点色数据
+                if (primitive.attributes.find("COLOR") != primitive.attributes.end())
+                {
+                    int accessorIdx = primitive.attributes.at("COLOR");
+                    const tinygltf::Accessor& accessor = model.accessors[accessorIdx];
+                    const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
+                    const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
+
+                    if (accessor.type != TINYGLTF_TYPE_VEC3)
+                    {
+                        LOG_WARN("mesh {} normal data type error", path);
+                    }
+                    else
+                    {
+                        colors = reinterpret_cast<const float*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
+                        vlayouts[buffIndex].attributeCount = 1;
+                        vlayouts[buffIndex].stride = 3 * sizeof(float);
+                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
+                        vlayouts[buffIndex].attributes[0].offset = 0;
+                        vlayouts[buffIndex].attributes[0].location = buffIndex;
+                        ++buffIndex;
+                    }
                 }
 
                 // 访问法线数据

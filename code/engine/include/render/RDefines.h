@@ -36,8 +36,8 @@ namespace rush
     enum class BlendMode
     {
         Opaque,
-        AlphaBlend,
-        AlphaTest,
+        Transparent,
+        Masked,
     };
 
     static constexpr StringView kBackBufferName = "BackBuffer";

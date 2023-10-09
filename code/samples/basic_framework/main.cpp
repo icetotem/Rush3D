@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
         trans->SetPosition(0, 0, 0);
 
         auto meshRenderer = ent0.Add<MeshRenderer>();
-        meshRenderer->AddModel("assets/monkey.glb");
+        meshRenderer->AddModel("assets/cube.glb");
         //meshRenderer->SetMaterial(0, "assets/test.mat");
 
         auto bonding = ent0.Add<Bounding>();

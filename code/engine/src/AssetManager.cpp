@@ -2,6 +2,7 @@
 #include "AssetManager.h"
 #include "core/Common.h"
 #include "BundleManager.h"
+#include <cstdio>
 
 namespace rush
 {
@@ -112,11 +113,20 @@ namespace rush
         }
     }
 
-    void AssetsManager::LoadOrCompileShader(const StringView& path, const StringView& defines, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param /*= nullptr*/)
+    void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+        size_t start_pos = 0;
+        while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+            str.replace(start_pos, from.length(), to);
+            start_pos += to.length(); // 为了处理替换字符串中包含替换目标的情况
+        }
+    }
+
+    void AssetsManager::LoadOrCompileShader(const StringView& path, const List<String>& defines, const StringView& code, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param /*= nullptr*/)
     {
         uint64_t h(0);
         hash_combine(h, path);
-        hash_combine(h, defines);
+        for (const auto& define : defines)
+            hash_combine(h, define);
         auto strHash = std::to_string(h);
         auto spvPath = "assets/spv/" + Path(path).filename().string() + "." + strHash + ".spv";
         auto iter = m_Shaders.find(spvPath);
@@ -124,7 +134,36 @@ namespace rush
         {
             auto relPath = "../../" + spvPath;
             char cmd[1024];
-            sprintf(cmd, "glslc \"%s\" -o \"%s\"", (String("../../") + String(path)).c_str(), relPath.c_str());
+            auto src = String("../../") + String(path);
+            auto inc = Path(src).parent_path().string();
+
+            std::string templateCode = R"(
+                    #pragma USER_SAMPLERS
+                    void _executeUserCode(inout Material material) {
+                    #pragma USER_CODE
+                    }
+                    )";
+
+            replaceAll(templateCode, "#pragma USER_CODE", String(code));
+            auto outPath = std::filesystem::absolute("../../assets/temp/user.glsl").string();
+            std::ofstream outputFile(outPath.c_str(), std::ios::out | std::ios::trunc);
+            if (!outputFile.is_open()) {
+                LOG_ERROR("Compile Shader {} failed", String(path));
+                return;
+            }
+
+            outputFile << templateCode;
+            outputFile.close();
+
+            sprintf(cmd, "glslc \"%s\" -I \"%s\" -I \"%s\" -o \"%s\"", src.c_str(), inc.c_str(), "../../assets/temp", relPath.c_str());
+
+            // macros
+            for (const auto& define : defines)
+            {
+                auto macro = String("-D") + String(define);
+                sprintf(cmd, "%s %s", cmd, macro.c_str());
+            }
+
             int result = std::system(cmd);
             if (result == 0)
             {
@@ -148,6 +187,8 @@ namespace rush
                 if (callback)
                     callback(AssetLoadResult::ParseFailed, nullptr, param);
             }
+
+            std::remove(outPath.c_str());
         }
         else
         {

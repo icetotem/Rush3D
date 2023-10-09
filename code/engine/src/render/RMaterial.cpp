@@ -17,12 +17,20 @@ namespace rush
     {
         String type;
         String shading_model;
+        String blend_mode;
         String vs;
         String fs;
         bool depth_write = true;
         bool depth_test = true;
         String front_face = "cw"; // cw
         String cull_mode = "back"; // "front" "none"
+        bool has_color = false;
+        bool has_normal = true;
+        bool has_tangent = false;
+        bool has_texcoord0 = true;
+        bool has_texcoord1 = false;
+        bool is_skined = false;
+        String code;
 
         struct Binding
         {
@@ -38,7 +46,9 @@ namespace rush
         };
         DArray<Binding> uniforms;
 
-        RUSH_DEFINE_PROPERTIES_NON_INTRUSIVE_WITH_DEFAULT(MaterialParse, type, shading_model, vs, fs, depth_write, depth_test, front_face, cull_mode, uniforms);
+        RUSH_DEFINE_PROPERTIES_NON_INTRUSIVE_WITH_DEFAULT(MaterialParse, type, shading_model, blend_mode, vs, fs,
+                            depth_write, depth_test, front_face, cull_mode, uniforms,
+                            has_color, has_normal, has_texcoord0, has_texcoord1, is_skined, code);
     };
 
 
@@ -57,6 +67,8 @@ namespace rush
 
         MaterialParse matData = Json::parse((const char*)stream->GetData(), nullptr, false);
 
+        List<String> defines;
+
         if (matData.type == "surface")
         {
             m_Type = MaterialType::Surface;
@@ -69,11 +81,54 @@ namespace rush
         if (matData.shading_model == "default_lit")
         {
             m_ShadingModel = ShadingModel::DefaultLit;
-            //m_DefaulLitData->albedo = Vector4(1.0f);
+            defines.push_back("SHADING_MODEL=SHADING_MODEL_DEFAULT_LIT");
         }
         else if (matData.shading_model == "unlit")
         {
             m_ShadingModel = ShadingModel::Unlit;
+            defines.push_back("SHADING_MODEL=SHADING_MODEL_UNLIT");
+        }
+
+        if (matData.blend_mode == "opaque")
+        {
+            blendMode = BlendMode::Opaque;
+            defines.push_back("BLEND_MODE=BLEND_MODE_OPAQUE");
+        }
+        else if (matData.blend_mode == "transparent")
+        {
+            blendMode = BlendMode::Transparent;
+            defines.push_back("BLEND_MODE=BLEND_MODE_TRANSPARENT");
+        }
+        else if (matData.blend_mode == "masked")
+        {
+            blendMode = BlendMode::Masked;
+            defines.push_back("BLEND_MODE=BLEND_MODE_MASKED");
+        }
+
+        // vertex flags
+        if (matData.has_color)
+        {
+            defines.push_back("HAS_COLOR");
+        }
+        else if (matData.has_normal)
+        {
+            defines.push_back("HAS_NORMAL");
+        }
+        else if (matData.has_tangent)
+        {
+            defines.push_back("HAS_TANGENTS");
+        }
+        else if (matData.has_texcoord0)
+        {
+            defines.push_back("HAS_TEXCOORD0");
+        }
+        else if (matData.has_texcoord0)
+        {
+            defines.push_back("HAS_TEXCOORD1");
+        }
+        else if (matData.is_skined)
+        {
+            defines.push_back("IS_SKINNED");
         }
 
         depthTest = matData.depth_test;
@@ -101,14 +156,12 @@ namespace rush
             cullMode = CullMode::Back;
         }
 
-        std::string defines;
-
         RUSH_ASSERT(matData.vs != "" && matData.fs != "");
-        AssetsManager::instance().LoadOrCompileShader(matData.vs, defines, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+        AssetsManager::instance().LoadOrCompileShader(matData.vs, defines, "", [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
             m_VertexShader = shader;
         }, nullptr);
 
-        AssetsManager::instance().LoadOrCompileShader(matData.fs, defines, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+        AssetsManager::instance().LoadOrCompileShader(matData.fs, defines, matData.code, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
             m_FragmentShader = shader;
         }, nullptr);
 
@@ -214,6 +267,7 @@ namespace rush
                         if (info.target.has_value())
                         {
                             auto tex = renderer->GetFGTexture(info.target.value());
+                            RUSH_ASSERT(tex);
                             material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, tex, TextureSampleType::Float, TextureViewDimension::e2D);
                         }
                         else if (info.path.has_value())
@@ -338,7 +392,7 @@ namespace rush
                     cTargets[i].format = outputBuffers.colorAttachment[i].format;
                     cTargets[i].writeMask = (wgpu::ColorWriteMask)material->writeMask;
 
-                    if (material->GetBlendMode() == BlendMode::AlphaBlend)
+                    if (material->GetBlendMode() == BlendMode::Transparent)
                     {
                         cTargets[i].blend = cBlendState;
                         cBlendState[i].color.srcFactor = material->srcColor;

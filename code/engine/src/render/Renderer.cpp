@@ -30,7 +30,10 @@ namespace rush
             }
         });
 
-        RegisterFGTexture("SceneColorTexture", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
+        RegisterFGTexture("GBuffer0", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
+        RegisterFGTexture("GBuffer1", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
+        RegisterFGTexture("GBuffer2", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
+        RegisterFGTexture("GBuffer3", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
         RegisterFGTexture("SceneDepthTexture", wgpu::TextureFormat::Depth24PlusStencil8, Vector2(1.0f, 1.0f));
 
         m_FrameDataBuffer = CreateRef<RUniformBuffer>(sizeof(m_FrameData), &m_FrameData, "FrameData_buffer");
@@ -320,8 +323,11 @@ namespace rush
         if (1)
         {
             FrameBuffer info;
-            info.lable = "Forward Pass";
-            info.colorAttachment.push_back({ "SceneColorTexture", GetFGTextureFormat("SceneColorTexture"), {0.2f, 0.25f, 0.2f, 1.0f} });
+            info.lable = "Deferred Pass";
+            info.colorAttachment.push_back({ "GBuffer0", GetFGTextureFormat("GBuffer0"), {0.2f, 0.2f, 0.2f, 1.0f} });
+            info.colorAttachment.push_back({ "GBuffer1", GetFGTextureFormat("GBuffer1"), {0.2f, 0.2f, 0.2f, 1.0f} });
+            info.colorAttachment.push_back({ "GBuffer2", GetFGTextureFormat("GBuffer2"), {0.2f, 0.2f, 0.2f, 1.0f} });
+            info.colorAttachment.push_back({ "GBuffer3", GetFGTextureFormat("GBuffer3"), {0.2f, 0.2f, 0.2f, 1.0f} });
             info.depthStencilTexture = "SceneDepthTexture";
             info.depthStencilFormat = GetFGTextureFormat("SceneDepthTexture");
             info.clearDepth = 1.0f;
