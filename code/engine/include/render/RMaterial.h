@@ -5,6 +5,7 @@
 #include "Asset.h"
 #include "render/RDefines.h"
 #include "Renderer.h"
+#include "RBuffer.h"
 
 namespace rush
 {
@@ -47,12 +48,14 @@ namespace rush
     {
         uint32_t binding;
         BindingType type;
+        String name;
         std::optional<String> target;
         std::optional<String> path;
         std::optional<AddressMode> address;
         std::optional<FilterMode> mag;
         std::optional<FilterMode> min;
         std::optional<MipmapFilterMode> mip;
+        std::optional<int> size;
     };
 
     class RMaterial : public Asset
@@ -106,7 +109,7 @@ namespace rush
         Ref<RBindGroup> m_BindGroup;
         DArray<BindInfo> m_BindInfos;
         static Map<uint64_t, wgpu::RenderPipeline> s_PipelineCache;
-
+        Ref<RUniformBuffer> m_UniformBuffer; 
         std::optional<DefaultLitData> m_DefaulLitData;
     };
 

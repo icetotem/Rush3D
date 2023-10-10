@@ -4,7 +4,8 @@ layout(location = 0) in vec2 v_TexCoord;
 
 #include <Resources/FrameBlock.glsl>
 
-layout(binding = 0) uniform sampler2D t_0;
+layout(set = 0, binding = 0) uniform texture2D t_0;
+layout(set = 0, binding = 1) uniform sampler s_0;
 
 const uint Mode_Default = 0;
 const uint Mode_LinearDepth = 1;
@@ -14,37 +15,43 @@ const uint Mode_BlueChannel = 4;
 const uint Mode_AlphaChannel = 5;
 const uint Mode_ViewSpaceNormals = 6;
 
-layout(location = 0) uniform uint u_Mode = Mode_Default;
+layout(set = 0, binding = 2) uniform Mode_t
+{
+    uint mode;
+}Mode;
+
+#define u_Mode Mode.mode
 
 #include <Lib/Depth.glsl>
 
-layout(location = 0) out vec3 FragColor;
+layout(location = 0) out vec4 FragColor;
 void main() {
-  const vec4 source = texture(t_0, v_TexCoord);
+  const vec4 source = texture(sampler2D(t_0, s_0), v_TexCoord);
 
   switch (u_Mode) {
   case Mode_LinearDepth:
-    FragColor = vec3(linearizeDepth(source.r) / u_Frame.camera.far);
+    FragColor.rgb = vec3(linearizeDepth(source.r) / u_Frame.camera.far);
     break;
   case Mode_RedChannel:
-    FragColor = source.rrr;
+    FragColor.rgb = source.rrr;
     break;
   case Mode_GreenChannel:
-    FragColor = source.ggg;
+    FragColor.rgb = source.ggg;
     break;
   case Mode_BlueChannel:
-    FragColor = source.bbb;
+    FragColor.rgb = source.bbb;
     break;
   case Mode_AlphaChannel:
-    FragColor = source.aaa;
+    FragColor.rgb = source.aaa;
     break;
   case Mode_ViewSpaceNormals:
-    FragColor = (u_Frame.camera.view * vec4(source.rgb, 0.0)).xyz;
+    FragColor.rgb = (u_Frame.camera.view * vec4(source.rgb, 0.0)).xyz;
     break;
 
   case Mode_Default:
   default:
-    FragColor = source.rgb;
+    FragColor.rgb = source.rgb;
     break;
   }
+  FragColor.a = 1.0;
 }

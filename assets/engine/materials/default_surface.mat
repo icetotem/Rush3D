@@ -4,13 +4,14 @@ material:
     shading_model = "default_lit";
     vs  = "assets/engine/shaders/geometry.vert";
     fs  = "assets/engine/shaders/gbufferpass.frag";
-/*
+
     uniforms = (
-        { binding=0; type="texture"; path="assets/Bricks051_2K_Color.jpg"; },
-        { binding=1; type="sampler"; address="repeat"; mag="linear"; min="linear"; mip="linear"; }
+        { binding=0; type="texture"; name = "u_baseColor"; path="assets/Bricks051_2K_Color.jpg"; },
+        { binding=1; type="sampler"; name = "u_baseColorSampler"; address="repeat"; mag="linear"; min="linear"; mip="linear"; }
     );
-*/
+
     code = "
-        material.baseColor = vec3(0.8, 0.8, 0);
+        vec4 color = texture(sampler2D(u_baseColor, u_baseColorSampler), getTexCoord0());
+        material.baseColor = color.rgb;
     ";
 }

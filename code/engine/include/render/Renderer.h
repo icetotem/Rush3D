@@ -15,11 +15,28 @@ namespace rush
     class RBindGroup;
     class RBuffer;
 
+    struct CameraData
+    {
+        Matrix4 projection;
+        Matrix4 inversedProjection;
+        Matrix4 view;
+        Matrix4 inversedView;
+        float fov;
+        float _near;
+        float _far;
+        float padding;
+        // Implicit padding, 4bytes
+    };
+
     struct FrameData
     {
-        Matrix4 proj;
-        Matrix4 view;
-        Matrix4 viewProj;
+        float time;
+        float deltaTime;
+        IVector2 resolution;
+        CameraData camera;
+        uint32_t renderFeatures;
+        uint32_t debugFlags;
+        float padding[2];
     };
 
     struct DirectLightData

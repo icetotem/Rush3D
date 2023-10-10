@@ -18,7 +18,7 @@
 layout(early_fragment_tests) in;
 #endif
 
-layout(set = 0, binding = 0) uniform MaterialFlags{
+layout(set = 1, binding = 0) uniform MaterialFlags{
   int materialFlags;
 } MaterialFlags_t;
 

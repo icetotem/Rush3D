@@ -24,11 +24,13 @@ layout(location = 7) in ivec4 a_Joints;
 layout(location = 8) in vec4 a_Weights;
 #endif
 
-layout(set = 0, binding = 0) uniform Transform {
+
+layout(set = 1, binding = 0) uniform Transform {
   mat4 modelMatrix;
   mat4 normalMatrix;
   mat4 modelViewProjMatrix;
 } u_Transform;
+
 
 out gl_PerVertex { vec4 gl_Position; };
 
@@ -54,6 +56,7 @@ layout(location = 0) out VertexData {
 vs_out;
 
 void main() {
+  //vs_out.fragPos = u_Transform.modelMatrix * vec4(a_Position, 1.0);
   vs_out.fragPos = u_Transform.modelMatrix * vec4(a_Position, 1.0);
 
 #ifdef HAS_NORMAL

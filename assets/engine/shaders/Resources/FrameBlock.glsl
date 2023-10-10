@@ -11,7 +11,7 @@ struct Camera {
   // Implicit padding, 4bytes
 };
 
-layout(binding = 0, std140) uniform FrameBlock {
+layout(set = 1, binding = 0, std140) uniform FrameBlock {
   float time;
   float deltaTime;
   uvec2 resolution;

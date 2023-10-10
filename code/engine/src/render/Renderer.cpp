@@ -43,10 +43,10 @@ namespace rush
 
         m_DirectionalLightBuffer = CreateRef<RUniformBuffer>(sizeof(m_DirectionalLightData), &m_DirectionalLightData, "DirectionalLightData_buffer");
         m_PointLightsBuffer = CreateRef<RUniformBuffer>(sizeof(PointLightData) * kMaxPointLights, &m_PointLightsData, "PointLightData_buffer");
-        m_LightingDataGroup = CreateRef<RBindGroup>();
-        m_LightingDataGroup->AddBinding(0, ShaderStage::Fragment, m_DirectionalLightBuffer);
-        m_LightingDataGroup->AddBinding(1, ShaderStage::Fragment, m_PointLightsBuffer);
-        m_LightingDataGroup->Create("LightingData_group");
+//         m_LightingDataGroup = CreateRef<RBindGroup>();
+//         m_LightingDataGroup->AddBinding(0, ShaderStage::Fragment, m_DirectionalLightBuffer);
+//         m_LightingDataGroup->AddBinding(1, ShaderStage::Fragment, m_PointLightsBuffer);
+//         m_LightingDataGroup->Create("LightingData_group");
     }
 
     void Renderer::CreateFullScreenQuad()
@@ -179,14 +179,24 @@ namespace rush
         // set frame data
         if (m_FrameDataGroup->GetBindGroupHandle())
         {
-            m_FrameData.proj = camera->GetProjMatrix();
-            m_FrameData.view = camera->GetViewMatrix();
-            m_FrameData.viewProj = m_FrameData.proj * m_FrameData.view;
+            m_FrameData.camera.projection = camera->GetProjMatrix();
+            m_FrameData.camera.view = camera->GetViewMatrix();
+            m_FrameData.camera.inversedProjection = glm::inverse(camera->GetProjMatrix());
+            m_FrameData.camera.inversedView = glm::inverse(camera->GetViewMatrix());
+            m_FrameData.camera.fov = camera->GetFov();
+            m_FrameData.camera._near = camera->GetNearClip();
+            m_FrameData.camera._far = camera->GetFarClip();
+            m_FrameData.time = Timer::GetTimeSec();
+            m_FrameData.deltaTime = Timer::GetDeltaTimeSec();
+            m_FrameData.resolution = IVector2(m_Width, m_Height);
+            m_FrameData.renderFeatures = 0;
+            m_FrameData.deltaTime = 0;
             m_FrameDataBuffer->UpdateData(&m_FrameData, sizeof(m_FrameData));
-            pass.SetBindGroup(0, m_FrameDataGroup->GetBindGroupHandle());
+            pass.SetBindGroup(1, m_FrameDataGroup->GetBindGroupHandle());
         }
 
         // set light data
+#if 0
         {
             m_PointLightsData.clear();
             for (auto light : renderQueue->GetLights())
@@ -217,6 +227,7 @@ namespace rush
             }
             pass.SetBindGroup(1, m_LightingDataGroup->GetBindGroupHandle());
         }
+#endif
 
         for (const auto& batch : renderQueue->GetBatches())
         {
@@ -224,7 +235,7 @@ namespace rush
             auto mat = batch.renderable.material;
             pass.SetPipeline(RMaterial::GetPipeline(this, geo, mat, outputBuffers));
             if (mat->GetBindGroup() && mat->GetBindGroup()->GetBindGroupHandle())
-                pass.SetBindGroup(2, mat->GetBindGroup()->GetBindGroupHandle());
+                pass.SetBindGroup(0, mat->GetBindGroup()->GetBindGroupHandle());
             for (uint32_t vb = 0; vb < geo->GetVBCount(); ++vb)
             {
                 pass.SetVertexBuffer(vb, geo->GetVB(vb)->GetBufferHandle());
@@ -290,8 +301,8 @@ namespace rush
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
 
         // set frame data
-        //if (m_FrameDataGroup.GetBindGroupHandle())
-        //    pass.SetBindGroup(0, m_FrameDataGroup.GetBindGroupHandle());
+        if (m_FrameDataGroup->GetBindGroupHandle())
+            pass.SetBindGroup(1, m_FrameDataGroup->GetBindGroupHandle());
 
         if (material)
         {

@@ -42,7 +42,7 @@ namespace rush
 
         void LoadMaterial(const StringView& path, std::function<void(AssetLoadResult result, Ref<RMaterial>, void* param)> callback, void* param = nullptr);
 
-        void LoadOrCompileShader(const StringView& path, const List<String>& defines, const StringView& code, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param = nullptr);
+        void LoadOrCompileShader(const StringView& path, const List<String>& defines, const StringView& code, const StringView& uniforms, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param = nullptr);
 
     private:
         HMap<String, Ref<RModel>> m_Models;

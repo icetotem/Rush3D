@@ -28,7 +28,6 @@ namespace rush
             return false;
         }
 
-        //MaterialParse matData = Json::parse((const char*)stream->GetData(), nullptr, false);
         config_t cfg;
         config_init(&cfg);
 
@@ -154,25 +153,7 @@ namespace rush
             tempCode = tempStr;
         }
 
-        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.vs", &tempStr))
-        {
-            AssetsManager::instance().LoadOrCompileShader(tempStr, defines, "", [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
-                m_VertexShader = shader;
-            }, nullptr);
-        }
-
-        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.fs", &tempStr))
-        {
-            AssetsManager::instance().LoadOrCompileShader(tempStr, defines, tempCode, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
-                m_FragmentShader = shader;
-            }, nullptr);
-        }
-
-        if (m_VertexShader == nullptr || m_FragmentShader == nullptr)
-        {
-            return false;
-        }
-
+        String uniformCode;
         auto uniforms = config_lookup(&cfg, "material.uniforms");
         if (uniforms)
         {
@@ -180,110 +161,161 @@ namespace rush
             for (int i = 0; i < count; ++i)
             {
                 auto uniform = config_setting_get_elem(uniforms, i);
-                if (uniform)
-                {
-                    auto& info = m_BindInfos.emplace_back();
-                    int binding = 0;
-                    if (CONFIG_TRUE != config_setting_lookup_int(uniform, "binding", &binding))
-                    {
-                        LOG_ERROR("Material uniform must define a binding");
-                        return false;
-                    }
-                    info.binding = binding;
-                    const char* type = nullptr;
-                    if (CONFIG_TRUE != config_setting_lookup_string(uniform, "type", &type))
-                    {
-                        LOG_ERROR("Material uniform must define a type");
-                        return false;
-                    }
+                RUSH_ASSERT(uniform);
 
-                    if (String(type) == "texture")
+                auto& info = m_BindInfos.emplace_back();
+                int binding = 0;
+                if (CONFIG_TRUE != config_setting_lookup_int(uniform, "binding", &binding))
+                {
+                    LOG_ERROR("Material uniform must define a binding");
+                    return false;
+                }
+                info.binding = binding;
+                const char* type = nullptr;
+                if (CONFIG_TRUE != config_setting_lookup_string(uniform, "type", &type))
+                {
+                    LOG_ERROR("Material uniform must define a type");
+                    return false;
+                }
+
+                const char* name = nullptr;
+                if (CONFIG_TRUE != config_setting_lookup_string(uniform, "name", &name))
+                {
+                    LOG_ERROR("Material uniform must define a name");
+                    return false;
+                }
+                info.name = name;
+
+                if (String(type) == "texture")
+                {
+                    info.type = BindingType::Texture;
+                    const char* target = nullptr;
+                    const char* path = nullptr;
+                    if (CONFIG_TRUE == config_setting_lookup_string(uniform, "target", &target))
                     {
-                        info.type = BindingType::Texture;
-                        const char* target = nullptr;
-                        const char* path = nullptr;
-                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "target", &target))
-                        {
-                            info.target = target;
-                        }
-                        else if (CONFIG_TRUE == config_setting_lookup_string(uniform, "path", &path))
-                        {
-                            info.path = path;
-                        }
-                        else
-                        {
-                            LOG_ERROR("Material texture uniform must define a target or path");
-                            return false;
-                        }
+                        info.target = target;
                     }
-                    else if (String(type) == "sampler")
+                    else if (CONFIG_TRUE == config_setting_lookup_string(uniform, "path", &path))
                     {
-                        info.type = BindingType::Sampler;
-                        const char* address = nullptr;
-                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "address", &address))
-                        {
-                            if (String(address) == "repeat")
-                            {
-                                info.address = AddressMode::Repeat;
-                            }
-                            else if (String(address) == "mirror")
-                            {
-                                info.address = AddressMode::MirrorRepeat;
-                            }
-                            else if (String(address) == "edge")
-                            {
-                                info.address = AddressMode::ClampToEdge;
-                            }
-                        }
-                        const char* mag = nullptr;
-                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "mag", &mag))
-                        {
-                            if (String(mag) == "linear")
-                            {
-                                info.mag = FilterMode::Linear;
-                            }
-                            else if (String(mag) == "nearest")
-                            {
-                                info.mag = FilterMode::Nearest;
-                            }
-                        }
-                        const char* min = nullptr;
-                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "min", &min))
-                        {
-                            if (String(min) == "linear")
-                            {
-                                info.min = FilterMode::Linear;
-                            }
-                            else if (String(min) == "nearest")
-                            {
-                                info.min = FilterMode::Nearest;
-                            }
-                        }
-                        const char* mip = nullptr;
-                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "mip", &mip))
-                        {
-                            if (String(mip) == "linear")
-                            {
-                                info.mip = MipmapFilterMode::Linear;
-                            }
-                            else if (String(mip) == "nearest")
-                            {
-                                info.mip = MipmapFilterMode::Nearest;
-                            }
-                        }
+                        info.path = path;
                     }
-                    else if (String(type) == "uniform")
+                    else
                     {
-                        info.type = BindingType::Uniform;
-                    }
-                    else if (String(type) == "storage")
-                    {
-                        info.type = BindingType::Storage;
+                        LOG_ERROR("Material texture uniform must define a target or path");
+                        return false;
                     }
                 }
+                else if (String(type) == "sampler")
+                {
+                    info.type = BindingType::Sampler;
+                    const char* address = nullptr;
+                    if (CONFIG_TRUE == config_setting_lookup_string(uniform, "address", &address))
+                    {
+                        if (String(address) == "repeat")
+                        {
+                            info.address = AddressMode::Repeat;
+                        }
+                        else if (String(address) == "mirror")
+                        {
+                            info.address = AddressMode::MirrorRepeat;
+                        }
+                        else if (String(address) == "edge")
+                        {
+                            info.address = AddressMode::ClampToEdge;
+                        }
+                    }
+                    const char* mag = nullptr;
+                    if (CONFIG_TRUE == config_setting_lookup_string(uniform, "mag", &mag))
+                    {
+                        if (String(mag) == "linear")
+                        {
+                            info.mag = FilterMode::Linear;
+                        }
+                        else if (String(mag) == "nearest")
+                        {
+                            info.mag = FilterMode::Nearest;
+                        }
+                    }
+                    const char* min = nullptr;
+                    if (CONFIG_TRUE == config_setting_lookup_string(uniform, "min", &min))
+                    {
+                        if (String(min) == "linear")
+                        {
+                            info.min = FilterMode::Linear;
+                        }
+                        else if (String(min) == "nearest")
+                        {
+                            info.min = FilterMode::Nearest;
+                        }
+                    }
+                    const char* mip = nullptr;
+                    if (CONFIG_TRUE == config_setting_lookup_string(uniform, "mip", &mip))
+                    {
+                        if (String(mip) == "linear")
+                        {
+                            info.mip = MipmapFilterMode::Linear;
+                        }
+                        else if (String(mip) == "nearest")
+                        {
+                            info.mip = MipmapFilterMode::Nearest;
+                        }
+                    }
+                }
+                else if (String(type) == "uniform")
+                {
+                    info.type = BindingType::Uniform;
+                    int size = 0;
+                    if (CONFIG_TRUE == config_setting_lookup_int(uniform, "size", &size))
+                    {
+                        info.size = size;
+                    }
+                }
+                else if (String(type) == "storage")
+                {
+                    info.type = BindingType::Storage;
+                }
+
+                char uniformLine[128];
+                if (info.type == BindingType::Texture)
+                {
+                    sprintf(uniformLine, "layout(set = 0, binding = %d) uniform texture2D %s;\n", info.binding, info.name.c_str());
+                }
+                else if (info.type == BindingType::Sampler)
+                {
+                    sprintf(uniformLine, "layout(set = 0, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
+                }
+
+                uniformCode += uniformLine;
             }
         }
 
+        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.vs", &tempStr))
+        {
+            AssetsManager::instance().LoadOrCompileShader(tempStr, defines, "", "", [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+                m_VertexShader = shader;
+            }, nullptr);
+        }
+
+        if (CONFIG_TRUE == config_lookup_string(&cfg, "material.fs", &tempStr))
+        {
+            if (m_Type == MaterialType::Surface)
+            {
+                AssetsManager::instance().LoadOrCompileShader(tempStr, defines, tempCode, uniformCode, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+                    m_FragmentShader = shader;
+                }, nullptr);
+            }
+            else
+            {
+                AssetsManager::instance().LoadOrCompileShader(tempStr, defines, "", "", [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+                    m_FragmentShader = shader;
+                }, nullptr);
+            }
+        }
+
+        if (m_VertexShader == nullptr || m_FragmentShader == nullptr)
+        {
+            return false;
+        }
 
         config_destroy(&cfg);
 
@@ -321,12 +353,6 @@ namespace rush
             auto lyoutlabel = material->GetPath() + String("_PipelineLayout_") + std::to_string(material->GetHash());
             plLayoutDesc.label = lyoutlabel.c_str();
             DArray<wgpu::BindGroupLayout> bindingGroupLayouts;
-
-            if (material->GetType() == MaterialType::Surface)
-            {
-                bindingGroupLayouts.push_back(renderer->GetFrameDataGroup()->GetBindLayoutHandle());
-                bindingGroupLayouts.push_back(renderer->GetLightDataGroup()->GetBindLayoutHandle());
-            }
 
             if (material->m_BindInfos.size() > 0)
             {
@@ -376,11 +402,24 @@ namespace rush
                         auto sampler = RDevice::instance().GetDevice().CreateSampler(&desc);
                         material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, sampler, wgpu::SamplerBindingType::Filtering);
                     }
+                    else if (info.type == BindingType::Uniform)
+                    {
+                        material->m_UniformBuffer = CreateRef<RUniformBuffer>(info.size.value());
+                        uint32_t mode = 0;
+                        material->m_UniformBuffer->UpdateData(&mode, sizeof(uint32_t));
+                        material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, material->m_UniformBuffer);
+                    }
                 }
 
                 auto bindGroupLabel = material->GetPath() + String("_BindGroup_") + std::to_string(material->GetHash());
                 material->m_BindGroup->Create(bindGroupLabel.c_str());
                 bindingGroupLayouts.push_back(material->m_BindGroup->GetBindLayoutHandle());
+            }
+
+            //if (material->GetType() == MaterialType::Surface)
+            {
+                bindingGroupLayouts.push_back(renderer->GetFrameDataGroup()->GetBindLayoutHandle());
+                //bindingGroupLayouts.push_back(renderer->GetLightDataGroup()->GetBindLayoutHandle());
             }
 
             plLayoutDesc.bindGroupLayoutCount = bindingGroupLayouts.size();

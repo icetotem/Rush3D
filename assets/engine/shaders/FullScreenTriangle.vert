@@ -1,10 +1,14 @@
 #version 460 core
 
-out gl_PerVertex { vec4 gl_Position; };
-layout(location = 0) out vec2 v_TexCoord;
+// input
+layout (location = 0) in vec2 a_position;
 
-// glDrawArrays(GL_TRIANGLES, 3);
-void main() {
-  v_TexCoord = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2);
-  gl_Position = vec4(v_TexCoord * 2.0 - 1.0, 0.0, 1.0);
+// output
+layout (location = 0) out vec2 v_TexCoord;
+   
+void main()
+{
+    v_TexCoord.x = (a_position.x + 1.0) * 0.5;
+    v_TexCoord.y = 1.0 - (a_position.y + 1.0) * 0.5;
+    gl_Position = vec4(a_position, 1.0, 1.0);
 }

@@ -113,7 +113,8 @@ namespace rush
         }
     }
 
-    void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    void replaceStr(std::string& str, const StringView& from, const StringView& to) 
+    {
         size_t start_pos = 0;
         while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
             str.replace(start_pos, from.length(), to);
@@ -121,14 +122,14 @@ namespace rush
         }
     }
 
-    void AssetsManager::LoadOrCompileShader(const StringView& path, const List<String>& defines, const StringView& code, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param /*= nullptr*/)
+    void AssetsManager::LoadOrCompileShader(const StringView& path, const List<String>& defines, const StringView& code, const StringView& uniforms, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param /*= nullptr*/)
     {
         uint64_t h(0);
         hash_combine(h, path);
         for (const auto& define : defines)
             hash_combine(h, define);
         auto strHash = std::to_string(h);
-        auto spvPath = "assets/spv/" + Path(path).filename().string() + "." + strHash + ".spv";
+        auto spvPath = str_tolower("assets/spv/" + Path(path).filename().string() + "." + strHash + ".spv");
         auto iter = m_Shaders.find(spvPath);
         if (iter == m_Shaders.end())
         {
@@ -137,14 +138,10 @@ namespace rush
             auto src = String("../../") + String(path);
             auto inc = Path(src).parent_path().string();
 
-            std::string templateCode = R"(
-                    #pragma USER_SAMPLERS
-                    void _executeUserCode(inout Material material) {
-                    #pragma USER_CODE
-                    }
-                    )";
+            std::string templateCode = "#pragma USER_SAMPLERS\nvoid _executeUserCode(inout Material material) { \n#pragma USER_CODE\n}";
 
-            replaceAll(templateCode, "#pragma USER_CODE", String(code));
+            replaceStr(templateCode, "#pragma USER_CODE", code);
+            replaceStr(templateCode, "#pragma USER_SAMPLERS", uniforms);
             auto outPath = std::filesystem::absolute("../../assets/temp/user.glsl").string();
             std::ofstream outputFile(outPath.c_str(), std::ios::out | std::ios::trunc);
             if (!outputFile.is_open()) {
