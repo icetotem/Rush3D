@@ -25,8 +25,7 @@ layout(set = 2, binding = 0) uniform MaterialFlags_t {
 layout(location = 0) out vec4 GBuffer0; // .rgb = Normal
 layout(location = 1) out vec4 GBuffer1; // .rgb = Albedo, .a = SpecularWeight
 layout(location = 2) out vec4 GBuffer2; // .rgb = Emissive
-// .r = Metallic, .g = Roughness, .b = AO, .a = ShadingModel/MaterialFlags
-layout(location = 3) out vec4 GBuffer3;
+layout(location = 3) out vec4 GBuffer3; // .r = Metallic, .g = Roughness, .b = AO, .a = ShadingModel/MaterialFlags
 
 void main() {
   Material material = _initMaterial();

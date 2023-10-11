@@ -126,23 +126,23 @@ namespace rush
         {
             defines.push_back("HAS_COLOR");
         }
-        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_normal", &tempBool) && tempBool)
+        if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_normal", &tempBool) && tempBool)
         {
             defines.push_back("HAS_NORMAL");
         }
-        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_tangent", &tempBool) && tempBool)
+        if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_tangent", &tempBool) && tempBool)
         {
             defines.push_back("HAS_TANGENTS");
         }
-        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_texcoord0", &tempBool) && tempBool)
+        if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_texcoord0", &tempBool) && tempBool)
         {
             defines.push_back("HAS_TEXCOORD0");
         }
-        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_texcoord1", &tempBool) && tempBool)
+        if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_texcoord1", &tempBool) && tempBool)
         {
             defines.push_back("HAS_TEXCOORD1");
         }
-        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.is_skined", &tempBool) && tempBool)
+        if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.is_skined", &tempBool) && tempBool)
         {
             defines.push_back("IS_SKINNED");
         }
