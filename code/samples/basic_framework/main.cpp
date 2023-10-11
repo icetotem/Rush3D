@@ -63,16 +63,28 @@ int main(int argc, char* argv[])
 
     // create the entity
     {
-        auto ent0 = mainScene->CreateEntity("ent0");
+        auto ent = mainScene->CreateEntity("ent0");
 
-        auto trans = ent0.Add<Transform>();
+        auto trans = ent.Add<Transform>();
         trans->SetPosition(0, 0, 0);
 
-        auto meshRenderer = ent0.Add<MeshRenderer>();
+        auto meshRenderer = ent.Add<MeshRenderer>();
         meshRenderer->AddModel("assets/cube.glb");
         //meshRenderer->SetMaterial(0, "assets/test.mat");
 
-        auto bonding = ent0.Add<Bounding>();
+        auto bonding = ent.Add<Bounding>();
+    }
+    {
+        auto ent = mainScene->CreateEntity("ent1");
+
+        auto trans = ent.Add<Transform>();
+        trans->SetPosition(2, 0, 0);
+
+        auto meshRenderer = ent.Add<MeshRenderer>();
+        meshRenderer->AddModel("assets/cube.glb");
+        //meshRenderer->SetMaterial(0, "assets/test.mat");
+
+        auto bonding = ent.Add<Bounding>();
     }
 
     while (engine.GetMainWindow()->ShouldClose())

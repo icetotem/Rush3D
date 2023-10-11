@@ -38,11 +38,12 @@ namespace rush
 
         m_FrameDataBuffer = CreateRef<RUniformBuffer>(sizeof(m_FrameData), &m_FrameData, "FrameData_buffer");
         m_FrameDataGroup = CreateRef<RBindGroup>();
-        m_FrameDataGroup->AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer);
+        m_FrameDataGroup->AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer, wgpu::BufferBindingType::Uniform);
         m_FrameDataGroup->Create("FrameData_group");
 
+        m_TransformBuffer = CreateRef<RStorageBuffer>(sizeof(Matrix4) * 2000, nullptr, "Transform_buffer");
         m_TransformDataGroup = CreateRef<RBindGroup>();
-        m_TransformDataGroup->AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer);
+        m_TransformDataGroup->AddBinding(0, ShaderStage::Vertex, m_TransformBuffer, wgpu::BufferBindingType::Storage);
         m_TransformDataGroup->Create("FrameData_group");
 
 //         m_DirectionalLightBuffer = CreateRef<RUniformBuffer>(sizeof(m_DirectionalLightData), &m_DirectionalLightData, "DirectionalLightData_buffer");
@@ -201,8 +202,19 @@ namespace rush
         }
 
         // set transform data
+        m_Transforms.clear();
         if (m_TransformDataGroup->GetBindGroupHandle())
+        {
+            for (const auto& batch : renderQueue->GetBatches())
+            {
+                for (uint32_t i = 0; i < batch.second.instanceCount; ++i)
+                {
+                    m_Transforms.push_back(*batch.second.transforms[i]);
+                }
+            }
+            m_TransformBuffer->UpdateData(m_Transforms.data(), sizeof(Matrix4) * m_Transforms.size());
             pass.SetBindGroup(1, m_TransformDataGroup->GetBindGroupHandle());
+        }
 
         // set light data
 #if 0
@@ -240,8 +252,8 @@ namespace rush
 
         for (const auto& batch : renderQueue->GetBatches())
         {
-            auto geo = batch.renderable.geometry;
-            auto mat = batch.renderable.material;
+            auto geo = batch.second.renderable.geometry;
+            auto mat = batch.second.renderable.material;
             pass.SetPipeline(RMaterial::GetPipeline(this, geo, mat, outputBuffers));
             if (mat && mat->GetBindGroup() && mat->GetBindGroup()->GetBindGroupHandle())
                 pass.SetBindGroup(2, mat->GetBindGroup()->GetBindGroupHandle());
@@ -250,7 +262,7 @@ namespace rush
                 pass.SetVertexBuffer(vb, geo->GetVB(vb)->GetBufferHandle());
             }
             pass.SetIndexBuffer(geo->GetIB()->GetBufferHandle(), geo->GetIB()->GetType());
-            pass.DrawIndexed(geo->GetIB()->GetIndexCount(), batch.instanceCount, 0, 0);
+            pass.DrawIndexed(geo->GetIB()->GetIndexCount(), batch.second.instanceCount, 0, 0);
         }
         pass.End();
     }

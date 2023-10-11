@@ -3,6 +3,7 @@
 #include "render/Renderer.h"
 #include "AssetManager.h"
 #include "render/RModel.h"
+#include "components/Transform.h"
 
 namespace rush
 {  
@@ -54,9 +55,10 @@ namespace rush
 
     void MeshRenderer::SubmitRenderQueue(Ref<RenderQueue> renderQueue)
     {
+        const auto& mtx = Get<Transform>()->GetWorldMatrix();
         for (auto& prim : m_Primitives)
         {
-            renderQueue->Add(prim.geometry, prim.material);
+            renderQueue->Add(prim.geometry, prim.material, &mtx);
         }
     }
 

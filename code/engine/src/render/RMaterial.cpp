@@ -357,10 +357,8 @@ namespace rush
             auto lyoutlabel = material->GetPath() + String("_PipelineLayout_") + std::to_string(material->GetHash());
             plLayoutDesc.label = lyoutlabel.c_str();
             DArray<wgpu::BindGroupLayout> bindingGroupLayouts;
-
             bindingGroupLayouts.push_back(renderer->GetFrameDataGroup()->GetBindLayoutHandle());
             bindingGroupLayouts.push_back(renderer->GetTransformDataGroup()->GetBindLayoutHandle());
-
             if (material->m_BindInfos.size() > 0)
             {
                 if (material->m_BindGroup == nullptr)
@@ -414,7 +412,7 @@ namespace rush
                         material->m_UniformBuffer = CreateRef<RUniformBuffer>(info.size.value());
                         uint32_t mode = 0;
                         material->m_UniformBuffer->UpdateData(&mode, sizeof(uint32_t));
-                        material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, material->m_UniformBuffer);
+                        material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, material->m_UniformBuffer, wgpu::BufferBindingType::Uniform);
                     }
                 }
 

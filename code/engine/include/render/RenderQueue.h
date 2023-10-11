@@ -12,14 +12,17 @@ namespace rush
 
     struct Renderable
     {
+        uint64_t hash = 0;
         Ref<RGeometry> geometry;
         Ref<RMaterial> material;
+        const Matrix4* transform = nullptr;
     };
 
     struct RenderBatch
     {
         Renderable renderable;
-        uint32_t instanceCount = 1;
+        uint32_t instanceCount = 0;
+        DArray<const Matrix4*> transforms;
     };
 
     class RenderQueue
@@ -28,11 +31,11 @@ namespace rush
         RenderQueue(Entity camera);
         ~RenderQueue() = default;
 
-        void Add(Ref<RGeometry> geometry, Ref<RMaterial> material);
+        void Add(Ref<RGeometry> geometry, Ref<RMaterial> material, const Matrix4* transform);
 
         void AddLight(Light* light);
 
-        List<RenderBatch> GetBatches() const { return m_Batches; }
+        const Map<uint64_t, RenderBatch>& GetBatches() const { return m_Batches; }
 
         void MergeBatch();
 
@@ -42,7 +45,7 @@ namespace rush
 
     private:
         List<Renderable> m_Renderables;
-        List<RenderBatch> m_Batches;
+        Map<uint64_t, RenderBatch> m_Batches;
         List<Light*> m_Lights;
         Entity m_Camera;
     };

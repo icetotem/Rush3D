@@ -31,12 +31,12 @@ namespace rush
         bgEntry.sampler = sampler;
     }
 
-    void RBindGroup::AddBinding(uint32_t binding, ShaderStage visibility, Ref<RBuffer> buffer)
+    void RBindGroup::AddBinding(uint32_t binding, ShaderStage visibility, Ref<RBuffer> buffer, wgpu::BufferBindingType bufferType)
     {
         auto& bgLayoutEntry = bgLayoutEntris.emplace_back();
         bgLayoutEntry.binding = binding;
         bgLayoutEntry.visibility = visibility;
-        bgLayoutEntry.buffer.type = wgpu::BufferBindingType::Uniform;
+        bgLayoutEntry.buffer.type = bufferType;
 
         auto& bgEntry = bgEntries.emplace_back();
         bgEntry.binding = binding;

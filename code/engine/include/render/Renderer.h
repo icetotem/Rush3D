@@ -142,6 +142,8 @@ namespace rush
         Ref<RBindGroup> m_FrameDataGroup;
 
         // TransformData
+        Ref<RBuffer> m_TransformBuffer;
+        DArray<Matrix4> m_Transforms;
         Ref<RBindGroup> m_TransformDataGroup;
 
         // Lighting Data
