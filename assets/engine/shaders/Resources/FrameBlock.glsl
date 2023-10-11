@@ -6,12 +6,13 @@ struct Camera {
   mat4 inversedProjection;
   mat4 view;
   mat4 inversedView;
+  mat4 vp;
   float fov;
   float near, far;
   // Implicit padding, 4bytes
 };
 
-layout(set = 1, binding = 0, std140) uniform FrameBlock {
+layout(set = 0, binding = 0, std140) uniform FrameBlock {
   float time;
   float deltaTime;
   uvec2 resolution;
@@ -20,6 +21,12 @@ layout(set = 1, binding = 0, std140) uniform FrameBlock {
   uint debugFlags;
 }
 u_Frame;
+
+#define u_proj u_Frame.camera.projection
+#define u_view u_Frame.camera.view
+#define u_invProj u_Frame.camera.inversedProjection
+#define u_invView u_Frame.camera.inversedView
+#define u_viewProj u_Frame.camera.vp
 
 float getTime() { return u_Frame.time; }
 float getDeltaTime() { return u_Frame.deltaTime; }

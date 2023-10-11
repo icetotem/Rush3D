@@ -58,6 +58,7 @@ namespace rush
                 const float* colors = nullptr;
                 const float* tangents = nullptr;
                 const float* texcoords0 = nullptr;
+                const float* texcoords1 = nullptr;
                 const uint16_t* jointIndices = nullptr;
                 const float* jointWeights = nullptr;
                 int numVertices = 0;
@@ -91,7 +92,7 @@ namespace rush
                     vlayouts[buffIndex].stride = 3 * sizeof(float);
                     vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
                     vlayouts[buffIndex].attributes[0].offset = 0;
-                    vlayouts[buffIndex].attributes[0].location = buffIndex;
+                    vlayouts[buffIndex].attributes[0].location = 0;
                     ++buffIndex;
                 }
 
@@ -114,7 +115,7 @@ namespace rush
                         vlayouts[buffIndex].stride = 3 * sizeof(float);
                         vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
                         vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = buffIndex;
+                        vlayouts[buffIndex].attributes[0].location = 1;
                         ++buffIndex;
                     }
                 }
@@ -138,7 +139,7 @@ namespace rush
                         vlayouts[buffIndex].stride = 3 * sizeof(float);
                         vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
                         vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = buffIndex;
+                        vlayouts[buffIndex].attributes[0].location = 2;
                         ++buffIndex;
                     }
                 }
@@ -162,7 +163,7 @@ namespace rush
                         vlayouts[buffIndex].stride = 3 * sizeof(float);
                         vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
                         vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = buffIndex;
+                        vlayouts[buffIndex].attributes[0].location = 3;
                         ++buffIndex;
                     }
                 }
@@ -187,7 +188,32 @@ namespace rush
                         vlayouts[buffIndex].stride = 2 * sizeof(float);
                         vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x2;
                         vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = buffIndex;
+                        vlayouts[buffIndex].attributes[0].location = 4;
+                        ++buffIndex;
+                    }
+                }
+
+                // 访问纹理坐标数据
+                if (primitive.attributes.find("TEXCOORD_1") != primitive.attributes.end())
+                {
+                    int accessorIdx = primitive.attributes.at("TEXCOORD_1");
+                    const tinygltf::Accessor& accessor = model.accessors[accessorIdx];
+                    const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
+                    const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
+
+                    if (accessor.type != TINYGLTF_TYPE_VEC2)
+                    {
+                        LOG_WARN("mesh {} texture coord 1 data type error", path);
+                        continue;
+                    }
+                    else
+                    {
+                        texcoords1 = reinterpret_cast<const float*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
+                        vlayouts[buffIndex].attributeCount = 1;
+                        vlayouts[buffIndex].stride = 2 * sizeof(float);
+                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x2;
+                        vlayouts[buffIndex].attributes[0].offset = 0;
+                        vlayouts[buffIndex].attributes[0].location = 5;
                         ++buffIndex;
                     }
                 }
@@ -218,7 +244,7 @@ namespace rush
                         vlayouts[buffIndex].stride = 4 * sizeof(uint16_t);
                         vlayouts[buffIndex].attributes[0].format = VertexFormat::Uint16x4;
                         vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = buffIndex;
+                        vlayouts[buffIndex].attributes[0].location = 6;
                         ++buffIndex;
 
                         const float* jointWeights = reinterpret_cast<const float*>(&(weightsBuffer.data[weightsAccessor.byteOffset + weightsBufferView.byteOffset]));
@@ -226,7 +252,7 @@ namespace rush
                         vlayouts[buffIndex].stride = 4 * sizeof(float);
                         vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x4;
                         vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = buffIndex;
+                        vlayouts[buffIndex].attributes[0].location = 7;
                         ++buffIndex;
                     }
                 }
@@ -262,6 +288,10 @@ namespace rush
                 if (texcoords0)
                 {
                     geo->UpdateVertexBuffer(buffIndex++, texcoords0, numVertices * sizeof(float) * 2);
+                }
+                if (texcoords1)
+                {
+                    geo->UpdateVertexBuffer(buffIndex++, texcoords1, numVertices * sizeof(float) * 2);
                 }
                 if (jointIndices && jointWeights)
                 {

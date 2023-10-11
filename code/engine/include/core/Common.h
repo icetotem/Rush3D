@@ -162,6 +162,14 @@ namespace rush
         return s;
     }
 
+    inline void str_replace(std::string& str, const StringView& from, const StringView& to)
+    {
+        size_t start_pos = 0;
+        while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+            str.replace(start_pos, from.length(), to);
+            start_pos += to.length(); // 为了处理替换字符串中包含替换目标的情况
+        }
+    }
 
     // Only defined for unsigned integers because that is all that is
     // needed at the time of writing.

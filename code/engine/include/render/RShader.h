@@ -21,6 +21,8 @@ namespace rush
 
         virtual bool Load(const StringView& path) override;
 
+        static bool Compile(const StringView& inputPath, const StringView& outputPath, const List<String>& defines, const StringView& code, const StringView& uniforms);
+
         ShaderStage GetType() const { return m_ShaderType; }
 
         wgpu::ShaderModule GetModule() const { return m_Module; }

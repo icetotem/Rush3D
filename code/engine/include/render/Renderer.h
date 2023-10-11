@@ -21,6 +21,7 @@ namespace rush
         Matrix4 inversedProjection;
         Matrix4 view;
         Matrix4 inversedView;
+        Matrix4 vp;
         float fov;
         float _near;
         float _far;
@@ -102,7 +103,8 @@ namespace rush
         Vector2 GetFGTextureScale(const StringView& name);
 
         const Ref<RBindGroup> GetFrameDataGroup() const { return m_FrameDataGroup; }
-        const Ref<RBindGroup> GetLightDataGroup() const { return m_LightingDataGroup; }
+        const Ref<RBindGroup> GetTransformDataGroup() const { return m_TransformDataGroup; }
+        //const Ref<RBindGroup> GetLightDataGroup() const { return m_LightingDataGroup; }
 
     protected:
         friend class Engine;
@@ -138,6 +140,9 @@ namespace rush
         Ref<RBuffer> m_FrameDataBuffer;
         FrameData m_FrameData;
         Ref<RBindGroup> m_FrameDataGroup;
+
+        // TransformData
+        Ref<RBindGroup> m_TransformDataGroup;
 
         // Lighting Data
         Ref<RBuffer> m_DirectionalLightBuffer;

@@ -113,15 +113,6 @@ namespace rush
         }
     }
 
-    void replaceStr(std::string& str, const StringView& from, const StringView& to) 
-    {
-        size_t start_pos = 0;
-        while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
-            str.replace(start_pos, from.length(), to);
-            start_pos += to.length(); // 为了处理替换字符串中包含替换目标的情况
-        }
-    }
-
     void AssetsManager::LoadOrCompileShader(const StringView& path, const List<String>& defines, const StringView& code, const StringView& uniforms, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param /*= nullptr*/)
     {
         uint64_t h(0);
@@ -133,37 +124,9 @@ namespace rush
         auto iter = m_Shaders.find(spvPath);
         if (iter == m_Shaders.end())
         {
-            auto relPath = "../../" + spvPath;
-            char cmd[1024];
-            auto src = String("../../") + String(path);
-            auto inc = Path(src).parent_path().string();
-
-            std::string templateCode = "#pragma USER_SAMPLERS\nvoid _executeUserCode(inout Material material) { \n#pragma USER_CODE\n}";
-
-            replaceStr(templateCode, "#pragma USER_CODE", code);
-            replaceStr(templateCode, "#pragma USER_SAMPLERS", uniforms);
-            auto outPath = std::filesystem::absolute("../../assets/temp/user.glsl").string();
-            std::ofstream outputFile(outPath.c_str(), std::ios::out | std::ios::trunc);
-            if (!outputFile.is_open()) {
-                LOG_ERROR("Compile Shader {} failed", String(path));
-                return;
-            }
-
-            outputFile << templateCode;
-            outputFile.close();
-
-            sprintf(cmd, "glslc \"%s\" -I \"%s\" -I \"%s\" -o \"%s\"", src.c_str(), inc.c_str(), "../../assets/temp", relPath.c_str());
-
-            // macros
-            for (const auto& define : defines)
+            if (RShader::Compile(path, spvPath, defines, code, uniforms))
             {
-                auto macro = String("-D") + String(define);
-                sprintf(cmd, "%s %s", cmd, macro.c_str());
-            }
-
-            int result = std::system(cmd);
-            if (result == 0)
-            {
+                auto relPath = String("../../") + String(spvPath);
                 BundleManager::instance().LoadSingleFile(relPath);
                 auto shader = CreateRef<RShader>(path);
                 if (shader->Load(relPath))
@@ -185,7 +148,6 @@ namespace rush
                     callback(AssetLoadResult::ParseFailed, nullptr, param);
             }
 
-            std::remove(outPath.c_str());
         }
         else
         {

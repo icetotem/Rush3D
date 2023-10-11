@@ -2,10 +2,9 @@
 
 layout(location = 0) in vec2 v_TexCoord;
 
-layout(binding = 0) uniform sampler2D t_SceneColor;
-layout(binding = 1) uniform sampler2D t_Blur;
-
-layout(location = 0) uniform float u_Strength;
+layout(set = 3, binding = 0) uniform sampler2D t_SceneColor;
+layout(set = 3, binding = 1) uniform sampler2D t_Blur;
+layout(set = 3, location = 2) uniform float u_Strength;
 
 layout(location = 0) out vec4 FragColor;
 void main() {

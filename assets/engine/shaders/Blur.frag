@@ -4,12 +4,12 @@
 
 layout(location = 0) in vec2 v_TexCoord;
 
-layout(binding = 0) uniform sampler2D t_0;
+layout(set = 3, binding = 0) uniform sampler2D t_0;
 
 #include <Lib/Texture.glsl>
 
-layout(location = 0) uniform bool u_Horizontal;
-layout(location = 1) uniform float u_Scale = 1.0;
+layout(set = 3, location = 0) uniform bool u_Horizontal;
+layout(set = 3, location = 1) uniform float u_Scale = 1.0;
 
 const float kOffsets[3] = {0.0, 1.3846153846, 3.2307692308};
 const float kWeights[3] = {0.2270270270, 0.3162162162, 0.0702702703};

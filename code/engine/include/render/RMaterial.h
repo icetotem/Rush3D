@@ -113,28 +113,6 @@ namespace rush
         std::optional<DefaultLitData> m_DefaulLitData;
     };
 
-    //////////////////////////////////////////////////////////////////////////
-
-//     class RMaterialInst : public Asset
-//     {
-//     public:
-//         virtual bool Load(const StringView& path) override;
-// 
-//         static Ref<RUniformBuffer> GetGlobalUniformBuffer() { return s_GlobalUniformBuffer; }
-// 
-//         Ref<RMaterial> GetMaterial() const { return m_Material; }
-// 
-//         const wgpu::BindGroup& GetBindGroup() const { return m_BindGroup->GetBindGroup(); }
-// 
-//     protected:
-//         friend class SceneManager;
-// 
-//         Ref<RMaterial> m_Material;
-//         Ref<RUniformBuffer> m_UniformBuffer;
-//         static Ref<RUniformBuffer> s_GlobalUniformBuffer;
-//         Ref<RBindGroup> m_BindGroup;
-//     };
-
 }
 
 #endif // RMaterial_h__

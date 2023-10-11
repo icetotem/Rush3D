@@ -2,8 +2,6 @@
 
 // Use with Geometry.vert
 
-#include <Resources/FrameBlock.glsl>
-
 #include "BasePassAttributes.glsl"
 
 #include <Lib/Math.glsl>
@@ -18,11 +16,11 @@
 layout(early_fragment_tests) in;
 #endif
 
-layout(set = 1, binding = 0) uniform MaterialFlags{
+layout(set = 2, binding = 0) uniform MaterialFlags_t {
   int materialFlags;
-} MaterialFlags_t;
+} u_MaterialFlags;
 
-#define u_MaterialFlags MaterialFlags_t.materialFlags
+#define u_MaterialFlags u_MaterialFlags.materialFlags
 
 layout(location = 0) out vec4 GBuffer0; // .rgb = Normal
 layout(location = 1) out vec4 GBuffer1; // .rgb = Albedo, .a = SpecularWeight

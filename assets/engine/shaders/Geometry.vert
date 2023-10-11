@@ -10,27 +10,28 @@ layout(location = 1) in vec3 a_Color0;
 layout(location = 2) in vec3 a_Normal;
 #  ifdef HAS_TANGENTS
 layout(location = 3) in vec3 a_Tangent;
-layout(location = 4) in vec3 a_Bitangent;
 #  endif
 #endif
 #ifdef HAS_TEXCOORD0
-layout(location = 5) in vec2 a_TexCoord0;
+layout(location = 4) in vec2 a_TexCoord0;
 #endif
 #ifdef HAS_TEXCOORD1
-layout(location = 6) in vec2 a_TexCoord1;
+layout(location = 5) in vec2 a_TexCoord1;
 #endif
 #ifdef IS_SKINNED
-layout(location = 7) in ivec4 a_Joints;
-layout(location = 8) in vec4 a_Weights;
+layout(location = 6) in ivec4 a_Joints;
+layout(location = 7) in vec4 a_Weights;
 #endif
 
+#include <Resources/FrameBlock.glsl>
 
-layout(set = 1, binding = 0) uniform Transform {
+/*
+layout(set = 3, binding = 0) uniform Transform {
   mat4 modelMatrix;
   mat4 normalMatrix;
   mat4 modelViewProjMatrix;
 } u_Transform;
-
+*/
 
 out gl_PerVertex { vec4 gl_Position; };
 
@@ -57,15 +58,16 @@ vs_out;
 
 void main() {
   //vs_out.fragPos = u_Transform.modelMatrix * vec4(a_Position, 1.0);
-  vs_out.fragPos = u_Transform.modelMatrix * vec4(a_Position, 1.0);
+  vs_out.fragPos = vec4(a_Position, 1.0);
 
 #ifdef HAS_NORMAL
-  const mat3 normalMatrix = mat3(u_Transform.normalMatrix);
+  const mat3 normalMatrix = mat3(u_viewProj);
   const vec3 N = normalize(normalMatrix * a_Normal);
 #  ifdef HAS_TANGENTS
   vec3 T = normalize(normalMatrix * a_Tangent);
   T = normalize(T - dot(T, N) * N);
-  vec3 B = normalize(normalMatrix * a_Bitangent);
+  vec3 binormal = cross(a_Tangent, N);
+  vec3 B = normalize(normalMatrix * binormal);
   vs_out.TBN = mat3(T, B, N);
 #  else
   vs_out.normal = N;
@@ -83,5 +85,5 @@ void main() {
   vs_out.color = a_Color0;
 #endif
 
-  gl_Position = u_Transform.modelViewProjMatrix * vec4(a_Position, 1.0);
+  gl_Position = u_viewProj * vec4(a_Position, 1.0);
 }

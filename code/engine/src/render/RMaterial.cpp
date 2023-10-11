@@ -122,27 +122,27 @@ namespace rush
             }
         }
 
-        if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_color", &tempBool))
+        if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_color", &tempBool) && tempBool)
         {
             defines.push_back("HAS_COLOR");
         }
-        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_normal", &tempBool))
+        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_normal", &tempBool) && tempBool)
         {
             defines.push_back("HAS_NORMAL");
         }
-        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_tangent", &tempBool))
+        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_tangent", &tempBool) && tempBool)
         {
             defines.push_back("HAS_TANGENTS");
         }
-        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_texcoord0", &tempBool))
+        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_texcoord0", &tempBool) && tempBool)
         {
             defines.push_back("HAS_TEXCOORD0");
         }
-        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_texcoord1", &tempBool))
+        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.has_texcoord1", &tempBool) && tempBool)
         {
             defines.push_back("HAS_TEXCOORD1");
         }
-        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.is_skined", &tempBool))
+        else if (CONFIG_TRUE == config_lookup_bool(&cfg, "material.is_skined", &tempBool) && tempBool)
         {
             defines.push_back("IS_SKINNED");
         }
@@ -278,14 +278,18 @@ namespace rush
                 char uniformLine[128];
                 if (info.type == BindingType::Texture)
                 {
-                    sprintf(uniformLine, "layout(set = 0, binding = %d) uniform texture2D %s;\n", info.binding, info.name.c_str());
+                    sprintf(uniformLine, "layout(set = 2, binding = %d) uniform texture2D %s;\n", info.binding, info.name.c_str());
+                    uniformCode += uniformLine;
                 }
                 else if (info.type == BindingType::Sampler)
                 {
-                    sprintf(uniformLine, "layout(set = 0, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
+                    sprintf(uniformLine, "layout(set = 2, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
+                    uniformCode += uniformLine;
                 }
-
-                uniformCode += uniformLine;
+//                 else if (info.type == BindingType::Uniform)
+//                 {
+//                     sprintf(uniformLine, "layout(set = 2, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
+//                 }
             }
         }
 
@@ -354,6 +358,9 @@ namespace rush
             plLayoutDesc.label = lyoutlabel.c_str();
             DArray<wgpu::BindGroupLayout> bindingGroupLayouts;
 
+            bindingGroupLayouts.push_back(renderer->GetFrameDataGroup()->GetBindLayoutHandle());
+            bindingGroupLayouts.push_back(renderer->GetTransformDataGroup()->GetBindLayoutHandle());
+
             if (material->m_BindInfos.size() > 0)
             {
                 if (material->m_BindGroup == nullptr)
@@ -416,11 +423,6 @@ namespace rush
                 bindingGroupLayouts.push_back(material->m_BindGroup->GetBindLayoutHandle());
             }
 
-            //if (material->GetType() == MaterialType::Surface)
-            {
-                bindingGroupLayouts.push_back(renderer->GetFrameDataGroup()->GetBindLayoutHandle());
-                //bindingGroupLayouts.push_back(renderer->GetLightDataGroup()->GetBindLayoutHandle());
-            }
 
             plLayoutDesc.bindGroupLayoutCount = bindingGroupLayouts.size();
             plLayoutDesc.bindGroupLayouts = bindingGroupLayouts.data();

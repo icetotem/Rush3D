@@ -5,13 +5,26 @@ material:
     vs  = "assets/engine/shaders/geometry.vert";
     fs  = "assets/engine/shaders/gbufferpass.frag";
 
+    has_color = false;
+    has_normal = true;
+    has_tangent = false;
+    has_texcoord0 = true;
+    has_texcoord1 = false;
+    is_skined = false;
+
     uniforms = (
-        { binding=0; type="texture"; name = "u_baseColor"; path="assets/Bricks051_2K_Color.jpg"; },
-        { binding=1; type="sampler"; name = "u_baseColorSampler"; address="repeat"; mag="linear"; min="linear"; mip="linear"; }
+        { binding = 0; type = "uniform"; name = "u_MaterialFlags"; size = 4; },
+        { binding = 1; type = "texture"; name = "u_baseColor"; path = "assets/Bricks051_2K_Color.jpg"; },
+        { binding = 2; type = "sampler"; name = "u_baseColorSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
+        { binding = 3; type = "texture"; name = "u_normal"; path = "assets/Bricks051_2K_Normal.jpg"; },
+        { binding = 4; type = "sampler"; name = "u_normalSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
     );
 
     code = "
         vec4 color = texture(sampler2D(u_baseColor, u_baseColorSampler), getTexCoord0());
         material.baseColor = color.rgb;
+                
+        vec4 normalMap = texture(sampler2D(u_normal, u_normalSampler), getTexCoord0());
+        material.normal = normalMap.rgb;
     ";
 }

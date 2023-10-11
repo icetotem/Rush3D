@@ -68,4 +68,39 @@ namespace rush
         return true;
     }
 
+    bool RShader::Compile(const StringView& inputPath, const StringView& outputPath, const List<String>& defines, const StringView& code, const StringView& uniforms)
+    {
+        auto relPath = String("../../") + String(outputPath);
+        char cmd[1024];
+        auto src = String("../../") + String(inputPath);
+        auto inc = Path(src).parent_path().string();
+
+        std::string templateCode = "#pragma USER_SAMPLERS\nvoid _executeUserCode(inout Material material) { \n#pragma USER_CODE\n}";
+
+        str_replace(templateCode, "#pragma USER_CODE", code);
+        str_replace(templateCode, "#pragma USER_SAMPLERS", uniforms);
+        auto outPath = std::filesystem::absolute("../../assets/temp/user.glsl").string();
+        std::ofstream outputFile(outPath.c_str(), std::ios::out | std::ios::trunc);
+        if (!outputFile.is_open()) {
+            LOG_ERROR("Compile Shader {} failed", String(inputPath));
+            return false;
+        }
+
+        outputFile << templateCode;
+        outputFile.close();
+
+        sprintf(cmd, "glslc \"%s\" -I \"%s\" -I \"%s\" -o \"%s\"", src.c_str(), inc.c_str(), "../../assets/temp", relPath.c_str());
+
+        // macros
+        for (const auto& define : defines)
+        {
+            auto macro = String("-D") + String(define);
+            sprintf(cmd, "%s %s", cmd, macro.c_str());
+        }
+
+        int ret = std::system(cmd);
+        std::remove(outPath.c_str());
+        return ret == 0;
+    }
+
 }

@@ -41,8 +41,12 @@ namespace rush
         m_FrameDataGroup->AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer);
         m_FrameDataGroup->Create("FrameData_group");
 
-        m_DirectionalLightBuffer = CreateRef<RUniformBuffer>(sizeof(m_DirectionalLightData), &m_DirectionalLightData, "DirectionalLightData_buffer");
-        m_PointLightsBuffer = CreateRef<RUniformBuffer>(sizeof(PointLightData) * kMaxPointLights, &m_PointLightsData, "PointLightData_buffer");
+        m_TransformDataGroup = CreateRef<RBindGroup>();
+        m_TransformDataGroup->AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer);
+        m_TransformDataGroup->Create("FrameData_group");
+
+//         m_DirectionalLightBuffer = CreateRef<RUniformBuffer>(sizeof(m_DirectionalLightData), &m_DirectionalLightData, "DirectionalLightData_buffer");
+//         m_PointLightsBuffer = CreateRef<RUniformBuffer>(sizeof(PointLightData) * kMaxPointLights, &m_PointLightsData, "PointLightData_buffer");
 //         m_LightingDataGroup = CreateRef<RBindGroup>();
 //         m_LightingDataGroup->AddBinding(0, ShaderStage::Fragment, m_DirectionalLightBuffer);
 //         m_LightingDataGroup->AddBinding(1, ShaderStage::Fragment, m_PointLightsBuffer);
@@ -183,6 +187,7 @@ namespace rush
             m_FrameData.camera.view = camera->GetViewMatrix();
             m_FrameData.camera.inversedProjection = glm::inverse(camera->GetProjMatrix());
             m_FrameData.camera.inversedView = glm::inverse(camera->GetViewMatrix());
+            m_FrameData.camera.vp = m_FrameData.camera.projection * m_FrameData.camera.view;
             m_FrameData.camera.fov = camera->GetFov();
             m_FrameData.camera._near = camera->GetNearClip();
             m_FrameData.camera._far = camera->GetFarClip();
@@ -192,8 +197,12 @@ namespace rush
             m_FrameData.renderFeatures = 0;
             m_FrameData.deltaTime = 0;
             m_FrameDataBuffer->UpdateData(&m_FrameData, sizeof(m_FrameData));
-            pass.SetBindGroup(1, m_FrameDataGroup->GetBindGroupHandle());
+            pass.SetBindGroup(0, m_FrameDataGroup->GetBindGroupHandle());
         }
+
+        // set transform data
+        if (m_TransformDataGroup->GetBindGroupHandle())
+            pass.SetBindGroup(1, m_TransformDataGroup->GetBindGroupHandle());
 
         // set light data
 #if 0
@@ -234,8 +243,8 @@ namespace rush
             auto geo = batch.renderable.geometry;
             auto mat = batch.renderable.material;
             pass.SetPipeline(RMaterial::GetPipeline(this, geo, mat, outputBuffers));
-            if (mat->GetBindGroup() && mat->GetBindGroup()->GetBindGroupHandle())
-                pass.SetBindGroup(0, mat->GetBindGroup()->GetBindGroupHandle());
+            if (mat && mat->GetBindGroup() && mat->GetBindGroup()->GetBindGroupHandle())
+                pass.SetBindGroup(2, mat->GetBindGroup()->GetBindGroupHandle());
             for (uint32_t vb = 0; vb < geo->GetVBCount(); ++vb)
             {
                 pass.SetVertexBuffer(vb, geo->GetVB(vb)->GetBufferHandle());
@@ -248,6 +257,12 @@ namespace rush
 
     void Renderer::DrawQuad(Ref<RMaterial> material, const FrameBuffer& outputBuffers)
     {
+        if (material == nullptr)
+        {
+            LOG_WARN("Frame buffer {} render quad does not have any material", outputBuffers.lable);
+            return;
+        }
+
         wgpu::RenderPassDescriptor renderPassDesc = {};
         renderPassDesc.label = outputBuffers.lable.c_str();
         renderPassDesc.depthStencilAttachment = nullptr;
@@ -302,20 +317,18 @@ namespace rush
 
         // set frame data
         if (m_FrameDataGroup->GetBindGroupHandle())
-            pass.SetBindGroup(1, m_FrameDataGroup->GetBindGroupHandle());
+            pass.SetBindGroup(0, m_FrameDataGroup->GetBindGroupHandle());
 
-        if (material)
+        if (m_TransformDataGroup->GetBindGroupHandle())
+            pass.SetBindGroup(1, m_TransformDataGroup->GetBindGroupHandle());
+
+        pass.SetPipeline(RMaterial::GetPipeline(this, m_ScreenQuadGeo, material, outputBuffers));
+        if (material->GetBindGroup() && material->GetBindGroup()->GetBindGroupHandle())
         {
-            pass.SetPipeline(RMaterial::GetPipeline(this, m_ScreenQuadGeo, material, outputBuffers));
-            if (material->GetBindGroup() && material->GetBindGroup()->GetBindGroupHandle())
-                pass.SetBindGroup(0, material->GetBindGroup()->GetBindGroupHandle());
-            pass.SetVertexBuffer(0, m_ScreenQuadGeo->GetVB(0)->GetBufferHandle());
-            pass.Draw(3);
+            pass.SetBindGroup(2, material->GetBindGroup()->GetBindGroupHandle());
         }
-        else
-        {
-            LOG_WARN("Frame buffer {} render quad does not have any material", outputBuffers.lable);
-        }
+        pass.SetVertexBuffer(0, m_ScreenQuadGeo->GetVB(0)->GetBufferHandle());
+        pass.Draw(3);
 
         pass.End();
     }
