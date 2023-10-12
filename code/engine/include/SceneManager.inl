@@ -174,7 +174,7 @@ namespace rush
         // render
         for (auto& [cam, renderQueue] : renderContent)
         {
-            renderQueue->MergeBatch();
+            renderQueue->MergeAndSortBatch();
             renderer->Render(renderQueue, surface);
         }
     }

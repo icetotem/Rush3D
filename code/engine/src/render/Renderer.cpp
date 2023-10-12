@@ -17,6 +17,8 @@
 namespace rush
 {
 
+#define MAX_INSTANCE_COUNT 2000
+
     Renderer::Renderer(uint32_t width, uint32_t height)
     {
         m_Width = width;
@@ -41,10 +43,19 @@ namespace rush
         m_FrameDataGroup->AddBinding(0, ShaderStage::Vertex | ShaderStage::Fragment, m_FrameDataBuffer, wgpu::BufferBindingType::Uniform);
         m_FrameDataGroup->Create("FrameData_group");
 
-        m_TransformBuffer = CreateRef<RStorageBuffer>(sizeof(Matrix4) * 2000, nullptr, "Transform_buffer");
+        m_TransformBuffer = CreateRef<RStorageBuffer>(sizeof(Matrix4) * MAX_INSTANCE_COUNT, nullptr, "Transform_buffer");
         m_TransformDataGroup = CreateRef<RBindGroup>();
-        m_TransformDataGroup->AddBinding(0, ShaderStage::Vertex, m_TransformBuffer, wgpu::BufferBindingType::Storage);
-        m_TransformDataGroup->Create("FrameData_group");
+        m_TransformDataGroup->AddBinding(0, ShaderStage::Vertex, m_TransformBuffer, wgpu::BufferBindingType::ReadOnlyStorage);
+        m_TransformDataGroup->Create("Transform_group");
+
+        for (int i = 0; i < MAX_INSTANCE_COUNT; ++i)
+        {
+            auto& instBindGroup = m_InstanceBindGroups.emplace_back();
+            instBindGroup.buffer = CreateRef<RUniformBuffer>(sizeof(InstanceData), &instBindGroup.data, "InstanceData_buffer");
+            instBindGroup.group = CreateRef<RBindGroup>();
+            instBindGroup.group->AddBinding(0, ShaderStage::Vertex, instBindGroup.buffer, wgpu::BufferBindingType::Uniform);
+            instBindGroup.group->Create("InstanceData_group");
+        }
 
 //         m_DirectionalLightBuffer = CreateRef<RUniformBuffer>(sizeof(m_DirectionalLightData), &m_DirectionalLightData, "DirectionalLightData_buffer");
 //         m_PointLightsBuffer = CreateRef<RUniformBuffer>(sizeof(PointLightData) * kMaxPointLights, &m_PointLightsData, "PointLightData_buffer");
@@ -207,13 +218,13 @@ namespace rush
         {
             for (const auto& batch : renderQueue->GetBatches())
             {
-                for (uint32_t i = 0; i < batch.second.instanceCount; ++i)
+                for (uint32_t i = 0; i < batch->instanceCount; ++i)
                 {
-                    m_Transforms.push_back(*batch.second.transforms[i]);
+                    m_Transforms.push_back(*batch->transforms[i]);
                 }
             }
             m_TransformBuffer->UpdateData(m_Transforms.data(), sizeof(Matrix4) * m_Transforms.size());
-            pass.SetBindGroup(1, m_TransformDataGroup->GetBindGroupHandle());
+            pass.SetBindGroup(2, m_TransformDataGroup->GetBindGroupHandle());
         }
 
         // set light data
@@ -250,19 +261,50 @@ namespace rush
         }
 #endif
 
-        for (const auto& batch : renderQueue->GetBatches())
+        uint32_t transformOffset = 0;
+        uint32_t batchIndex = 0;
+        uint64_t lastPipeHash = 0;
+        uint64_t lastGroupHash = 0;
+        for (auto batch : renderQueue->GetBatches())
         {
-            auto geo = batch.second.renderable.geometry;
-            auto mat = batch.second.renderable.material;
-            pass.SetPipeline(RMaterial::GetPipeline(this, geo, mat, outputBuffers));
-            if (mat && mat->GetBindGroup() && mat->GetBindGroup()->GetBindGroupHandle())
-                pass.SetBindGroup(2, mat->GetBindGroup()->GetBindGroupHandle());
+            auto geo = batch->renderable.geometry;
+            auto mat = batch->renderable.material;
+            auto pipe = RMaterial::GetPipeline(this, geo, mat, outputBuffers);
+
+            if (lastPipeHash != batch->renderable.hashPipeline)
+            {
+                pass.SetPipeline(pipe);
+                lastPipeHash = batch->renderable.hashPipeline;
+
+                if (mat && mat->GetBindGroup() && mat->GetBindGroup()->GetBindGroupHandle() && mat->GetBindGroupHash() != lastGroupHash)
+                {
+                    lastGroupHash = mat->GetBindGroupHash();
+                    pass.SetBindGroup(1, mat->GetBindGroup()->GetBindGroupHandle());
+                }
+            }
+
+            if (m_InstanceBindGroups.size() < batchIndex + 1)
+            {
+                auto& instBindGroup = m_InstanceBindGroups.emplace_back();
+                instBindGroup.buffer = CreateRef<RUniformBuffer>(sizeof(InstanceData), &instBindGroup.data, "InstanceData_buffer");
+                instBindGroup.group = CreateRef<RBindGroup>();
+                instBindGroup.group->AddBinding(0, ShaderStage::Vertex, instBindGroup.buffer, wgpu::BufferBindingType::Uniform);
+                instBindGroup.group->Create("InstanceData_group");
+            }
+
+            m_InstanceBindGroups[batchIndex].data.transformOffset = transformOffset;
+            m_InstanceBindGroups[batchIndex].buffer->UpdateData(&m_InstanceBindGroups[batchIndex].data);
+            transformOffset += batch->instanceCount;
+            pass.SetBindGroup(3, m_InstanceBindGroups[batchIndex].group->GetBindGroupHandle());
+
             for (uint32_t vb = 0; vb < geo->GetVBCount(); ++vb)
             {
                 pass.SetVertexBuffer(vb, geo->GetVB(vb)->GetBufferHandle());
             }
             pass.SetIndexBuffer(geo->GetIB()->GetBufferHandle(), geo->GetIB()->GetType());
-            pass.DrawIndexed(geo->GetIB()->GetIndexCount(), batch.second.instanceCount, 0, 0);
+            pass.DrawIndexed(geo->GetIB()->GetIndexCount(), batch->instanceCount, 0, 0);
+
+            ++batchIndex;
         }
         pass.End();
     }
@@ -331,13 +373,10 @@ namespace rush
         if (m_FrameDataGroup->GetBindGroupHandle())
             pass.SetBindGroup(0, m_FrameDataGroup->GetBindGroupHandle());
 
-        if (m_TransformDataGroup->GetBindGroupHandle())
-            pass.SetBindGroup(1, m_TransformDataGroup->GetBindGroupHandle());
-
         pass.SetPipeline(RMaterial::GetPipeline(this, m_ScreenQuadGeo, material, outputBuffers));
         if (material->GetBindGroup() && material->GetBindGroup()->GetBindGroupHandle())
         {
-            pass.SetBindGroup(2, material->GetBindGroup()->GetBindGroupHandle());
+            pass.SetBindGroup(1, material->GetBindGroup()->GetBindGroupHandle());
         }
         pass.SetVertexBuffer(0, m_ScreenQuadGeo->GetVB(0)->GetBufferHandle());
         pass.Draw(3);

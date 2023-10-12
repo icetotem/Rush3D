@@ -38,8 +38,8 @@ layout(set = 1, binding = 1) uniform PointLightDataWrap
 
 #define u_pointLightData pointLightData.data
 
-layout(set = 2, binding = 0) uniform texture2D u_baseColor;
-layout(set = 2, binding = 1) uniform sampler u_baseColorSampler;
+layout(set = 1, binding = 0) uniform texture2D u_baseColor;
+layout(set = 1, binding = 1) uniform sampler u_baseColorSampler;
 
 void main()
 {

@@ -26,10 +26,10 @@ namespace rush
         }
 
         // hash
-        for (int i = 0; i < kMaxVertexBuffers; ++i)
+        for (int i = 0; i < m_BufferCount; ++i)
         {
             hashCombine(m_LayoutHash, m_Layouts[i].stride);
-            for (int j = 0; j < kMaxVertexAttributes; ++j)
+            for (int j = 0; j < m_Layouts[i].attributeCount; ++j)
             {
                 hashCombine(m_LayoutHash, m_Layouts[i].attributes[j].format, m_Layouts[i].attributes[j].offset, m_Layouts[i].attributes[j].location);
             }

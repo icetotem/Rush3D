@@ -40,6 +40,19 @@ namespace rush
         float padding[2];
     };
 
+    struct InstanceData
+    {
+        uint32_t transformOffset;
+    };
+
+    struct InstanceBindGroup
+    {
+        Ref<RBuffer> buffer;
+        InstanceData data;
+        Ref<RBindGroup> group;
+    };
+
+
     struct DirectLightData
     {
         Vector3 direction;
@@ -104,6 +117,7 @@ namespace rush
 
         const Ref<RBindGroup> GetFrameDataGroup() const { return m_FrameDataGroup; }
         const Ref<RBindGroup> GetTransformDataGroup() const { return m_TransformDataGroup; }
+        const Ref<RBindGroup> GetInstanceDataGroup() const { return m_InstanceBindGroups[0].group; }
         //const Ref<RBindGroup> GetLightDataGroup() const { return m_LightingDataGroup; }
 
     protected:
@@ -145,6 +159,9 @@ namespace rush
         Ref<RBuffer> m_TransformBuffer;
         DArray<Matrix4> m_Transforms;
         Ref<RBindGroup> m_TransformDataGroup;
+
+        // instance data
+        DArray<InstanceBindGroup> m_InstanceBindGroups;
 
         // Lighting Data
         Ref<RBuffer> m_DirectionalLightBuffer;

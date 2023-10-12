@@ -80,6 +80,7 @@ namespace rush
         str_replace(templateCode, "#pragma USER_CODE", code);
         str_replace(templateCode, "#pragma USER_SAMPLERS", uniforms);
         auto outPath = std::filesystem::absolute("../../assets/temp/user.glsl").string();
+        std::remove(outPath.c_str());
         std::ofstream outputFile(outPath.c_str(), std::ios::out | std::ios::trunc);
         if (!outputFile.is_open()) {
             LOG_ERROR("Compile Shader {} failed", String(inputPath));

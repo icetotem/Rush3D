@@ -12,7 +12,8 @@ namespace rush
 
     struct Renderable
     {
-        uint64_t hash = 0;
+        uint64_t hashPipeline = 0;
+        uint64_t hashInst = 0;
         Ref<RGeometry> geometry;
         Ref<RMaterial> material;
         const Matrix4* transform = nullptr;
@@ -35,9 +36,9 @@ namespace rush
 
         void AddLight(Light* light);
 
-        const Map<uint64_t, RenderBatch>& GetBatches() const { return m_Batches; }
+        const List<const RenderBatch*>& GetBatches() const { return m_BatchList; }
 
-        void MergeBatch();
+        void MergeAndSortBatch();
 
         Entity GetCamera() const { return m_Camera; }
 
@@ -45,7 +46,8 @@ namespace rush
 
     private:
         List<Renderable> m_Renderables;
-        Map<uint64_t, RenderBatch> m_Batches;
+        Map<uint64_t, RenderBatch> m_BatchCache;
+        List<const RenderBatch*> m_BatchList;
         List<Light*> m_Lights;
         Entity m_Camera;
     };

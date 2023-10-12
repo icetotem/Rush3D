@@ -62,27 +62,72 @@ int main(int argc, char* argv[])
     firstPersonCtrl.Setup(engine.GetMainWindow(), mainCamera);
 
     // create the entity
+    for (int i = 1; i < 3; ++i)
     {
-        auto ent = mainScene->CreateEntity("ent0");
+        auto ent = mainScene->CreateEntity();
 
         auto trans = ent.Add<Transform>();
-        trans->SetPosition(0, 0, 0);
+        trans->SetPosition(i * 3.0f, 0, 0);
 
         auto meshRenderer = ent.Add<MeshRenderer>();
-        meshRenderer->AddModel("assets/cube.glb");
-        //meshRenderer->SetMaterial(0, "assets/test.mat");
+        meshRenderer->AddModel("assets/monkey.glb");
+        meshRenderer->SetMaterial(0, "assets/test.mat");
 
         auto bonding = ent.Add<Bounding>();
     }
+
+    for (int i = 1; i < 3; ++i)
     {
-        auto ent = mainScene->CreateEntity("ent1");
+        auto ent = mainScene->CreateEntity();
 
         auto trans = ent.Add<Transform>();
-        trans->SetPosition(2, 0, 0);
+        trans->SetPosition(-i * 3.0f, 0, 0);
+
+        auto meshRenderer = ent.Add<MeshRenderer>();
+        meshRenderer->AddModel("assets/monkey.glb");
+        meshRenderer->SetMaterial(0, "assets/test2.mat");
+
+        auto bonding = ent.Add<Bounding>();
+    }
+
+    for (int i = 1; i < 3; ++i)
+    {
+        auto ent = mainScene->CreateEntity();
+
+        auto trans = ent.Add<Transform>();
+        trans->SetPosition(0, i * 3.0f, 0);
+
+        auto meshRenderer = ent.Add<MeshRenderer>();
+        meshRenderer->AddModel("assets/monkey.glb");
+        //meshRenderer->SetMaterial(0, "assets/test2.mat"); // default mat
+
+        auto bonding = ent.Add<Bounding>();
+    }
+
+    for (int i = 1; i < 3; ++i)
+    {
+        auto ent = mainScene->CreateEntity();
+
+        auto trans = ent.Add<Transform>();
+        trans->SetPosition(0, -i * 3.0f, 0);
 
         auto meshRenderer = ent.Add<MeshRenderer>();
         meshRenderer->AddModel("assets/cube.glb");
-        //meshRenderer->SetMaterial(0, "assets/test.mat");
+        //meshRenderer->SetMaterial(0, "assets/test2.mat"); // default mat
+
+        auto bonding = ent.Add<Bounding>();
+    }
+
+    for (int i = 3; i < 5; ++i)
+    {
+        auto ent = mainScene->CreateEntity();
+
+        auto trans = ent.Add<Transform>();
+        trans->SetPosition(0, -i * 3.0f, 0);
+
+        auto meshRenderer = ent.Add<MeshRenderer>();
+        meshRenderer->AddModel("assets/sphere.glb");
+        //meshRenderer->SetMaterial(0, "assets/test2.mat"); // default mat
 
         auto bonding = ent.Add<Bounding>();
     }

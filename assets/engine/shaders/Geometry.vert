@@ -33,6 +33,14 @@ layout(set = 3, binding = 0) uniform Transform {
 } u_Transform;
 */
 
+layout(set = 2, binding = 0) readonly buffer Transforms {
+  mat4 mtx[2000];
+} u_Transforms;
+
+layout(set = 3, binding = 0) uniform Instance {
+  int transformOffset;
+} u_Instance;
+
 out gl_PerVertex { vec4 gl_Position; };
 
 layout(location = 0) out VertexData {
@@ -85,5 +93,5 @@ void main() {
   vs_out.color = a_Color0;
 #endif
 
-  gl_Position = u_viewProj * vec4(a_Position, 1.0);
+  gl_Position = u_viewProj * u_Transforms.mtx[u_Instance.transformOffset + gl_InstanceIndex] * vec4(a_Position, 1.0);
 }

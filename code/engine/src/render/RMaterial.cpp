@@ -147,10 +147,10 @@ namespace rush
             defines.push_back("IS_SKINNED");
         }
 
-        String tempCode;
+        String customCode;
         if (CONFIG_TRUE == config_lookup_string(&cfg, "material.code", &tempStr))
         {
-            tempCode = tempStr;
+            customCode = tempStr;
         }
 
         String uniformCode;
@@ -186,28 +186,38 @@ namespace rush
                 }
                 info.name = name;
 
+                hash_combine(m_BindGroupHash, binding);
+                hash_combine(m_BindGroupHash, name);
+
                 if (String(type) == "texture")
                 {
                     info.type = BindingType::Texture;
+                    hash_combine(m_BindGroupHash, info.type);
+
                     const char* target = nullptr;
                     const char* path = nullptr;
                     if (CONFIG_TRUE == config_setting_lookup_string(uniform, "target", &target))
                     {
                         info.target = target;
+                        hash_combine(m_BindGroupHash, target);
                     }
                     else if (CONFIG_TRUE == config_setting_lookup_string(uniform, "path", &path))
                     {
                         info.path = path;
+                        hash_combine(m_BindGroupHash, path);
                     }
                     else
                     {
                         LOG_ERROR("Material texture uniform must define a target or path");
                         return false;
                     }
+
                 }
                 else if (String(type) == "sampler")
                 {
                     info.type = BindingType::Sampler;
+                    hash_combine(m_BindGroupHash, info.type);
+
                     const char* address = nullptr;
                     if (CONFIG_TRUE == config_setting_lookup_string(uniform, "address", &address))
                     {
@@ -223,6 +233,7 @@ namespace rush
                         {
                             info.address = AddressMode::ClampToEdge;
                         }
+                        hash_combine(m_BindGroupHash, info.address);
                     }
                     const char* mag = nullptr;
                     if (CONFIG_TRUE == config_setting_lookup_string(uniform, "mag", &mag))
@@ -235,6 +246,7 @@ namespace rush
                         {
                             info.mag = FilterMode::Nearest;
                         }
+                        hash_combine(m_BindGroupHash, info.mag);
                     }
                     const char* min = nullptr;
                     if (CONFIG_TRUE == config_setting_lookup_string(uniform, "min", &min))
@@ -247,6 +259,7 @@ namespace rush
                         {
                             info.min = FilterMode::Nearest;
                         }
+                        hash_combine(m_BindGroupHash, info.min);
                     }
                     const char* mip = nullptr;
                     if (CONFIG_TRUE == config_setting_lookup_string(uniform, "mip", &mip))
@@ -259,31 +272,35 @@ namespace rush
                         {
                             info.mip = MipmapFilterMode::Nearest;
                         }
+                        hash_combine(m_BindGroupHash, info.mip);
                     }
                 }
                 else if (String(type) == "uniform")
                 {
                     info.type = BindingType::Uniform;
+                    hash_combine(m_BindGroupHash, info.type);
                     int size = 0;
                     if (CONFIG_TRUE == config_setting_lookup_int(uniform, "size", &size))
                     {
                         info.size = size;
+                        hash_combine(m_BindGroupHash, info.size);
                     }
                 }
                 else if (String(type) == "storage")
                 {
                     info.type = BindingType::Storage;
+                    hash_combine(m_BindGroupHash, info.type);
                 }
 
                 char uniformLine[128];
                 if (info.type == BindingType::Texture)
                 {
-                    sprintf(uniformLine, "layout(set = 2, binding = %d) uniform texture2D %s;\n", info.binding, info.name.c_str());
+                    sprintf(uniformLine, "layout(set = 1, binding = %d) uniform texture2D %s;\n", info.binding, info.name.c_str());
                     uniformCode += uniformLine;
                 }
                 else if (info.type == BindingType::Sampler)
                 {
-                    sprintf(uniformLine, "layout(set = 2, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
+                    sprintf(uniformLine, "layout(set = 1, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
                     uniformCode += uniformLine;
                 }
 //                 else if (info.type == BindingType::Uniform)
@@ -304,7 +321,7 @@ namespace rush
         {
             if (m_Type == MaterialType::Surface)
             {
-                AssetsManager::instance().LoadOrCompileShader(tempStr, defines, tempCode, uniformCode, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
+                AssetsManager::instance().LoadOrCompileShader(tempStr, defines, customCode, uniformCode, [&](AssetLoadResult result, Ref<RShader> shader, void* param) {
                     m_FragmentShader = shader;
                 }, nullptr);
             }
@@ -324,13 +341,33 @@ namespace rush
         config_destroy(&cfg);
 
         // hash
-        hash_combine(m_Hash, m_Type);
-        hash_combine(m_Hash, m_VertexShader->GetHash());
-        hash_combine(m_Hash, m_FragmentShader->GetHash());
-        hash_combine(m_Hash, cullMode);
-        hash_combine(m_Hash, writeMask);
-        hash_combine(m_Hash, depthTest);
-        hash_combine(m_Hash, depthWrite);
+        hash_combine(m_ShaderHash, m_Type);
+        hash_combine(m_ShaderHash, m_ShadingModel);
+        hash_combine(m_ShaderHash, m_VertexShader->GetHash());
+        hash_combine(m_ShaderHash, m_FragmentShader->GetHash());
+        for (const auto& define : defines)
+        {
+            hash_combine(m_ShaderHash, define);
+        }
+        hash_combine(m_ShaderHash, customCode);
+
+        hash_combine(m_StateHash, cullMode);
+        hash_combine(m_StateHash, writeMask);
+        hash_combine(m_StateHash, depthTest);
+        hash_combine(m_StateHash, depthWrite);
+        hash_combine(m_StateHash, depthCompare);
+        hash_combine(m_StateHash, stencilTest);
+        hash_combine(m_StateHash, stencilWrite);
+        hash_combine(m_StateHash, opColor);
+        hash_combine(m_StateHash, srcColor);
+        hash_combine(m_StateHash, dstColor);
+        hash_combine(m_StateHash, opAlpha);
+        hash_combine(m_StateHash, srcAlpha);
+        hash_combine(m_StateHash, dstAlpha);
+
+        hash_combine(m_Hash, m_BindGroupHash);
+        hash_combine(m_Hash, m_ShaderHash);
+        hash_combine(m_Hash, m_StateHash);
 
         return true;
     }
@@ -356,9 +393,12 @@ namespace rush
             wgpu::PipelineLayoutDescriptor plLayoutDesc = {};
             auto lyoutlabel = material->GetPath() + String("_PipelineLayout_") + std::to_string(material->GetHash());
             plLayoutDesc.label = lyoutlabel.c_str();
+
             DArray<wgpu::BindGroupLayout> bindingGroupLayouts;
+
+            // add frame data group
             bindingGroupLayouts.push_back(renderer->GetFrameDataGroup()->GetBindLayoutHandle());
-            bindingGroupLayouts.push_back(renderer->GetTransformDataGroup()->GetBindLayoutHandle());
+
             if (material->m_BindInfos.size() > 0)
             {
                 if (material->m_BindGroup == nullptr)
@@ -421,6 +461,12 @@ namespace rush
                 bindingGroupLayouts.push_back(material->m_BindGroup->GetBindLayoutHandle());
             }
 
+            // add transform and instance data group
+            if (material->GetType() == MaterialType::Surface)
+            {
+                bindingGroupLayouts.push_back(renderer->GetTransformDataGroup()->GetBindLayoutHandle());
+                bindingGroupLayouts.push_back(renderer->GetInstanceDataGroup()->GetBindLayoutHandle());
+            }
 
             plLayoutDesc.bindGroupLayoutCount = bindingGroupLayouts.size();
             plLayoutDesc.bindGroupLayouts = bindingGroupLayouts.data();

@@ -358,10 +358,25 @@ namespace rush
 
     uint64_t GenerateUUID64();
 
+    extern "C"
+    {
+        extern uint64_t Hash64(const std::string& value);
+    }
+
     template<class T>
     inline void hash_combine(uint64_t& seed, const T& val)
     {
         seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
+
+    inline void hash_combine(uint64_t& seed, const char* val)
+    {
+        seed ^= Hash64(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
+
+    inline void hash_combine(uint64_t& seed, const std::string& val)
+    {
+        seed ^= Hash64(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
 
     template<class T>
@@ -389,16 +404,27 @@ namespace rush
 
     std::string Md5_Str(uint8_t md5[16]);
 
-    extern "C"
-    {
-        extern uint64_t Hash64(const std::string& value);
-    }
-
     template <typename T, typename... Rest>
     static inline void hashCombine(std::size_t& seed, const T& v, const Rest &...rest) 
     {
         // https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x
-        seed ^= std::hash<T>{}(v)+0x9e3779b9 + (seed << 6) + (seed >> 2);
+        seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        (hashCombine(seed, rest), ...);
+    }
+
+    template <typename... Rest>
+    static inline void hashCombine(std::size_t& seed, const char* v, const Rest &...rest)
+    {
+        // https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x
+        seed ^= Hash64(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        (hashCombine(seed, rest), ...);
+    }
+
+    template <typename... Rest>
+    static inline void hashCombine(std::size_t& seed, const std::string& v, const Rest &...rest)
+    {
+        // https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x
+        seed ^= Hash64(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
         (hashCombine(seed, rest), ...);
     }
 

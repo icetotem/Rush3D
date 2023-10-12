@@ -17,7 +17,8 @@ namespace rush
         renderable.geometry = geometry;
         renderable.material = material;
         renderable.transform = transform;
-        hash_val(renderable.hash, geometry->GetLayoutHash(), material->GetHash());
+        hash_val(renderable.hashPipeline, geometry->GetLayoutHash(), material->GetHash());
+        hash_val(renderable.hashInst, renderable.hashPipeline, (uint64_t*)geometry.get());
     }
 
     void RenderQueue::AddLight(Light* light)
@@ -25,15 +26,33 @@ namespace rush
         m_Lights.push_back(light);
     }
 
-    void RenderQueue::MergeBatch()
+    void RenderQueue::MergeAndSortBatch()
     {
+        // merge
         for (const auto& renderable : m_Renderables)
         {
-            auto& batch = m_Batches[renderable.hash];
+            auto& batch = m_BatchCache[renderable.hashInst];
             batch.renderable = renderable;
             batch.instanceCount++;
             batch.transforms.push_back(renderable.transform);
         }
+
+        for (auto& batch : m_BatchCache)
+        {
+            m_BatchList.push_back(&batch.second);
+        }
+
+        // sort
+        m_BatchList.sort([](const RenderBatch* a, const RenderBatch* b)->bool {
+            auto ma = a->renderable.material;
+            auto mb = b->renderable.material;
+            if (ma->GetBindGroupHash() == mb->GetBindGroupHash()) {
+                return a->renderable.hashPipeline < b->renderable.hashPipeline;
+            }
+            else {
+                return ma->GetBindGroupHash() < mb->GetBindGroupHash();
+            }
+        });
     }
 
 }

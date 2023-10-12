@@ -28,14 +28,6 @@ namespace rush
         Unlit,
     };
 
-    struct DefaultLitData
-    {
-        Ref<RTexture> albedo;
-        Ref<RTexture> normal;
-        Ref<RTexture> metalic;
-        Ref<RTexture> roughness;
-    };
-
     enum class BindingType
     {
         Uniform,
@@ -66,6 +58,9 @@ namespace rush
         static const wgpu::RenderPipeline GetPipeline(Renderer* renderer, Ref<RGeometry> geometry, Ref<RMaterial> material, const FrameBuffer& outputBuffers);
 
         uint64_t GetHash() const { return m_Hash; }
+        uint64_t GetBindGroupHash() const { return m_BindGroupHash; }
+        uint64_t GetShaderHash() const { return m_ShaderHash; }
+        uint64_t GetStateHash() const { return m_StateHash; }
 
         MaterialType GetType() const { return m_Type; }
 
@@ -87,6 +82,9 @@ namespace rush
     protected:
         String m_Path;
         uint64_t m_Hash;
+        uint64_t m_BindGroupHash;
+        uint64_t m_ShaderHash;
+        uint64_t m_StateHash;
         MaterialType m_Type = MaterialType::Surface;
         ShadingModel m_ShadingModel = ShadingModel::DefaultLit;
         BlendMode blendMode = BlendMode::Opaque;
@@ -109,8 +107,7 @@ namespace rush
         Ref<RBindGroup> m_BindGroup;
         DArray<BindInfo> m_BindInfos;
         static Map<uint64_t, wgpu::RenderPipeline> s_PipelineCache;
-        Ref<RUniformBuffer> m_UniformBuffer; 
-        std::optional<DefaultLitData> m_DefaulLitData;
+        Ref<RUniformBuffer> m_UniformBuffer;
     };
 
 }
