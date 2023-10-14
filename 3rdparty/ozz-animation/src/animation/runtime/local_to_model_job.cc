@@ -62,8 +62,7 @@ bool LocalToModelJob::Validate() const {
 
   // Test input and output ranges, implicitly tests for nullptr end pointers.
   valid &= input.size() >= num_soa_joints;
-  valid &= outputWorld.size() >= num_joints;
-  valid &= outputLocal.size() >= num_joints;
+  valid &= output.size() >= num_joints;
 
   return valid;
 }
@@ -104,9 +103,8 @@ bool LocalToModelJob::Run() const {
          ++i, process = i < end && parents[i] >= from) {
       const int parent = parents[i];
       const math::Float4x4* parent_matrix =
-          parent == Skeleton::kNoParent ? root_matrix : &outputWorld[parent];
-      outputLocal[i] = local_aos_matrices[i & 3];
-      outputWorld[i] = *parent_matrix * outputLocal[i];
+          parent == Skeleton::kNoParent ? root_matrix : &output[parent];
+      output[i] = *parent_matrix * local_aos_matrices[i & 3];
     }
   }
   return true;

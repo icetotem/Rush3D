@@ -15,6 +15,7 @@
 #include <glfw/glfw3.h>
 #include <glfw/include/GLFW/glfw3native.h>
 #include "render/RDevice.h"
+#include "imgui.h"
 
 namespace rush
 {
@@ -158,50 +159,76 @@ namespace rush
 
         glfwSetKeyCallback(m_Impl->handle, [](GLFWwindow* window, int key, int scancode, int action, int mods)
         {
-            Window* rd = (Window*)glfwGetWindowUserPointer(window);
-            switch (action)
+            ImGuiIO& io = ImGui::GetIO();
+
+//             if (key >= 0 && key < IM_ARRAYSIZE(io.KeysDown))
+//             {
+//                 if (action == GLFW_PRESS)
+//                 {
+//                     io.KeysDown[key] = true;
+//                 }
+//                 else if (action == GLFW_RELEASE)
+//                 {
+//                     io.KeysDown[key] = false;
+//                 }
+//             }
+// 
+//             io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+//             io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+//             io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+//             io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
+
+            if (!io.WantCaptureKeyboard)
             {
-            case GLFW_PRESS:
-            {
-                for (auto iter : rd->m_KeyCallbacks)
+
+                Window* rd = (Window*)glfwGetWindowUserPointer(window);
+                switch (action)
                 {
-                    std::function<bool(InputButtonState, KeyCode)> function = iter;
-                    if (!function(InputButtonState::Pressed, KeyCode(key)))
-                    {
-                        break;
-                    }
-                }
-                break;
-            }
-            case GLFW_RELEASE:
-            {
-                for (auto iter : rd->m_KeyCallbacks)
+                case GLFW_PRESS:
                 {
-                    std::function<bool(InputButtonState, KeyCode)> function = iter;
-                    if (!function(InputButtonState::Released, KeyCode(key)))
+                    for (auto iter : rd->m_KeyCallbacks)
                     {
-                        break;
+                        std::function<bool(InputButtonState, KeyCode)> function = iter;
+                        if (!function(InputButtonState::Pressed, KeyCode(key)))
+                        {
+                            break;
+                        }
                     }
+                    break;
                 }
-                break;
-            }
-            case GLFW_REPEAT:
-            {
-                for (auto iter : rd->m_KeyCallbacks)
+                case GLFW_RELEASE:
                 {
-                    std::function<bool(InputButtonState, KeyCode)> function = iter;
-                    if (!function(InputButtonState::Repeat, KeyCode(key)))
+                    for (auto iter : rd->m_KeyCallbacks)
                     {
-                        break;
+                        std::function<bool(InputButtonState, KeyCode)> function = iter;
+                        if (!function(InputButtonState::Released, KeyCode(key)))
+                        {
+                            break;
+                        }
                     }
+                    break;
                 }
-                break;
-            }
+                case GLFW_REPEAT:
+                {
+                    for (auto iter : rd->m_KeyCallbacks)
+                    {
+                        std::function<bool(InputButtonState, KeyCode)> function = iter;
+                        if (!function(InputButtonState::Repeat, KeyCode(key)))
+                        {
+                            break;
+                        }
+                    }
+                    break;
+                }
+                }
             }
         });
 
         glfwSetCharCallback(m_Impl->handle, [](GLFWwindow* window, unsigned int keycode)
         {
+            ImGuiIO& io = ImGui::GetIO();
+            io.AddInputCharacter(keycode);
+
             Window* rd = (Window*)glfwGetWindowUserPointer(window);
             for (auto iter : rd->m_CharCallbacks)
             {
@@ -215,59 +242,88 @@ namespace rush
 
         glfwSetMouseButtonCallback(m_Impl->handle, [](GLFWwindow* window, int button, int action, int mods)
         {
-            Window* rd = (Window*)glfwGetWindowUserPointer(window);            
-            switch (action)
+            ImGuiIO& io = ImGui::GetIO();
+
+            if (button >= 0 && button < IM_ARRAYSIZE(io.MouseDown))
             {
-            case GLFW_PRESS:
-            {
-                glfwFocusWindow(window); // focus window when click
-                for (auto iter : rd->m_MouseButtonCallbacks)
+                if (action == GLFW_PRESS)
                 {
-                    std::function<bool(InputButtonState, MouseCode, uint32_t mouseX, uint32_t mouseY)> function = iter;
-                    if (!function(InputButtonState::Pressed, MouseCode(button), rd->m_MouseX, rd->m_MouseY))
+                    io.MouseDown[button] = true;
+                }
+                else if (action == GLFW_RELEASE)
+                {
+                    io.MouseDown[button] = false;
+                }
+
+                if (!io.WantCaptureMouse)
+                {
+                    Window* rd = (Window*)glfwGetWindowUserPointer(window);
+                    switch (action)
                     {
+                    case GLFW_PRESS:
+                    {
+                        glfwFocusWindow(window); // focus window when click
+                        for (auto iter : rd->m_MouseButtonCallbacks)
+                        {
+                            std::function<bool(InputButtonState, MouseCode, uint32_t mouseX, uint32_t mouseY)> function = iter;
+                            if (!function(InputButtonState::Pressed, MouseCode(button), rd->m_MouseX, rd->m_MouseY))
+                            {
+                                break;
+                            }
+                        }
                         break;
                     }
-                }
-                break;
-            }
-            case GLFW_RELEASE:
-            {
-                for (auto iter : rd->m_MouseButtonCallbacks)
-                {
-                    std::function<bool(InputButtonState, MouseCode, uint32_t mouseX, uint32_t mouseY)> function = iter;
-                    if (!function(InputButtonState::Released, MouseCode(button), rd->m_MouseX, rd->m_MouseY))
+                    case GLFW_RELEASE:
                     {
+                        for (auto iter : rd->m_MouseButtonCallbacks)
+                        {
+                            std::function<bool(InputButtonState, MouseCode, uint32_t mouseX, uint32_t mouseY)> function = iter;
+                            if (!function(InputButtonState::Released, MouseCode(button), rd->m_MouseX, rd->m_MouseY))
+                            {
+                                break;
+                            }
+                        }
                         break;
                     }
+                    }
                 }
-                break;
-            }
             }
         });
 
         glfwSetScrollCallback(m_Impl->handle, [](GLFWwindow* window, double xOffset, double yOffset)
         {
-            Window* rd = (Window*)glfwGetWindowUserPointer(window);
-            for (auto iter : rd->m_MouseWheelCallbacks)
+            ImGuiIO& io = ImGui::GetIO();
+            io.MouseWheelH += (float)xOffset;
+            io.MouseWheel += (float)yOffset;
+            if (!io.WantCaptureMouse)
             {
-                std::function<bool(uint32_t)> function = iter;
-                if (!function((uint32_t)yOffset))
+                Window* rd = (Window*)glfwGetWindowUserPointer(window);
+                for (auto iter : rd->m_MouseWheelCallbacks)
                 {
-                    break;
+                    std::function<bool(uint32_t)> function = iter;
+                    if (!function((uint32_t)yOffset))
+                    {
+                        break;
+                    }
                 }
             }
         });
 
         glfwSetCursorPosCallback(m_Impl->handle, [](GLFWwindow* window, double xPos, double yPos)
         {
-            Window* rd = (Window*)glfwGetWindowUserPointer(window);
-            for (auto iter : rd->m_MouseMoveCallbacks)
+            ImGuiIO& io = ImGui::GetIO();
+            io.MousePos.x = (float)xPos;
+            io.MousePos.y = (float)yPos;
+            if (!io.WantCaptureMouse)
             {
-                std::function<bool(uint32_t, uint32_t)> function = iter;
-                if (!function((uint32_t)xPos, (uint32_t)yPos))
+                Window* rd = (Window*)glfwGetWindowUserPointer(window);
+                for (auto iter : rd->m_MouseMoveCallbacks)
                 {
-                    break;
+                    std::function<bool(uint32_t, uint32_t)> function = iter;
+                    if (!function((uint32_t)xPos, (uint32_t)yPos))
+                    {
+                        break;
+                    }
                 }
             }
         });

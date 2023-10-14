@@ -37,7 +37,7 @@
 
 // Internal include file
 #define OZZ_INCLUDE_PRIVATE_HEADER  // Allows to include private headers.
-#include "animation_keyframe.h"
+#include "animation/runtime/animation_keyframe.h"
 
 namespace ozz {
 namespace animation {

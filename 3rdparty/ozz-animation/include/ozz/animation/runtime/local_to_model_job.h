@@ -114,10 +114,7 @@ struct OZZ_ANIMATION_DLL LocalToModelJob {
   // Job output.
 
   // The output range to be filled with model-space matrices.
-  span<ozz::math::Float4x4> outputWorld;
-
-  span<ozz::math::Float4x4> outputLocal;
-
+  span<ozz::math::Float4x4> output;
 };
 }  // namespace animation
 }  // namespace ozz

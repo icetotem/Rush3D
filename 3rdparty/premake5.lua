@@ -17,6 +17,7 @@ project "Rush3D_Deps"
         "MAKE_LIB", 
         "B3_USE_CLEW", 
         "BT_USE_SSE_IN_API",
+        "IMGUI_DISABLE_OBSOLETE_KEYIO",
     }
 
     filter "action:vs*"
