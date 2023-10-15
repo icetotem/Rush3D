@@ -1,6 +1,6 @@
 #version 460 core
 
-layout(binding = 0) uniform sampler2D t_Accum;
+layout(set = 1, binding = 0) uniform sampler2D t_Accum;
 layout(binding = 1) uniform sampler2D t_Reveal;
 
 #include <Lib/Math.glsl>

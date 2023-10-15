@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec2 v_TexCoord;
 
-layout(binding = 0) uniform sampler2D t_0;
+layout(set = 1, binding = 0) uniform sampler2D t_0;
 
 const uint Tonemap_Clamp = 0;
 const uint Tonemap_ACES = 1;

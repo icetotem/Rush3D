@@ -6,7 +6,7 @@ layout(location = 0) in Interface {
 }
 fs_in;
 
-layout(binding = 0) uniform samplerCube t_Skybox;
+layout(set = 1, binding = 0) uniform samplerCube t_Skybox;
 
 layout(location = 0) out vec3 FragColor;
 void main() { FragColor = texture(t_Skybox, fs_in.eyeDirection).rgb; }

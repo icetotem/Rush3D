@@ -156,4 +156,17 @@ namespace rush
         }
     }
 
+    Ref<RMaterial> AssetsManager::GetMaterial(const StringView& path)
+    {
+        auto iter = m_Materials.find(String(path));
+        if (iter != m_Materials.end())
+        {
+            return iter->second;
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
 }

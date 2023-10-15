@@ -8,6 +8,6 @@ struct Frustum {
 };
 
 #define _DECLARE_FRUSTUMS(index, access, name)                                 \
-  layout(binding = index, std430) access buffer GridFrustums { Frustum name[]; }
+  layout(set = 1, binding = index, std430) access buffer GridFrustums { Frustum name[]; }
 
 #endif

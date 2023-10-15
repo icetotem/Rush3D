@@ -14,8 +14,8 @@
 #include <Lib/SpaceTraversal.glsl>
 
 // Returns depth in clip-space
-float getDepth(sampler2D depthMap, vec2 texCoord) {
-  const float sampledDepth = texture(depthMap, texCoord).r;
+float getDepth(texture2D depthMap, sampler samp, vec2 texCoord) {
+  const float sampledDepth = texture(sampler2D(depthMap, samp), texCoord).r;
 #if DEPTH_ZERO_TO_ONE
   return sampledDepth;
 #else

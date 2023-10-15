@@ -1,6 +1,6 @@
 #version 460 core
 
-layout(binding = 0) uniform sampler2D t_GBuffer0; // .rgb = world position
+layout(set = 1, binding = 0) uniform sampler2D t_GBuffer0; // .rgb = world position
 layout(binding = 1) uniform sampler2D t_GBuffer1; // .rgb = world normal
 
 #include "LPV.glsl"

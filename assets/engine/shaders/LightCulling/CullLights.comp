@@ -7,12 +7,12 @@ layout(local_size_x = TILE_SIZE, local_size_y = TILE_SIZE) in;
 
 #include <Resources/FrameBlock.glsl>
 
-layout(binding = 0) uniform sampler2D t_SceneDepth;
+layout(set = 1, binding = 0) uniform sampler2D t_SceneDepth;
 
 // [startOffset, lightCount]
 // .rg = opaque geometry
 // .ba = translucent geometry
-layout(binding = 0, rgba32ui) uniform restrict writeonly uimage2D i_LightGrid;
+layout(set = 1, binding = 0, rgba32ui) uniform restrict writeonly uimage2D i_LightGrid;
 
 #include <Lib/Light.glsl>
 _DECLARE_LIGHT_BUFFER(0, g_LightBuffer);

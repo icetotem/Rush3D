@@ -34,7 +34,7 @@ layout(set = 3, binding = 0) uniform Transform {
 */
 
 layout(set = 2, binding = 0) readonly buffer Transforms {
-  mat4 mtx[2000];
+  mat4 mtx[];
 } u_Transforms;
 
 layout(set = 3, binding = 0) uniform Instance {

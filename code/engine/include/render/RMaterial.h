@@ -41,7 +41,9 @@ namespace rush
         uint32_t binding;
         BindingType type;
         String name;
+        std::optional<TextureViewDimension> dim;
         std::optional<String> target;
+        std::optional<bool> isDepth;
         std::optional<String> path;
         std::optional<AddressMode> address;
         std::optional<FilterMode> mag;
@@ -76,6 +78,8 @@ namespace rush
 
         Ref<RBindGroup> GetBindGroup() const { return m_BindGroup; }
 
+        const DArray<String>& GetGlobalBindGroups() const { return m_GlobalBindGroups; }
+
     public:
         void UpdateFrameData(const FrameData& data);
 
@@ -108,6 +112,7 @@ namespace rush
         DArray<BindInfo> m_BindInfos;
         static Map<uint64_t, wgpu::RenderPipeline> s_PipelineCache;
         Ref<RUniformBuffer> m_UniformBuffer;
+        DArray<String> m_GlobalBindGroups;
     };
 
 }

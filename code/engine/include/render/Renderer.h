@@ -52,23 +52,25 @@ namespace rush
         Ref<RBindGroup> group;
     };
 
-
-    struct DirectLightData
-    {
-        Vector3 direction;
-        float pointLightCount;
-        Vector4 color;
-    };
-
-    static constexpr uint32_t kMaxPointLights = 16u;
-
-    struct PointLightData
+    struct LightData
     {
         Vector3 position;
-        float radius;
+        float range;
         Vector3 direction;
-        float angle;
+        float pading;
         Vector4 color;
+        uint32_t type;
+        float innerConeAngle; // [spot] in radians
+        float outerConeAngle; // [spot] in radians
+    };
+
+    static constexpr uint32_t kMaxPointLights = 1024;
+
+    struct LightBufferData
+    {
+        uint32_t numLights = 0;
+        uint32_t padding[3];
+        LightData data[kMaxPointLights];
     };
 
     struct FrameBufferAttachment
@@ -81,7 +83,6 @@ namespace rush
     struct FrameBuffer
     {
         std::string lable;
-
         std::vector<FrameBufferAttachment> colorAttachment;
         std::optional<String> depthStencilTexture;
         std::optional<TextureFormat> depthStencilFormat;
@@ -89,11 +90,13 @@ namespace rush
         std::optional<float> clearStencil;
     };
 
-    struct FrameTexture
+    struct SceneGraphTexture
     {
+        bool isRT = true;
         Ref<RTexture> texture;
         TextureFormat format;
-        Vector2 scale = { 1.0f, 1.0f };
+        TextureViewDimension dim;
+        Vector2 size = { 1.0f, 1.0f };
     };
 
     /// <summary>
@@ -113,12 +116,19 @@ namespace rush
 
         Ref<RTexture> GetFGTexture(const StringView& name);
         TextureFormat GetFGTextureFormat(const StringView& name);
-        Vector2 GetFGTextureScale(const StringView& name);
+        TextureViewDimension GetFGTextureViewDim(const StringView& name);
+
+        void GenAttachment(FrameBufferAttachment& inout, const StringView& name, const Vector4& clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f))
+        {
+            inout.texture = String(name);
+            inout.format = GetFGTextureFormat(name);
+            inout.clearColor = clearColor;
+        }
 
         const Ref<RBindGroup> GetFrameDataGroup() const { return m_FrameDataGroup; }
         const Ref<RBindGroup> GetTransformDataGroup() const { return m_TransformDataGroup; }
         const Ref<RBindGroup> GetInstanceDataGroup() const { return m_InstanceBindGroups[0].group; }
-        //const Ref<RBindGroup> GetLightDataGroup() const { return m_LightingDataGroup; }
+        const Ref<RBindGroup> GetLightDataGroup() const { return m_LightDataGroup; }
 
     protected:
         friend class Engine;
@@ -132,7 +142,8 @@ namespace rush
 
         void CreateFullScreenQuad();
 
-        void RegisterFGTexture(const StringView& name, TextureFormat format, Vector2 viewScale);
+        void RegisterFGRenderTexture(const StringView& name, TextureFormat format, TextureViewDimension dim, Vector2 viewScale);
+        void RegisterFGDynamicTexture(const StringView& name, TextureFormat format, TextureViewDimension dim, Vector2 size);
 
         void BeginDraw(Ref<RSurface> surface);
         void DrawScene(Ref<RenderQueue> renderQueue, const FrameBuffer& outputBuffers);
@@ -147,8 +158,9 @@ namespace rush
         Ref<RGeometry> m_ScreenQuadGeo;
         Ref<RSurface> m_Surface;
         // frame graph resources
-        HMap<String, FrameTexture> m_RenderTextures;
+        HMap<String, SceneGraphTexture> m_RenderTextures;
         Ref<RMaterial> m_FinalPassMat;
+        Ref<RMaterial> m_DeferredLightingPassMat;
 
         // FrameData
         Ref<RBuffer> m_FrameDataBuffer;
@@ -163,12 +175,10 @@ namespace rush
         // instance data
         DArray<InstanceBindGroup> m_InstanceBindGroups;
 
-        // Lighting Data
-        Ref<RBuffer> m_DirectionalLightBuffer;
-        Ref<RBuffer> m_PointLightsBuffer;
-        DirectLightData m_DirectionalLightData;
-        DArray<PointLightData> m_PointLightsData;
-        Ref<RBindGroup> m_LightingDataGroup;
+        // Light Data
+        Ref<RBuffer> m_LightsBuffer;
+        LightBufferData m_LightsData;
+        Ref<RBindGroup> m_LightDataGroup;
     };
 
 }

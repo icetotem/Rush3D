@@ -3,7 +3,7 @@
 
 #define MAX_NUM_CASCADES 4
 
-layout(binding = 1, std140) uniform Cascades {
+layout(set = 1, binding = 1, std140) uniform Cascades {
   vec4 splitDepth;
   mat4 viewProjMatrices[MAX_NUM_CASCADES];
 }

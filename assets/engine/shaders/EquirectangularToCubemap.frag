@@ -4,7 +4,7 @@
 
 layout(location = 0) in vec3 v_WorldPos;
 
-layout(binding = 0) uniform sampler2D t_EquirectangularMap;
+layout(set = 1, binding = 0) uniform sampler2D t_EquirectangularMap;
 
 layout(location = 1) uniform bool u_InvertY = false;
 

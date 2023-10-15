@@ -5,7 +5,7 @@ layout(location = 0) in vec2 v_TexCoord;
 #include <Resources/FrameBlock.glsl>
 #include <Resources/Cascades.glsl>
 
-layout(binding = 0) uniform sampler2D t_SceneDepth;
+layout(set = 1, binding = 0) uniform sampler2D t_SceneDepth;
 
 #include <Lib/Depth.glsl>
 

@@ -6,7 +6,7 @@
 
 #include "BasePassAttributes.glsl"
 
-layout(binding = 0) uniform sampler2D t_SceneDepth;
+layout(set = 1, binding = 0) uniform sampler2D t_SceneDepth;
 
 layout(binding = 1) uniform sampler2D t_BRDF;
 layout(binding = 2) uniform samplerCube t_IrradianceMap;
@@ -22,7 +22,7 @@ layout(binding = 1, std430) restrict readonly buffer LightIndexList {
 // [startOffset, lightCount]
 // .rg = opaque geometry
 // .ba = translucent geometry
-layout(binding = 0, rgba32ui) restrict readonly uniform uimage2D i_LightGrid;
+layout(set = 1, binding = 0, rgba32ui) restrict readonly uniform uimage2D i_LightGrid;
 #endif
 
 layout(binding = 4) uniform sampler2DArrayShadow t_CascadedShadowMaps;

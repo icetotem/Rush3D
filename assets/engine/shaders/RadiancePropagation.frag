@@ -3,7 +3,7 @@
 layout(location = 0) in FragData { flat ivec3 cellIndex; }
 fs_in;
 
-layout(binding = 0) uniform sampler3D t_SH_R;
+layout(set = 1, binding = 0) uniform sampler3D t_SH_R;
 layout(binding = 1) uniform sampler3D t_SH_G;
 layout(binding = 2) uniform sampler3D t_SH_B;
 

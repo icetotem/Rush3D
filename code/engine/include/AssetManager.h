@@ -44,6 +44,8 @@ namespace rush
 
         void LoadOrCompileShader(const StringView& path, const List<String>& defines, const StringView& code, const StringView& uniforms, std::function<void(AssetLoadResult result, Ref<RShader>, void* param)> callback, void* param = nullptr);
 
+        Ref<RMaterial> GetMaterial(const StringView& path);
+
     private:
         HMap<String, Ref<RModel>> m_Models;
         HMap<String, Ref<RTexture>> m_Textures;

@@ -15,7 +15,7 @@ namespace rush
         RBindGroup() = default;
         ~RBindGroup() = default;
 
-        void AddBinding(uint32_t binding, ShaderStage visibility, Ref<RTexture> texture, TextureSampleType textureSampleType, TextureViewDimension viewDimension);
+        void AddBinding(uint32_t binding, ShaderStage visibility, Ref<RTexture> texture, TextureSampleType textureSampleType, TextureViewDimension viewDimension, const char* lable = nullptr);
         void AddBinding(uint32_t binding, ShaderStage visibility, wgpu::Sampler sampler, SamplerBindingType samplerType);
         void AddBinding(uint32_t binding, ShaderStage visibility, Ref<RBuffer> buffer, wgpu::BufferBindingType bufferType);
         void Create(const char* lable = nullptr);

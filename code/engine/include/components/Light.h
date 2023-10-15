@@ -10,8 +10,8 @@ namespace rush
     enum LightType
     {
         LT_Directional,
-        LT_Point,
         LT_Spot,
+        LT_Point,
     };
     
     class Light : public Component
@@ -31,8 +31,11 @@ namespace rush
         void SetRadius(float radius);
         float GetRaidus() const { return m_Radius; }
 
-        void SetSpotAngle(float angle) { m_SpotAngle = glm::clamp(angle, 0.0f, 80.0f); }
-        float GetSpotAngle() const { return m_SpotAngle; }
+        void SetInerAngle(float angle) { m_SpotInnerAngle = glm::clamp(angle, 0.0f, m_SpotOutterAngle); }
+        float GetInnerAngle() const { return m_SpotInnerAngle; }
+
+        void SetOutterAngle(float angle) { m_SpotOutterAngle = glm::clamp(angle, m_SpotInnerAngle, 80.0f); }
+        float GetOutterAngle() const { return m_SpotOutterAngle; }
 
         void UpdateBoundings();
         const AABB& GetAABB() const { return m_AABB; }
@@ -43,7 +46,8 @@ namespace rush
     protected:
         LightType m_Type = LightType::LT_Point;
         float m_Radius = 1.0f;
-        float m_SpotAngle = 45.0f;
+        float m_SpotInnerAngle = 5.0f;
+        float m_SpotOutterAngle = 45.0f;
         Vector3 m_Color = Vector3(1.0f, 1.0f, 1.0f);
         float m_Intensity = 3.14f;
         AABB m_AABB;

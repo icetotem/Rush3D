@@ -5,7 +5,7 @@
 namespace rush
 {
 
-    void RBindGroup::AddBinding(uint32_t binding, ShaderStage visibility, Ref<RTexture> texture, TextureSampleType textureSampleType, TextureViewDimension viewDimension)
+    void RBindGroup::AddBinding(uint32_t binding, ShaderStage visibility, Ref<RTexture> texture, TextureSampleType textureSampleType, TextureViewDimension viewDimension, const char* lable)
     {
         auto& bgLayoutEntry = bgLayoutEntris.emplace_back();
         bgLayoutEntry.binding = binding;
@@ -15,7 +15,11 @@ namespace rush
 
         auto& bgEntry = bgEntries.emplace_back();
         bgEntry.binding = binding;
-        bgEntry.textureView = texture->GetTextureHandle().CreateView();
+        wgpu::TextureViewDescriptor desc = {};
+        desc.label = lable;
+        desc.dimension = viewDimension;
+        desc.arrayLayerCount = viewDimension == TextureViewDimension::Cube ? 6 : 1;
+        bgEntry.textureView = texture->GetTextureHandle().CreateView(&desc);
 
     }
 

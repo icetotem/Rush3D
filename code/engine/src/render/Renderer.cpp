@@ -25,18 +25,19 @@ namespace rush
         m_Height = height;
         CreateFullScreenQuad();
 
-        AssetsManager::instance().LoadMaterial("assets/engine/pipeline/materials/final.mat", [&](AssetLoadResult result, Ref<RMaterial> material, void*) {
-            if (result == AssetLoadResult::Success)
-            {
-                m_FinalPassMat = material;
-            }
-        });
+        m_FinalPassMat = AssetsManager::instance().GetMaterial("assets/engine/pipeline/final.mat");
+        m_DeferredLightingPassMat = AssetsManager::instance().GetMaterial("assets/engine/pipeline/deferred_lighting.mat");
 
-        RegisterFGTexture("GBuffer0", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
-        RegisterFGTexture("GBuffer1", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
-        RegisterFGTexture("GBuffer2", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
-        RegisterFGTexture("GBuffer3", wgpu::TextureFormat::BGRA8Unorm, Vector2(1.0f, 1.0f));
-        RegisterFGTexture("SceneDepthTexture", wgpu::TextureFormat::Depth24PlusStencil8, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("GBuffer0", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("GBuffer1", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("GBuffer2", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("GBuffer3", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("SceneDepth", TextureFormat::Depth24Plus, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("LDR", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("SSAO", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("BRDF", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGDynamicTexture("IrradianceMap", TextureFormat::RGBA16Float, TextureViewDimension::Cube, Vector2(1.0f, 1.0f));
+        RegisterFGDynamicTexture("PrefilteredEnvMap", TextureFormat::RGBA16Float, TextureViewDimension::Cube, Vector2(1.0f, 1.0f));
 
         m_FrameDataBuffer = CreateRef<RUniformBuffer>(sizeof(m_FrameData), &m_FrameData, "FrameData_buffer");
         m_FrameDataGroup = CreateRef<RBindGroup>();
@@ -57,12 +58,10 @@ namespace rush
             instBindGroup.group->Create("InstanceData_group");
         }
 
-//         m_DirectionalLightBuffer = CreateRef<RUniformBuffer>(sizeof(m_DirectionalLightData), &m_DirectionalLightData, "DirectionalLightData_buffer");
-//         m_PointLightsBuffer = CreateRef<RUniformBuffer>(sizeof(PointLightData) * kMaxPointLights, &m_PointLightsData, "PointLightData_buffer");
-//         m_LightingDataGroup = CreateRef<RBindGroup>();
-//         m_LightingDataGroup->AddBinding(0, ShaderStage::Fragment, m_DirectionalLightBuffer);
-//         m_LightingDataGroup->AddBinding(1, ShaderStage::Fragment, m_PointLightsBuffer);
-//         m_LightingDataGroup->Create("LightingData_group");
+        m_LightsBuffer = CreateRef<RStorageBuffer>(sizeof(m_LightsData), &m_LightsData, "LightData_buffer");
+        m_LightDataGroup = CreateRef<RBindGroup>();
+        m_LightDataGroup->AddBinding(0, ShaderStage::Fragment, m_LightsBuffer, wgpu::BufferBindingType::ReadOnlyStorage);
+        m_LightDataGroup->Create("LightData_group");
     }
 
     void Renderer::CreateFullScreenQuad()
@@ -82,18 +81,6 @@ namespace rush
         vlayouts[0].attributes[0].offset = 0;
         m_ScreenQuadGeo = CreateRef<RGeometry>(PrimitiveTopology::TriangleStrip, 1, vlayouts, 3, 0, "FullSceenQuad");
         m_ScreenQuadGeo->UpdateVertexBuffer(0, verts, sizeof(verts));
-    }
-
-    void Renderer::RegisterFGTexture(const StringView& name, TextureFormat format, Vector2 viewScale)
-    {
-        auto iter = m_RenderTextures.find(String(name));
-        if (iter == m_RenderTextures.end())
-        {
-            FrameTexture ft;
-            ft.format = format;
-            ft.scale = viewScale;
-            m_RenderTextures.insert({ String(name), ft });
-        }
     }
 
     void Renderer::BeginDraw(Ref<RSurface> surface)
@@ -122,7 +109,10 @@ namespace rush
                     LOG_ERROR("Render texture {} is not registered", outputBuffers.colorAttachment[i].texture);
                     continue;
                 }
-                attachments[i].view = rt->GetTextureHandle().CreateView();
+
+                wgpu::TextureViewDescriptor tvdesc = {};
+                tvdesc.dimension = GetFGTextureViewDim(outputBuffers.colorAttachment[i].texture);
+                attachments[i].view = rt->GetTextureHandle().CreateView(&tvdesc);
                 attachments[i].resolveTarget = nullptr;
                 attachments[i].loadOp = wgpu::LoadOp::Clear;
                 attachments[i].storeOp = wgpu::StoreOp::Store;
@@ -147,13 +137,18 @@ namespace rush
             {
                 depthStencilDesc.view = rt->GetTextureHandle().CreateView();
                 depthStencilDesc.depthReadOnly = false;
-                depthStencilDesc.stencilReadOnly = false;
                 depthStencilDesc.depthClearValue = outputBuffers.clearDepth.has_value() ? outputBuffers.clearDepth.value() : 1.0f;
-                depthStencilDesc.stencilClearValue = outputBuffers.clearStencil.has_value() ? outputBuffers.clearStencil.value() : 0.0f;
                 depthStencilDesc.depthLoadOp = wgpu::LoadOp::Clear;
                 depthStencilDesc.depthStoreOp = wgpu::StoreOp::Store;
-                depthStencilDesc.stencilLoadOp = wgpu::LoadOp::Clear;
-                depthStencilDesc.stencilStoreOp = wgpu::StoreOp::Store;
+
+                if (outputBuffers.clearStencil.has_value())
+                {
+                    depthStencilDesc.stencilReadOnly = false;
+                    depthStencilDesc.stencilClearValue = outputBuffers.clearStencil.value();
+                    depthStencilDesc.stencilLoadOp = wgpu::LoadOp::Clear;
+                    depthStencilDesc.stencilStoreOp = wgpu::StoreOp::Store;
+                }
+
                 renderPassDesc.depthStencilAttachment = &depthStencilDesc;
             }
             else
@@ -227,39 +222,24 @@ namespace rush
             pass.SetBindGroup(2, m_TransformDataGroup->GetBindGroupHandle());
         }
 
-        // set light data
-#if 0
+        // update light data
+        if (m_LightDataGroup->GetBindGroupHandle())
         {
-            m_PointLightsData.clear();
+            m_LightsData.numLights = renderQueue->GetLights().size();
+            int lt = 0;
             for (auto light : renderQueue->GetLights())
             {
-                if (light->GetType() == LightType::LT_Directional)
-                {
-                    m_DirectionalLightData.color = Vector4(light->GetColor(), light->GetIntensity());
-                    m_DirectionalLightData.direction = light->Get<Transform>()->GetForward();
-                }
-                else if (light->GetType() == LightType::LT_Point || light->GetType() == LightType::LT_Spot)
-                {
-                    if (m_PointLightsData.size() < kMaxPointLights)
-                    {
-                        PointLightData& data = m_PointLightsData.emplace_back();
-                        data.color = Vector4(light->GetColor(), light->GetIntensity());
-                        data.position = light->Get<Transform>()->GetPosition();
-                        data.radius = light->GetRaidus();
-                        data.direction = light->Get<Transform>()->GetForward();
-                        data.angle = light->GetSpotAngle();
-                    }
-                }
+                m_LightsData.data[lt].color = Vector4(light->GetColor(), light->GetIntensity());
+                m_LightsData.data[lt].direction = light->Get<Transform>()->GetForward();
+                m_LightsData.data[lt].range = light->GetRaidus();
+                m_LightsData.data[lt].innerConeAngle = light->GetInnerAngle();
+                m_LightsData.data[lt].outerConeAngle = light->GetOutterAngle();
+                m_LightsData.data[lt].type = (uint32_t)light->GetType();
+                m_LightsData.data[lt].position = light->Get<Transform>()->GetPosition();
+                ++lt;
             }
-            m_DirectionalLightData.pointLightCount = (float)m_PointLightsData.size();
-            m_DirectionalLightBuffer->UpdateData(&m_DirectionalLightData, sizeof(m_DirectionalLightData));
-            if (m_DirectionalLightData.pointLightCount > 0)
-            {
-                m_PointLightsBuffer->UpdateData(&m_PointLightsData[0], sizeof(PointLightData) * m_DirectionalLightData.pointLightCount);
-            }
-            pass.SetBindGroup(1, m_LightingDataGroup->GetBindGroupHandle());
+            m_LightsBuffer->UpdateData(&m_LightsData, m_LightsData.numLights * sizeof(LightData) + 16);
         }
-#endif
 
         uint32_t transformOffset = 0;
         uint32_t batchIndex = 0;
@@ -340,7 +320,9 @@ namespace rush
                         LOG_ERROR("Render texture {} is not registered", outputBuffers.colorAttachment[i].texture);
                         continue;
                     }
-                    attachments[i].view = rt->GetTextureHandle().CreateView();
+                    wgpu::TextureViewDescriptor tvdesc = {};
+                    tvdesc.dimension = GetFGTextureViewDim(outputBuffers.colorAttachment[i].texture);
+                    attachments[i].view = rt->GetTextureHandle().CreateView(&tvdesc);
                 }
                 attachments[i].resolveTarget = nullptr;
                 attachments[i].loadOp = wgpu::LoadOp::Clear;
@@ -378,6 +360,26 @@ namespace rush
         {
             pass.SetBindGroup(1, material->GetBindGroup()->GetBindGroupHandle());
         }
+
+        const auto& globalGroups = material->GetGlobalBindGroups();
+        int bgIndex = 2;
+        for (const auto& bg : globalGroups)
+        {
+            if (bg == "light_data")
+            {
+                pass.SetBindGroup(bgIndex, GetLightDataGroup()->GetBindGroupHandle());
+            }
+            else if (bg == "transform_data")
+            {
+                pass.SetBindGroup(bgIndex, GetTransformDataGroup()->GetBindGroupHandle());
+            }
+            else if (bg == "instance_data")
+            {
+                pass.SetBindGroup(bgIndex, GetInstanceDataGroup()->GetBindGroupHandle());
+            }
+            ++bgIndex;
+        }
+
         pass.SetVertexBuffer(0, m_ScreenQuadGeo->GetVB(0)->GetBufferHandle());
         pass.Draw(3);
 
@@ -394,28 +396,38 @@ namespace rush
     {
         BeginDraw(surface);
 
-        // forward pass
+        // g-buffer pass
         if (1)
         {
             FrameBuffer info;
-            info.lable = "Deferred Pass";
-            info.colorAttachment.push_back({ "GBuffer0", GetFGTextureFormat("GBuffer0"), {0.2f, 0.2f, 0.2f, 1.0f} });
-            info.colorAttachment.push_back({ "GBuffer1", GetFGTextureFormat("GBuffer1"), {0.2f, 0.2f, 0.2f, 1.0f} });
-            info.colorAttachment.push_back({ "GBuffer2", GetFGTextureFormat("GBuffer2"), {0.2f, 0.2f, 0.2f, 1.0f} });
-            info.colorAttachment.push_back({ "GBuffer3", GetFGTextureFormat("GBuffer3"), {0.2f, 0.2f, 0.2f, 1.0f} });
-            info.depthStencilTexture = "SceneDepthTexture";
-            info.depthStencilFormat = GetFGTextureFormat("SceneDepthTexture");
+            info.lable = "g-buffer Pass"; 
+            GenAttachment(info.colorAttachment.emplace_back(), "GBuffer0", Vector4(0));
+            GenAttachment(info.colorAttachment.emplace_back(), "GBuffer1", Vector4(0.2f, 0.2f, 0.2f, 0.0f)); // only albedo can with clear color
+            GenAttachment(info.colorAttachment.emplace_back(), "GBuffer2", Vector4(0));
+            GenAttachment(info.colorAttachment.emplace_back(), "GBuffer3", Vector4(0));
+            info.depthStencilTexture = "SceneDepth";
+            info.depthStencilFormat = GetFGTextureFormat("SceneDepth");
             info.clearDepth = 1.0f;
             DrawScene(renderQueue, info);
         }
+
+        // deferred lighting pass
+        if (1)
+        {
+            FrameBuffer info;
+            info.lable = "Deferred Lighting Pass";
+            GenAttachment(info.colorAttachment.emplace_back(), "LDR", Vector4(0));
+            DrawQuad(m_DeferredLightingPassMat, info);
+        }
+
         // final pass
         if (1)
         {
             FrameBuffer info;
             info.lable = "Final Pass";
-            info.colorAttachment.push_back({ String(kBackBufferName), TextureFormat::BGRA8Unorm, {0.0f, 0.0f, 0.0f, 0.0f} });
+            GenAttachment(info.colorAttachment.emplace_back(), kBackBufferName, Vector4(0));
             DrawQuad(m_FinalPassMat, info);
-        }        
+        }
 
         EndDraw();
     }
@@ -424,6 +436,34 @@ namespace rush
     {
         m_Width = width;
         m_Height = height;
+    }
+
+    void Renderer::RegisterFGRenderTexture(const StringView& name, TextureFormat format, TextureViewDimension dim, Vector2 viewScale)
+    {
+        auto iter = m_RenderTextures.find(String(name));
+        if (iter == m_RenderTextures.end())
+        {
+            SceneGraphTexture ft;
+            ft.format = format;
+            ft.size = viewScale;
+            ft.dim = dim;
+            ft.isRT = true;
+            m_RenderTextures.insert({ String(name), ft });
+        }
+    }
+
+    void Renderer::RegisterFGDynamicTexture(const StringView& name, TextureFormat format, TextureViewDimension dim, Vector2 size)
+    {
+        auto iter = m_RenderTextures.find(String(name));
+        if (iter == m_RenderTextures.end())
+        {
+            SceneGraphTexture ft;
+            ft.format = format;
+            ft.size = size;
+            ft.dim = dim;
+            ft.isRT = false;
+            m_RenderTextures.insert({ String(name), ft });
+        }
     }
 
     Ref<RTexture> Renderer::GetFGTexture(const StringView& name)
@@ -435,8 +475,24 @@ namespace rush
         }
         else if (iter->second.texture == nullptr)
         {
-            const FrameTexture& info = iter->second;
-            Ref<RTexture> newTexture = CreateRef<RTexture>(m_Width * info.scale.x, m_Height * info.scale.y, info.format, 1, 1, TextureDimension::e2D, 
+            const SceneGraphTexture& info = iter->second;
+            int layer = 1;
+            if (info.dim == wgpu::TextureViewDimension::Cube)
+            {
+                layer = 6;
+            }
+            uint32_t width, height;
+            if (iter->second.isRT)
+            {
+                width = m_Width * info.size.x;
+                height = m_Height * info.size.y;
+            }
+            else
+            {
+                width = info.size.x;
+                height = info.size.y;
+            }
+            Ref<RTexture> newTexture = CreateRef<RTexture>(width, height, info.format, 1, layer, TextureDimension::e2D,
                                             TextureUsage::RenderAttachment | TextureUsage::TextureBinding, String(name).c_str());
             iter->second.texture = newTexture;
             return newTexture;
@@ -449,37 +505,44 @@ namespace rush
 
     TextureFormat Renderer::GetFGTextureFormat(const StringView& name)
     {
-        auto iter = m_RenderTextures.find(String(name));
-        if (iter == m_RenderTextures.end())
+        if (name == kBackBufferName)
         {
-            return TextureFormat::Undefined;
-        }
-        else if (iter->second.texture == nullptr)
-        {
-            const FrameTexture& info = iter->second;
-            return info.format;
+            return TextureFormat::BGRA8Unorm;
         }
         else
         {
-            return iter->second.format;
+            auto iter = m_RenderTextures.find(String(name));
+            if (iter == m_RenderTextures.end())
+            {
+                return TextureFormat::Undefined;
+            }
+            else if (iter->second.texture == nullptr)
+            {
+                const SceneGraphTexture& info = iter->second;
+                return info.format;
+            }
+            else
+            {
+                return iter->second.format;
+            }
         }
     }
 
-    Vector2 Renderer::GetFGTextureScale(const StringView& name)
+    TextureViewDimension Renderer::GetFGTextureViewDim(const StringView& name)
     {
         auto iter = m_RenderTextures.find(String(name));
         if (iter == m_RenderTextures.end())
         {
-            return Vector2(0);
+            return TextureViewDimension::e2D;
         }
         else if (iter->second.texture == nullptr)
         {
-            const FrameTexture& info = iter->second;
-            return info.scale;
+            const SceneGraphTexture& info = iter->second;
+            return info.dim;
         }
         else
         {
-            return iter->second.scale;
+            return iter->second.dim;
         }
     }
 

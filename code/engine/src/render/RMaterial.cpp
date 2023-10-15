@@ -153,6 +153,18 @@ namespace rush
             customCode = tempStr;
         }
 
+        auto globalBindGroups = config_lookup(&cfg, "material.global_bind_groups");
+        if (globalBindGroups)
+        {
+            int count = config_setting_length(globalBindGroups);
+            for (int i = 0; i < count; ++i)
+            {
+                auto bg = config_setting_get_elem(globalBindGroups, i);
+                m_GlobalBindGroups.push_back(bg->value.sval);
+            }
+        }
+
+
         String uniformCode;
         auto uniforms = config_lookup(&cfg, "material.uniforms");
         if (uniforms)
@@ -171,6 +183,8 @@ namespace rush
                     return false;
                 }
                 info.binding = binding;
+                hash_combine(m_BindGroupHash, binding);
+
                 const char* type = nullptr;
                 if (CONFIG_TRUE != config_setting_lookup_string(uniform, "type", &type))
                 {
@@ -179,20 +193,29 @@ namespace rush
                 }
 
                 const char* name = nullptr;
-                if (CONFIG_TRUE != config_setting_lookup_string(uniform, "name", &name))
+                if (CONFIG_TRUE == config_setting_lookup_string(uniform, "name", &name))
                 {
-                    LOG_ERROR("Material uniform must define a name");
-                    return false;
+                    info.name = name;
                 }
-                info.name = name;
+                hash_combine(m_BindGroupHash, info.name);
 
-                hash_combine(m_BindGroupHash, binding);
-                hash_combine(m_BindGroupHash, name);
-
-                if (String(type) == "texture")
+                if (String(type) == "texture" || String(type) == "texture_cube" || String(type) == "texture_3d")
                 {
                     info.type = BindingType::Texture;
                     hash_combine(m_BindGroupHash, info.type);
+
+                    if (String(type) == "texture")
+                    {
+                        info.dim = TextureViewDimension::e2D;
+                    }
+                    else if (String(type) == "texture_cube")
+                    {
+                        info.dim = TextureViewDimension::Cube;
+                    }
+                    else if (String(type) == "texture_3d")
+                    {
+                        info.dim = TextureViewDimension::e3D;
+                    }
 
                     const char* target = nullptr;
                     const char* path = nullptr;
@@ -200,6 +223,13 @@ namespace rush
                     {
                         info.target = target;
                         hash_combine(m_BindGroupHash, target);
+
+                        int isDepth = 0;
+                        if (CONFIG_TRUE == config_setting_lookup_bool(uniform, "is_depth", &isDepth))
+                        {
+                            info.isDepth = (bool)isDepth;
+                        }
+                        hash_combine(m_BindGroupHash, isDepth);
                     }
                     else if (CONFIG_TRUE == config_setting_lookup_string(uniform, "path", &path))
                     {
@@ -211,7 +241,6 @@ namespace rush
                         LOG_ERROR("Material texture uniform must define a target or path");
                         return false;
                     }
-
                 }
                 else if (String(type) == "sampler")
                 {
@@ -293,17 +322,25 @@ namespace rush
                 }
 
                 char uniformLine[128];
-                if (info.type == BindingType::Texture)
+                if (info.type == BindingType::Texture && info.name != "")
                 {
-                    sprintf(uniformLine, "layout(set = 1, binding = %d) uniform texture2D %s;\n", info.binding, info.name.c_str());
+                    String tex;
+                    if (info.dim == TextureViewDimension::e2D)
+                        tex = "texture2D";
+                    else if (info.dim == TextureViewDimension::e3D)
+                        tex = "texture2D";
+                    else if (info.dim == TextureViewDimension::Cube)
+                        tex = "textureCube";
+
+                    sprintf(uniformLine, "layout(set = 1, binding = %d) uniform %s %s;\n", info.binding, tex.c_str(), info.name.c_str());
                     uniformCode += uniformLine;
                 }
-                else if (info.type == BindingType::Sampler)
+                else if (info.type == BindingType::Sampler && info.name != "")
                 {
                     sprintf(uniformLine, "layout(set = 1, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
                     uniformCode += uniformLine;
                 }
-//                 else if (info.type == BindingType::Uniform)
+//                 else if (info.type == BindingType::Uniform && info.name != "")
 //                 {
 //                     sprintf(uniformLine, "layout(set = 2, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
 //                 }
@@ -412,12 +449,17 @@ namespace rush
                         {
                             auto tex = renderer->GetFGTexture(info.target.value());
                             RUSH_ASSERT(tex);
-                            material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, tex, TextureSampleType::Float, TextureViewDimension::e2D);
+                            auto samplerType = (info.isDepth.has_value() && info.isDepth.value()) ? TextureSampleType::Depth : TextureSampleType::Float;
+                            char temp[128];
+                            sprintf(temp, "%s_TextureView_%d_%s", material->GetPath().c_str(), info.binding, info.name.c_str());
+                            material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, tex, samplerType, info.dim.value(), temp);
                         }
                         else if (info.path.has_value())
                         {
+                            char temp[128];
+                            sprintf(temp, "%s_TextureView_%d_%s", material->GetPath().c_str(), info.binding, info.name.c_str());
                             AssetsManager::instance().LoadTexture(info.path.value(), [&](AssetLoadResult result, Ref<RTexture> tex, void* param){
-                                material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, tex, TextureSampleType::Float, TextureViewDimension::e2D);
+                                material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, tex, TextureSampleType::Float, info.dim.value(), temp);
                             });
                         }
                     }
@@ -466,6 +508,24 @@ namespace rush
             {
                 bindingGroupLayouts.push_back(renderer->GetTransformDataGroup()->GetBindLayoutHandle());
                 bindingGroupLayouts.push_back(renderer->GetInstanceDataGroup()->GetBindLayoutHandle());
+            }
+            else if (material->GetType() == MaterialType::PostProcess)
+            {
+                for (auto bg : material->m_GlobalBindGroups)
+                {
+                    if (bg == "light_data")
+                    {
+                        bindingGroupLayouts.push_back(renderer->GetLightDataGroup()->GetBindLayoutHandle());
+                    }
+                    else if (bg == "transform_data")
+                    {
+                        bindingGroupLayouts.push_back(renderer->GetTransformDataGroup()->GetBindLayoutHandle());
+                    }
+                    else if (bg == "instance_data")
+                    {
+                        bindingGroupLayouts.push_back(renderer->GetInstanceDataGroup()->GetBindLayoutHandle());
+                    }
+                }
             }
 
             plLayoutDesc.bindGroupLayoutCount = bindingGroupLayouts.size();

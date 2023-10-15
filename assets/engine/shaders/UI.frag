@@ -6,7 +6,7 @@ layout(location = 0) in VertexData {
 }
 fs_in;
 
-layout(binding = 0) uniform sampler2D t_0;
+layout(set = 1, binding = 0) uniform sampler2D t_0;
 
 layout(location = 0) out vec4 FragColor;
 void main() { FragColor = fs_in.color * texture(t_0, fs_in.texCoord); }

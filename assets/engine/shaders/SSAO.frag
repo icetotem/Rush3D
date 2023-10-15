@@ -4,7 +4,7 @@ layout(location = 0) in vec2 v_TexCoord;
 
 #include <Resources/FrameBlock.glsl>
 
-layout(binding = 0) uniform sampler2D t_SceneDepth;
+layout(set = 1, binding = 0) uniform sampler2D t_SceneDepth;
 
 layout(binding = 1) uniform sampler2D t_GBuffer0; // .rgb = Normal
 layout(binding = 2) uniform sampler2D t_Noise;

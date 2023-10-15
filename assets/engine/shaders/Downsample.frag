@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec2 v_TexCoord;
 
-layout(binding = 0) uniform sampler2D t_0;
+layout(set = 1, binding = 0) uniform sampler2D t_0;
 
 layout(location = 0) uniform int u_MipLevel;
 

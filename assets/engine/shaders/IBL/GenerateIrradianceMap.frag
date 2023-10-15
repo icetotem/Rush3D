@@ -4,7 +4,7 @@
 
 layout(location = 0) in vec3 v_WorldPos;
 
-layout(binding = 0) uniform samplerCube t_EnvironmentMap;
+layout(set = 1, binding = 0) uniform samplerCube t_EnvironmentMap;
 
 #include <Lib/Math.glsl>
 #include <Lib/Hammersley2D.glsl>

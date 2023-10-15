@@ -1,26 +1,34 @@
 #version 460 core
+#extension GL_EXT_samplerless_texture_functions : enable
 
 layout(location = 0) in vec2 v_TexCoord;
 
 #include <Resources/FrameBlock.glsl>
 
-layout(binding = 0) uniform sampler2D t_SceneDepth;
+// #define ENABLE_SHADOW
+// #define ENABLE_GI
 
-layout(binding = 1) uniform sampler2D t_GBuffer0; // .rgb = Normal
-layout(binding = 2) uniform sampler2D
-  t_GBuffer1; // .rgb = Albedo, .a = SpecularWeight
-layout(binding = 3) uniform sampler2D t_GBuffer2; // .rgb = EmissiveColor
-// .r = Metallic, .g = Roughness, .b = AO, .a = ShadingModel/MaterialFlags
-layout(binding = 4) uniform sampler2D t_GBuffer3;
-
-layout(binding = 5) uniform sampler2D t_SSAO;
-
-layout(binding = 6) uniform sampler2D t_BRDF;
-layout(binding = 7) uniform samplerCube t_IrradianceMap;
-layout(binding = 8) uniform samplerCube t_PrefilteredEnvMap;
+layout(set = 1, binding = 0) uniform texture2D t_SceneDepth;
+layout(set = 1, binding = 1) uniform sampler s_d;
+layout(set = 1, binding = 2) uniform texture2D t_GBuffer0; // .rgb = Normal
+layout(set = 1, binding = 3) uniform sampler s_0;
+layout(set = 1, binding = 4) uniform texture2D t_GBuffer1; // .rgb = Albedo, .a = SpecularWeight
+layout(set = 1, binding = 5) uniform sampler s_1;
+layout(set = 1, binding = 6) uniform texture2D t_GBuffer2; // .rgb = EmissiveColor
+layout(set = 1, binding = 7) uniform sampler s_2;
+layout(set = 1, binding = 8) uniform texture2D t_GBuffer3; // .r = Metallic, .g = Roughness, .b = AO, .a = ShadingModel/MaterialFlags
+layout(set = 1, binding = 9) uniform sampler s_3;
+layout(set = 1, binding = 10) uniform texture2D t_SSAO;
+layout(set = 1, binding = 11) uniform sampler s_ssao;
+layout(set = 1, binding = 12) uniform texture2D t_BRDF;
+layout(set = 1, binding = 13) uniform sampler s_brdf;
+layout(set = 1, binding = 14) uniform textureCube t_IrradianceMap;
+layout(set = 1, binding = 15) uniform sampler s_irr;
+layout(set = 1, binding = 16) uniform textureCube t_PrefilteredEnvMap;
+layout(set = 1, binding = 17) uniform sampler s_prf;
 
 #if TILED_LIGHTING
-layout(binding = 1, std430) restrict readonly buffer LightIndexList {
+layout(set = 1, binding = 18, std430) restrict readonly buffer LightIndexList {
   // .x = indices for opaque geometry
   // .y = indices for translucent geometry
   uvec2 g_LightIndexList[];
@@ -29,14 +37,22 @@ layout(binding = 1, std430) restrict readonly buffer LightIndexList {
 // [startOffset, lightCount]
 // .rg = opaque geometry
 // .ba = translucent geometry
-layout(binding = 0, rgba32ui) restrict readonly uniform uimage2D i_LightGrid;
+layout(set = 1, binding = 19, rgba32ui) restrict readonly uniform uimage2D i_LightGrid;
 #endif
 
-layout(binding = 9) uniform sampler2DArrayShadow t_CascadedShadowMaps;
+#if ENABLE_SHADOW
+layout(set = 1, binding = 20) uniform texture2DArray t_CascadedShadowMaps;
+layout(set = 1, binding = 21) uniform sampler s_shadow;
+#endif
 
-layout(binding = 10) uniform sampler3D t_AccumulatedSH_R;
-layout(binding = 11) uniform sampler3D t_AccumulatedSH_G;
-layout(binding = 12) uniform sampler3D t_AccumulatedSH_B;
+#if ENABLE_GI
+layout(set = 1, binding = 22) uniform texture3D t_AccumulatedSH_R;
+layout(set = 1, binding = 23) uniform sampler s_acc_r;
+layout(set = 1, binding = 24) uniform texture3D t_AccumulatedSH_G;
+layout(set = 1, binding = 25) uniform sampler s_acc_g;
+layout(set = 1, binding = 26) uniform texture3D t_AccumulatedSH_B;
+layout(set = 1, binding = 27) uniform sampler s_acc_b;
+#endif
 
 #include <Lib/Depth.glsl>
 
@@ -46,29 +62,39 @@ _DECLARE_LIGHT_BUFFER(0, g_LightBuffer);
 #include <Lib/IBL_AmbientLighting.glsl>
 #include <Lib/PBR_DirectLighting.glsl>
 
+#ifdef ENABLE_SHADOW
 #define SOFT_SHADOWS 1
 #include <Lib/CSM.glsl>
 #include "LPV.glsl"
+#endif
 
-layout(location = 12) uniform vec3 u_MinCorner;
-layout(location = 13) uniform vec3 u_GridSize;
-layout(location = 14) uniform float u_CellSize;
+layout(set = 1, binding = 28) uniform LightGrid_t {
+  vec3 minCorner;
+  float padding;
+  vec3 gridSize;
+  float cellSize;
+} LightGrid;
+
+#define u_MinCorner LightGrid.minCorner
+#define u_GridSize LightGrid.gridSize
+#define u_CellSize LightGrid.cellSize
 
 #include <MaterialDefines.glsl>
 
-layout(location = 0) out vec3 FragColor;
+layout(location = 0) out vec4 FragColor;
+
 void main() {
-  const float depth = getDepth(t_SceneDepth, v_TexCoord);
+  const float depth = getDepth(t_SceneDepth, s_d, v_TexCoord);
   if (depth >= 1.0) discard;
 
-  const vec3 emissiveColor = texture(t_GBuffer2, v_TexCoord).rgb;
+  const vec3 emissiveColor = texture(sampler2D(t_GBuffer2, s_2), v_TexCoord).rgb;
 
-  vec4 temp = texture(t_GBuffer3, v_TexCoord);
+  vec4 temp = texture(sampler2D(t_GBuffer3, s_3), v_TexCoord);
 
   const int encoded = int(temp.a * 255.0);
   const int shadingModel = bitfieldExtract(encoded, 0, 2);
   if (shadingModel == SHADING_MODEL_UNLIT) {
-    FragColor = emissiveColor;
+    FragColor.rgb = emissiveColor;
     return;
   }
   const int materialFlags = bitfieldExtract(encoded, 2, 6);
@@ -79,11 +105,10 @@ void main() {
   const float roughness = temp.g;
   float ao = temp.b;
   if (hasRenderFeatures(RenderFeature_SSAO)) {
-    // ao = min(ao, texture(t_SSAO, v_TexCoord).r);
-    ao = texture(t_SSAO, v_TexCoord).r;
+    ao = texture(sampler2D(t_SSAO, s_ssao), v_TexCoord).r;
   }
 
-  temp = texture(t_GBuffer1, v_TexCoord);
+  temp = texture(sampler2D(t_GBuffer1, s_1), v_TexCoord);
   const vec3 albedo = temp.rgb;
   const float specularWeight = temp.a;
 
@@ -101,7 +126,7 @@ void main() {
   const vec3 fragPosWorldSpace =
     (u_Frame.camera.inversedView * vec4(fragPosViewSpace, 1.0)).xyz;
 
-  const vec3 N = normalize(texture(t_GBuffer0, v_TexCoord).rgb);
+  const vec3 N = normalize(texture(sampler2D(t_GBuffer0, s_0), v_TexCoord).rgb);
   const vec3 V = normalize(getCameraPosition() - fragPosWorldSpace);
   const float NdotV = clamp01(dot(N, V));
 
@@ -119,7 +144,7 @@ void main() {
 
   vec3 Lo_diffuse = vec3(0.0);
   vec3 Lo_specular = vec3(0.0);
-
+#if ENABLE_IBL
   if (hasRenderFeatures(RenderFeature_IBL)) {
     // clang-format off
     const LightContribution ambientLighting = IBL_AmbientLighting(
@@ -135,16 +160,18 @@ void main() {
     Lo_diffuse = ambientLighting.diffuse * ao;
     Lo_specular = ambientLighting.specular * ao;
   }
+#endif
 
+#ifdef ENABLE_GI
   if (hasRenderFeatures(RenderFeature_GI)) {
     const vec3 cellCoords =
       (fragPosWorldSpace - u_MinCorner) / u_CellSize / u_GridSize;
 
     // clang-format off
     const SHcoeffs coeffs = {
-      texture(t_AccumulatedSH_R, cellCoords, 0),
-      texture(t_AccumulatedSH_G, cellCoords, 0),
-      texture(t_AccumulatedSH_B, cellCoords, 0)
+      texture(sampler3D(t_AccumulatedSH_R, s_acc_r), cellCoords, 0),
+      texture(sampler3D(t_AccumulatedSH_G, s_acc_g), cellCoords, 0),
+      texture(sampler3D(t_AccumulatedSH_B, s_acc_b), cellCoords, 0)
     };
     // clang-format on
 
@@ -159,10 +186,11 @@ void main() {
     Lo_diffuse += albedo * LPV_radiance * ao;
 
     if (hasDebugFlags(DebugFlag_RadianceOnly)) {
-      FragColor = LPV_radiance;
+      FragColor.rgb = LPV_radiance;
       return;
     }
   }
+#endif
 
   //
   // Direct lighting:
@@ -192,6 +220,7 @@ void main() {
     const float NdotL = clamp01(dot(N, L));
     if (NdotL > 0.0 || NdotV > 0.0) {
       float visibility = 1.0;
+#ifdef ENABLE_SHADOW
       if (hasRenderFeatures(RenderFeature_Shadows) && receiveShadow) {
         if (light.type == LightType_Directional) {
           const uint cascadeIndex = _selectCascadeIndex(fragPosViewSpace);
@@ -201,7 +230,7 @@ void main() {
 
         if (visibility == 0.0) continue;
       }
-
+#endif
       const vec3 radiance =
         _getLightIntensity(light, fragToLight) * NdotL * visibility;
 
@@ -224,5 +253,6 @@ void main() {
     }
   }
 
-  FragColor = Lo_diffuse + Lo_specular + emissiveColor;
+  FragColor.rgb = Lo_diffuse + Lo_specular + emissiveColor;
+  FragColor.rgb += diffuseColor;
 }

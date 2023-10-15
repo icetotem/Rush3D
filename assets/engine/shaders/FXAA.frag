@@ -8,7 +8,7 @@ layout(location = 0) in vec2 v_TexCoord;
 
 #include <Resources/FrameBlock.glsl>
 
-layout(binding = 0) uniform sampler2D t_0;
+layout(set = 1, binding = 0) uniform sampler2D t_0;
 
 #define FXAA_SPAN_MAX 8.0
 #define FXAA_REDUCE_MUL (1.0 / FXAA_SPAN_MAX)

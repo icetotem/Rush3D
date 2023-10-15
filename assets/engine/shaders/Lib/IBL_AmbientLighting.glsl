@@ -8,13 +8,13 @@
 LightContribution IBL_AmbientLighting(vec3 diffuseColor, vec3 F0,
                                       float specularWeight, float roughness,
                                       vec3 N, vec3 V, float NdotV) {
-  const vec2 f_ab = texture(t_BRDF, clamp01(vec2(NdotV, roughness))).rg;
+  const vec2 f_ab = texture(sampler2D(t_BRDF, s_brdf), clamp01(vec2(NdotV, roughness))).rg;
   const vec3 Fr = max(vec3(1.0 - roughness), F0) - F0;
   const vec3 k_S = F0 + Fr * pow(1.0 - NdotV, 5.0);
 
   // -- Diffuse IBL:
 
-  const vec3 irradiance = textureLod(t_IrradianceMap, N, 0.0).rgb;
+  const vec3 irradiance = textureLod(samplerCube(t_IrradianceMap, s_irr), N, 0.0).rgb;
 
   vec3 FssEss = specularWeight * k_S * f_ab.x + f_ab.y;
 
@@ -32,7 +32,7 @@ LightContribution IBL_AmbientLighting(vec3 diffuseColor, vec3 F0,
 
   const float maxReflectionLOD = calculateMipLevels(t_PrefilteredEnvMap);
   const vec3 prefilteredColor =
-    textureLod(t_PrefilteredEnvMap, R, roughness * maxReflectionLOD).rgb;
+    textureLod(samplerCube(t_PrefilteredEnvMap, s_prf), R, roughness * maxReflectionLOD).rgb;
 
   FssEss = k_S * f_ab.x + f_ab.y;
 
