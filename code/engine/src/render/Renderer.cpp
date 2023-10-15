@@ -13,6 +13,7 @@
 #include "render/RBindGroup.h"
 #include "AssetManager.h"
 #include "components/Transform.h"
+#include "imgui/backends/imgui_impl_wgpu.h"
 
 namespace rush
 {
@@ -98,7 +99,6 @@ namespace rush
         wgpu::RenderPassColorAttachment attachments[8] = {};
         wgpu::RenderPassDepthStencilAttachment depthStencilDesc;
 
-        bool useBackbuffer = false;
         if (outputBuffers.colorAttachment.size() > 0)
         {
             for (int i = 0; i < outputBuffers.colorAttachment.size(); ++i)
@@ -122,8 +122,6 @@ namespace rush
             }
             renderPassDesc.colorAttachmentCount = outputBuffers.colorAttachment.size();
             renderPassDesc.colorAttachments = attachments;
-
-            useBackbuffer = true;
         }
         else
         {
@@ -155,29 +153,10 @@ namespace rush
             {
                 LOG_ERROR("Render texture {} is not registered", outputBuffers.depthStencilTexture.value());
             }
-
-            useBackbuffer = true;
         }
         else
         {
             renderPassDesc.depthStencilAttachment = nullptr;
-        }
-
-        if (!useBackbuffer)
-        {
-            wgpu::TextureView backbufferView = m_Surface->GetSwapChain().GetCurrentTextureView();
-            attachments[0].view = backbufferView;
-            attachments[0].resolveTarget = nullptr;
-            attachments[0].loadOp = wgpu::LoadOp::Clear;
-            attachments[0].storeOp = wgpu::StoreOp::Store;
-            attachments[0].clearValue = { 0, 0, 0, 0 };
-            renderPassDesc.colorAttachmentCount = 1;
-            renderPassDesc.colorAttachments = attachments;
-        }
-        else if (m_Surface == nullptr)
-        {
-            LOG_WARN("Framebuffer {} does not assign any render target", outputBuffers.lable);
-            return;
         }
 
         wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderPassDesc);
@@ -311,6 +290,7 @@ namespace rush
                 {
                     wgpu::TextureView backbufferView = m_Surface->GetSwapChain().GetCurrentTextureView();
                     attachments[i].view = backbufferView;
+                    useBackbuffer = true;
                 }
                 else
                 {
@@ -330,22 +310,8 @@ namespace rush
 
                 const auto& color = outputBuffers.colorAttachment[i].clearColor;
                 attachments[i].clearValue = { color.r, color.g, color.b, color.a };
-
-                useBackbuffer = true;
             }
             renderPassDesc.colorAttachmentCount = outputBuffers.colorAttachment.size();
-            renderPassDesc.colorAttachments = attachments;
-        }
-
-        if (!useBackbuffer)
-        {
-            wgpu::TextureView backbufferView = m_Surface->GetSwapChain().GetCurrentTextureView();
-            attachments[0].view = backbufferView;
-            attachments[0].resolveTarget = nullptr;
-            attachments[0].loadOp = wgpu::LoadOp::Clear;
-            attachments[0].storeOp = wgpu::StoreOp::Store;
-            attachments[0].clearValue = { 0, 0, 0, 0 };
-            renderPassDesc.colorAttachmentCount = 1;
             renderPassDesc.colorAttachments = attachments;
         }
 
@@ -382,6 +348,10 @@ namespace rush
 
         pass.SetVertexBuffer(0, m_ScreenQuadGeo->GetVB(0)->GetBufferHandle());
         pass.Draw(3);
+
+        // darw gui
+        if (useBackbuffer)
+            ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), pass.Get());
 
         pass.End();
     }

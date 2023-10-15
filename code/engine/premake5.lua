@@ -11,7 +11,7 @@ project "Rush3D_Engine"
 
     defines 
 	{ 
-		"__STDC_FORMAT_MACROS", "SPDLOG_NO_EXCEPTIONS" 
+		"__STDC_FORMAT_MACROS", "SPDLOG_NO_EXCEPTIONS", "IMGUI_DISABLE_OBSOLETE_KEYIO",
 	}
 
     debugdir "../../Bin/%{cfg.buildcfg}"
@@ -27,6 +27,8 @@ project "Rush3D_Engine"
 		path.join(ENGINE_DIR, "**.cpp"),
 		path.join(ENGINE_DIR, "**.vert"),
 		path.join(ENGINE_DIR, "**.frag"),
+		path.join(DEP_DIR, "imgui/backends/imgui_impl_wgpu.h"),
+		path.join(DEP_DIR, "imgui/backends/imgui_impl_wgpu.cpp"),
     }
 
 	includedirs
@@ -34,6 +36,7 @@ project "Rush3D_Engine"
 		DEP_DIR,
 		path.join(ENGINE_DIR, "include"),
 		path.join(DEP_DIR, "dawn/inc"),
+		path.join(DEP_DIR, "imgui"),
 		path.join(DEP_DIR, "spdlog/include"),
 		path.join(DEP_DIR, "glfw/include"),
 		path.join(DEP_DIR, "json"),
