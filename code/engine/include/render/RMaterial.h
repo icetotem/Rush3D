@@ -41,9 +41,10 @@ namespace rush
         uint32_t binding;
         BindingType type;
         String name;
+        std::optional<TextureSampleType> textureSampleType;
+        std::optional<SamplerBindingType> samplerBindingType;
         std::optional<TextureViewDimension> dim;
         std::optional<String> target;
-        std::optional<bool> isDepth;
         std::optional<String> path;
         std::optional<AddressMode> address;
         std::optional<FilterMode> mag;

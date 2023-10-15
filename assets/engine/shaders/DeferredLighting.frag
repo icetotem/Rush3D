@@ -8,7 +8,7 @@ layout(location = 0) in vec2 v_TexCoord;
 // #define ENABLE_SHADOW
 // #define ENABLE_GI
 
-layout(set = 1, binding = 0) uniform texture2D t_SceneDepth;
+layout(set = 1, binding = 0) uniform texture2D t_SceneDepth; 
 layout(set = 1, binding = 1) uniform sampler s_d;
 layout(set = 1, binding = 2) uniform texture2D t_GBuffer0; // .rgb = Normal
 layout(set = 1, binding = 3) uniform sampler s_0;

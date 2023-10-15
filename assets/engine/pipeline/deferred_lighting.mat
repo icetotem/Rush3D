@@ -7,8 +7,8 @@ material:
     depth_write = false;
     depth_test = false;
     uniforms = (
-        { binding = 0; type = "texture"; target = "SceneDepth"; is_depth = true; },
-        { binding = 1; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
+        { binding = 0; type = "texture"; target = "SceneDepth";  sample_type = "unfilterable"; },
+        { binding = 1; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; binding_type = "non_filtering"; },
         { binding = 2; type = "texture"; target = "GBuffer0";},
         { binding = 3; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
         { binding = 4; type = "texture"; target = "GBuffer1";},

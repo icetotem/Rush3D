@@ -224,12 +224,35 @@ namespace rush
                         info.target = target;
                         hash_combine(m_BindGroupHash, target);
 
-                        int isDepth = 0;
-                        if (CONFIG_TRUE == config_setting_lookup_bool(uniform, "is_depth", &isDepth))
+                        const char* sampleType;
+                        if (CONFIG_TRUE == config_setting_lookup_string(uniform, "sample_type", &sampleType))
                         {
-                            info.isDepth = (bool)isDepth;
+                            if (String(sampleType) == "float")
+                            {
+                                info.textureSampleType = TextureSampleType::Float;
+                            }
+                            else if (String(sampleType) == "unfilterable")
+                            {
+                                info.textureSampleType = TextureSampleType::UnfilterableFloat;
+                            }
+                            else if (String(sampleType) == "depth")
+                            {
+                                info.textureSampleType = TextureSampleType::Depth;
+                            }
+                            else if (String(sampleType) == "sint")
+                            {
+                                info.textureSampleType = TextureSampleType::Sint;
+                            }
+                            else if (String(sampleType) == "uint")
+                            {
+                                info.textureSampleType = TextureSampleType::Uint;
+                            }
+                            else
+                            {
+                                LOG_ERROR("Unknown sample type {}", sampleType);
+                            }
+                            hash_combine(m_BindGroupHash, sampleType);
                         }
-                        hash_combine(m_BindGroupHash, isDepth);
                     }
                     else if (CONFIG_TRUE == config_setting_lookup_string(uniform, "path", &path))
                     {
@@ -302,6 +325,28 @@ namespace rush
                             info.mip = MipmapFilterMode::Nearest;
                         }
                         hash_combine(m_BindGroupHash, info.mip);
+                    }
+
+                    const char* sampleBindType;
+                    if (CONFIG_TRUE == config_setting_lookup_string(uniform, "binding_type", &sampleBindType))
+                    {
+                        if (String(sampleBindType) == "filtering")
+                        {
+                            info.samplerBindingType = SamplerBindingType::Filtering;
+                        }
+                        else if (String(sampleBindType) == "non_filtering")
+                        {
+                            info.samplerBindingType = SamplerBindingType::NonFiltering;
+                        }
+                        else if (String(sampleBindType) == "comparison")
+                        {
+                            info.samplerBindingType = SamplerBindingType::Comparison;
+                        }
+                        else
+                        {
+                            LOG_ERROR("Unknown sampler binding type {}", sampleBindType);
+                        }
+                        hash_combine(m_BindGroupHash, sampleBindType);
                     }
                 }
                 else if (String(type) == "uniform")
@@ -449,7 +494,11 @@ namespace rush
                         {
                             auto tex = renderer->GetFGTexture(info.target.value());
                             RUSH_ASSERT(tex);
-                            auto samplerType = (info.isDepth.has_value() && info.isDepth.value()) ? TextureSampleType::Depth : TextureSampleType::Float;
+                            TextureSampleType samplerType = TextureSampleType::Float;
+                            if (info.textureSampleType.has_value())
+                            {
+                                samplerType = info.textureSampleType.value();
+                            }
                             char temp[128];
                             sprintf(temp, "%s_TextureView_%d_%s", material->GetPath().c_str(), info.binding, info.name.c_str());
                             material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, tex, samplerType, info.dim.value(), temp);
@@ -487,7 +536,12 @@ namespace rush
      
                         desc.maxAnisotropy = 1;
                         auto sampler = RDevice::instance().GetDevice().CreateSampler(&desc);
-                        material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, sampler, wgpu::SamplerBindingType::Filtering);
+                        wgpu::SamplerBindingType type = wgpu::SamplerBindingType::Filtering;
+                        if (info.samplerBindingType.has_value())
+                        {
+                            type = info.samplerBindingType.value();
+                        }
+                        material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, sampler, type);
                     }
                     else if (info.type == BindingType::Uniform)
                     {

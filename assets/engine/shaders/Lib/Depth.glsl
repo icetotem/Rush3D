@@ -2,7 +2,7 @@
 #define _DEPTH_GLSL_
 
 // NOTE: Must match glClipControl
-#define DEPTH_ZERO_TO_ONE 0
+#define DEPTH_ZERO_TO_ONE 1
 
 #if DEPTH_ZERO_TO_ONE
 #  define NEAR_CLIP_PLANE 0.0
