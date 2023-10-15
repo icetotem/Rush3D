@@ -1,0 +1,31 @@
+material:
+{
+    type = "post_process";
+    shading_model="default_lit";
+    vs = "assets/engine/shaders/FullScreenTriangle.vert";
+    fs = "assets/engine/shaders/DeferredLighting.frag";
+    depth_write = false;
+    depth_test = false;
+    uniforms = (
+        { binding = 0; type = "texture"; target = "SceneDepth"; is_depth = true; },
+        { binding = 1; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
+        { binding = 2; type = "texture"; target = "GBuffer0";},
+        { binding = 3; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
+        { binding = 4; type = "texture"; target = "GBuffer1";},
+        { binding = 5; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
+        { binding = 6; type = "texture"; target = "GBuffer2";},
+        { binding = 7; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
+        { binding = 8; type = "texture"; target = "GBuffer3";},
+        { binding = 9; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
+        { binding = 10; type = "texture"; target = "SSAO";},
+        { binding = 11; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
+        { binding = 12; type = "texture"; target = "BRDF";},
+        { binding = 13; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
+        { binding = 14; type = "texture_cube"; target = "IrradianceMap";},
+        { binding = 15; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
+        { binding = 16; type = "texture_cube"; target = "PrefilteredEnvMap";},
+        { binding = 17; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
+        { binding = 28; type = "uniform"; size = 32; }
+    );
+    global_bind_groups = ["light_data"]; // maybe "transform_data", "instance_data"
+}
