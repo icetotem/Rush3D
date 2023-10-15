@@ -13,16 +13,19 @@ struct Light {
   uint type;
   float innerConeAngle; // [spot] in radians
   float outerConeAngle; // [spot] in radians
+  float pading;
   // Implicit padding, 4bytes
 };
 
-#define _DECLARE_LIGHT_BUFFER(index, name)                                     \
-  layout(set = 2, binding = index, std430) restrict readonly buffer LightBuffer {       \
-    uint numLights;                                                            \
+#define _DECLARE_LIGHT_BUFFER(countName, buffername)                           \
+  layout(set = 2, binding = 0, std430) restrict readonly buffer LightCount {   \
+    uint count;                                                                \
     uint _pad[3];                                                              \
+  } countName;                                                                 \
+  layout(set = 2, binding = 1, std430) restrict readonly buffer LightBuffer {  \
     Light data[];                                                              \
   }                                                                            \
-  name
+  buffername;
 
 struct LightContribution {
   vec3 diffuse;
@@ -67,8 +70,7 @@ float _getLightAttenuation(const in Light light, vec3 fragToLight) {
 }
 
 vec3 _getLightIntensity(const in Light light, vec3 fragToLight) {
-  return light.color.rgb * light.color.a *
-         _getLightAttenuation(light, fragToLight);
+  return light.color.rgb * light.color.a * _getLightAttenuation(light, fragToLight);
 }
 
 #endif

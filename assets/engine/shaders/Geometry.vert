@@ -25,17 +25,13 @@ layout(location = 7) in vec4 a_Weights;
 
 #include <Resources/FrameBlock.glsl>
 
-/*
-layout(set = 3, binding = 0) uniform Transform {
-  mat4 modelMatrix;
-  mat4 normalMatrix;
-  mat4 modelViewProjMatrix;
-} u_Transform;
-*/
-
 layout(set = 2, binding = 0) readonly buffer Transforms {
   mat4 mtx[];
 } u_Transforms;
+
+layout(set = 2, binding = 1) readonly buffer NormalTransforms {
+  mat4 mtx[];
+} u_NormalTransforms;
 
 layout(set = 3, binding = 0) uniform Instance {
   int transformOffset;
@@ -65,12 +61,13 @@ layout(location = 0) out VertexData {
 vs_out;
 
 void main() {
-  //vs_out.fragPos = u_Transform.modelMatrix * vec4(a_Position, 1.0);
-  vs_out.fragPos = vec4(a_Position, 1.0);
+  mat4 modelMtx = u_Transforms.mtx[u_Instance.transformOffset + gl_InstanceIndex];
+  vs_out.fragPos = modelMtx * vec4(a_Position, 1.0);
 
 #ifdef HAS_NORMAL
-  const mat3 normalMatrix = mat3(u_viewProj);
+  const mat3 normalMatrix = mat3(u_NormalTransforms.mtx[u_Instance.transformOffset + gl_InstanceIndex]);
   const vec3 N = normalize(normalMatrix * a_Normal);
+  //const vec3 N = a_Normal;
 #  ifdef HAS_TANGENTS
   vec3 T = normalize(normalMatrix * a_Tangent);
   T = normalize(T - dot(T, N) * N);
@@ -93,5 +90,5 @@ void main() {
   vs_out.color = a_Color0;
 #endif
 
-  gl_Position = u_viewProj * u_Transforms.mtx[u_Instance.transformOffset + gl_InstanceIndex] * vec4(a_Position, 1.0);
+  gl_Position = u_viewProj * vs_out.fragPos;
 }

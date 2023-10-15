@@ -6,7 +6,7 @@
 #endif
 
 // NOTE: Must match glClipControl
-#define ORIGIN_UPPER_LEFT 0
+#define ORIGIN_UPPER_LEFT 1
 
 vec4 worldToView(vec4 v) { return u_Frame.camera.view * v; }
 vec4 viewToWorld(vec4 v) { return u_Frame.camera.inversedView * v; }

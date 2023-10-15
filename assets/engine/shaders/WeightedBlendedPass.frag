@@ -30,7 +30,7 @@ layout(binding = 4) uniform sampler2DArrayShadow t_CascadedShadowMaps;
 #include <Lib/Depth.glsl>
 
 #include <Lib/Light.glsl>
-_DECLARE_LIGHT_BUFFER(0, g_LightBuffer);
+_DECLARE_LIGHT_BUFFER(g_LightCount, g_LightBuffer);
 
 #include <Lib/IBL_AmbientLighting.glsl>
 #include <Lib/PBR_DirectLighting.glsl>
@@ -135,8 +135,7 @@ void main() {
         if (visibility == 0.0) continue;
       }
 
-      const vec3 radiance =
-        _getLightIntensity(light, fragToLight) * NdotL * visibility;
+      const vec3 radiance = _getLightIntensity(light, fragToLight) * NdotL * visibility;
 
       // clang-format off
       const LightContribution directLighting = PBR_DirectLighting(

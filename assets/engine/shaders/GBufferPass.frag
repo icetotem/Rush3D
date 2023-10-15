@@ -38,7 +38,7 @@ void main() {
   }
 #endif
 
-  GBuffer0.rgb = normalize(material.normal);
+  GBuffer0.rgb = (normalize(material.normal) + 1) * 0.5;
   GBuffer1 = vec4(material.baseColor, material.specular);
   GBuffer2.rgb = material.emissiveColor;
 

@@ -33,7 +33,7 @@ namespace rush
         RegisterFGRenderTexture("GBuffer1", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("GBuffer2", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("GBuffer3", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
-        RegisterFGRenderTexture("SceneDepth", TextureFormat::Depth24Plus, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("SceneDepth", TextureFormat::Depth32Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("LDR", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("SSAO", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("BRDF", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
@@ -46,8 +46,10 @@ namespace rush
         m_FrameDataGroup->Create("FrameData_group");
 
         m_TransformBuffer = CreateRef<RStorageBuffer>(sizeof(Matrix4) * MAX_INSTANCE_COUNT, nullptr, "Transform_buffer");
+        m_NormalTransformBuffer = CreateRef<RStorageBuffer>(sizeof(Matrix4) * MAX_INSTANCE_COUNT, nullptr, "NormalTransform_buffer");
         m_TransformDataGroup = CreateRef<RBindGroup>();
         m_TransformDataGroup->AddBinding(0, ShaderStage::Vertex, m_TransformBuffer, wgpu::BufferBindingType::ReadOnlyStorage);
+        m_TransformDataGroup->AddBinding(1, ShaderStage::Vertex, m_NormalTransformBuffer, wgpu::BufferBindingType::ReadOnlyStorage);
         m_TransformDataGroup->Create("Transform_group");
 
         for (int i = 0; i < MAX_INSTANCE_COUNT; ++i)
@@ -59,9 +61,11 @@ namespace rush
             instBindGroup.group->Create("InstanceData_group");
         }
 
-        m_LightsBuffer = CreateRef<RStorageBuffer>(sizeof(m_LightsData), &m_LightsData, "LightData_buffer");
+        m_LightsCountBuffer = CreateRef<RStorageBuffer>(sizeof(IVector4), nullptr, "LightCountData_buffer");
+        m_LightsBuffer = CreateRef<RStorageBuffer>(sizeof(LightData) * 2048, nullptr, "LightData_buffer");
         m_LightDataGroup = CreateRef<RBindGroup>();
-        m_LightDataGroup->AddBinding(0, ShaderStage::Fragment, m_LightsBuffer, wgpu::BufferBindingType::ReadOnlyStorage);
+        m_LightDataGroup->AddBinding(0, ShaderStage::Fragment, m_LightsCountBuffer, wgpu::BufferBindingType::ReadOnlyStorage);
+        m_LightDataGroup->AddBinding(1, ShaderStage::Fragment, m_LightsBuffer, wgpu::BufferBindingType::ReadOnlyStorage);
         m_LightDataGroup->Create("LightData_group");
     }
 
@@ -169,20 +173,6 @@ namespace rush
         // set frame data
         if (m_FrameDataGroup->GetBindGroupHandle())
         {
-            m_FrameData.camera.projection = camera->GetProjMatrix();
-            m_FrameData.camera.view = camera->GetViewMatrix();
-            m_FrameData.camera.inversedProjection = glm::inverse(camera->GetProjMatrix());
-            m_FrameData.camera.inversedView = glm::inverse(camera->GetViewMatrix());
-            m_FrameData.camera.vp = m_FrameData.camera.projection * m_FrameData.camera.view;
-            m_FrameData.camera.fov = camera->GetFov();
-            m_FrameData.camera._near = camera->GetNearClip();
-            m_FrameData.camera._far = camera->GetFarClip();
-            m_FrameData.time = Timer::GetTimeSec();
-            m_FrameData.deltaTime = Timer::GetDeltaTimeSec();
-            m_FrameData.resolution = IVector2(m_Width, m_Height);
-            m_FrameData.renderFeatures = 0;
-            m_FrameData.deltaTime = 0;
-            m_FrameDataBuffer->UpdateData(&m_FrameData, sizeof(m_FrameData));
             pass.SetBindGroup(0, m_FrameDataGroup->GetBindGroupHandle());
         }
 
@@ -190,34 +180,7 @@ namespace rush
         m_Transforms.clear();
         if (m_TransformDataGroup->GetBindGroupHandle())
         {
-            for (const auto& batch : renderQueue->GetBatches())
-            {
-                for (uint32_t i = 0; i < batch->instanceCount; ++i)
-                {
-                    m_Transforms.push_back(*batch->transforms[i]);
-                }
-            }
-            m_TransformBuffer->UpdateData(m_Transforms.data(), sizeof(Matrix4) * m_Transforms.size());
             pass.SetBindGroup(2, m_TransformDataGroup->GetBindGroupHandle());
-        }
-
-        // update light data
-        if (m_LightDataGroup->GetBindGroupHandle())
-        {
-            m_LightsData.numLights = renderQueue->GetLights().size();
-            int lt = 0;
-            for (auto light : renderQueue->GetLights())
-            {
-                m_LightsData.data[lt].color = Vector4(light->GetColor(), light->GetIntensity());
-                m_LightsData.data[lt].direction = light->Get<Transform>()->GetForward();
-                m_LightsData.data[lt].range = light->GetRaidus();
-                m_LightsData.data[lt].innerConeAngle = light->GetInnerAngle();
-                m_LightsData.data[lt].outerConeAngle = light->GetOutterAngle();
-                m_LightsData.data[lt].type = (uint32_t)light->GetType();
-                m_LightsData.data[lt].position = light->Get<Transform>()->GetPosition();
-                ++lt;
-            }
-            m_LightsBuffer->UpdateData(&m_LightsData, m_LightsData.numLights * sizeof(LightData) + 16);
         }
 
         uint32_t transformOffset = 0;
@@ -366,13 +329,67 @@ namespace rush
     {
         BeginDraw(surface);
 
+        // update frame data
+        auto camera = renderQueue->GetCamera().Get<Camera>();
+        if (m_FrameDataGroup->GetBindGroupHandle())
+        {
+            m_FrameData.camera.projection = camera->GetProjMatrix();
+            m_FrameData.camera.view = camera->GetViewMatrix();
+            m_FrameData.camera.inversedProjection = glm::inverse(camera->GetProjMatrix());
+            m_FrameData.camera.inversedView = glm::inverse(camera->GetViewMatrix());
+            m_FrameData.camera.vp = m_FrameData.camera.projection * m_FrameData.camera.view;
+            m_FrameData.camera.fov = camera->GetFov();
+            m_FrameData.camera._near = camera->GetNearClip();
+            m_FrameData.camera._far = camera->GetFarClip();
+            m_FrameData.time = Timer::GetTimeSec();
+            m_FrameData.deltaTime = Timer::GetDeltaTimeSec();
+            m_FrameData.resolution = IVector2(m_Width, m_Height);
+            m_FrameData.renderFeatures = 0;
+            m_FrameData.deltaTime = 0;
+            m_FrameDataBuffer->UpdateData(&m_FrameData, sizeof(m_FrameData));
+        }
+
+        // update transform data
+        m_Transforms.clear();
+        m_NormalTransforms.clear();
+        if (m_TransformDataGroup->GetBindGroupHandle())
+        {
+            for (const auto& batch : renderQueue->GetBatches())
+            {
+                for (uint32_t i = 0; i < batch->instanceCount; ++i)
+                {
+                    m_Transforms.push_back(*batch->transforms[i]);
+                    m_NormalTransforms.push_back(glm::transpose(glm::inverse(*batch->transforms[i])));
+                }
+            }
+            m_TransformBuffer->UpdateData(m_Transforms.data(), sizeof(Matrix4) * m_Transforms.size());
+            m_NormalTransformBuffer->UpdateData(m_NormalTransforms.data(), sizeof(Matrix4) * m_NormalTransforms.size());
+        }
+
+        // update light data
+        m_LightsData.clear();
+        if (m_LightDataGroup->GetBindGroupHandle())
+        {
+            IVector4 count = Vector4(renderQueue->GetLights().size(), 0, 0, 0);
+            for (auto light : renderQueue->GetLights())
+            {
+                auto& lightData = m_LightsData.emplace_back();
+                lightData.color = Vector4(light->GetColor(), light->GetIntensity());
+                lightData.direction = Vector4(light->Get<Transform>()->GetForward(), 0);
+                lightData.typeAngle = Vector4((uint32_t)light->GetType(), degToRad(light->GetInnerAngle()), degToRad(light->GetOutterAngle()), 0);
+                lightData.position = Vector4(light->Get<Transform>()->GetPosition(), light->GetRaidus());
+            }
+            m_LightsCountBuffer->UpdateData(&count, sizeof(count));
+            m_LightsBuffer->UpdateData(m_LightsData.data(), sizeof(LightData) * m_LightsData.size());
+        }
+
         // g-buffer pass
         if (1)
         {
             FrameBuffer info;
             info.lable = "g-buffer Pass"; 
             GenAttachment(info.colorAttachment.emplace_back(), "GBuffer0", Vector4(0));
-            GenAttachment(info.colorAttachment.emplace_back(), "GBuffer1", Vector4(0.2f, 0.2f, 0.2f, 0.0f)); // only albedo can with clear color
+            GenAttachment(info.colorAttachment.emplace_back(), "GBuffer1", Vector4(0));
             GenAttachment(info.colorAttachment.emplace_back(), "GBuffer2", Vector4(0));
             GenAttachment(info.colorAttachment.emplace_back(), "GBuffer3", Vector4(0));
             info.depthStencilTexture = "SceneDepth";

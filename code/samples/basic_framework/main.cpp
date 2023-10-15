@@ -36,33 +36,51 @@ int main(int argc, char* argv[])
     auto mainCamera = mainScene->GetMainCamera();
 
     // directional light
+    if (1)
     {
         auto dirLight = mainScene->CreateEntity("dirLight");
         auto light = dirLight.Add<Light>();
         light->SetType(LightType::LT_Directional);
-        light->SetColor(Vector3(0.15f, 0.15f, 0.15f));
-        light->SetIntensity(1.0f);
+        light->SetColor(Vector3(1.0f));
+        //light->SetIntensity(1.f);
         auto transform = dirLight.Add<Transform>();
-        transform->SetPosition(1, 1, 1);
+        transform->SetPosition(2, 2, 2);
         transform->LookAt(0, 0, 0);
     }
-    // point light #1
+    // point lights
+//     for (int i = -3; i <= 3; ++i)
+//     {
+//         auto pointLight = mainScene->CreateEntity();
+//         auto light = pointLight.Add<Light>();
+//         light->SetType(LightType::LT_Point);
+//         light->SetColor(Vector3(1.0f, 0.5f, 0.5f));
+//         light->SetIntensity(10.5F);
+//         light->SetRadius(15.0f);
+//         auto transform = pointLight.Add<Transform>();
+//         transform->SetPosition(i * 3.0f, 1.5, 0);
+//     }
+
+    // spot light #1
+    for (int i = -3; i <= 3; ++i)
     {
-        auto pointLight = mainScene->CreateEntity("pointLight#1");
+        auto pointLight = mainScene->CreateEntity();
         auto light = pointLight.Add<Light>();
-        light->SetType(LightType::LT_Point);
-        light->SetColor(Vector3(0.15f, 0.15f, 0.15f));
-        light->SetIntensity(1.0f);
-        light->SetRadius(1.0f);
+        light->SetType(LightType::LT_Spot);
+        light->SetColor(Vector3(0.0f, 1.0f, 0.5f));
+        light->SetIntensity(5.5F);
+        light->SetRadius(1.1f);
+        light->SetInerAngle(0.0f);
+        light->SetOutterAngle(0.0f);
         auto transform = pointLight.Add<Transform>();
-        transform->SetPosition(0, 0, 0);
+        transform->SetPosition(i * 3.0f, 0, 2.0);
+        transform->LookAt(0, 0, 0);
     }
 
     CameraCtrlFirstPerson firstPersonCtrl;
     firstPersonCtrl.Setup(engine.GetMainWindow(), mainCamera);
 
     // create the entity
-    for (int i = 1; i < 3; ++i)
+    for (int i = -3; i <= 3; ++i)
     {
         auto ent = mainScene->CreateEntity();
 
@@ -70,67 +88,68 @@ int main(int argc, char* argv[])
         trans->SetPosition(i * 3.0f, 0, 0);
 
         auto meshRenderer = ent.Add<MeshRenderer>();
-        meshRenderer->AddModel("assets/monkey.glb");
-        meshRenderer->SetMaterial(0, "assets/test.mat");
+        meshRenderer->AddModel("assets/Cube.glb");
+        //meshRenderer->SetMaterial(0, "assets/test.mat");
 
         auto bonding = ent.Add<Bounding>();
     }
 
-    for (int i = 1; i < 3; ++i)
-    {
-        auto ent = mainScene->CreateEntity();
 
-        auto trans = ent.Add<Transform>();
-        trans->SetPosition(-i * 3.0f, 0, 0);
-
-        auto meshRenderer = ent.Add<MeshRenderer>();
-        meshRenderer->AddModel("assets/monkey.glb");
-        meshRenderer->SetMaterial(0, "assets/test2.mat");
-
-        auto bonding = ent.Add<Bounding>();
-    }
-
-    for (int i = 1; i < 3; ++i)
-    {
-        auto ent = mainScene->CreateEntity();
-
-        auto trans = ent.Add<Transform>();
-        trans->SetPosition(0, i * 3.0f, 0);
-
-        auto meshRenderer = ent.Add<MeshRenderer>();
-        meshRenderer->AddModel("assets/monkey.glb");
-        //meshRenderer->SetMaterial(0, "assets/test2.mat"); // default mat
-
-        auto bonding = ent.Add<Bounding>();
-    }
-
-    for (int i = 1; i < 3; ++i)
-    {
-        auto ent = mainScene->CreateEntity();
-
-        auto trans = ent.Add<Transform>();
-        trans->SetPosition(0, -i * 3.0f, 0);
-
-        auto meshRenderer = ent.Add<MeshRenderer>();
-        meshRenderer->AddModel("assets/cube.glb");
-        //meshRenderer->SetMaterial(0, "assets/test2.mat"); // default mat
-
-        auto bonding = ent.Add<Bounding>();
-    }
-
-    for (int i = 3; i < 5; ++i)
-    {
-        auto ent = mainScene->CreateEntity();
-
-        auto trans = ent.Add<Transform>();
-        trans->SetPosition(0, -i * 3.0f, 0);
-
-        auto meshRenderer = ent.Add<MeshRenderer>();
-        meshRenderer->AddModel("assets/sphere.glb");
-        //meshRenderer->SetMaterial(0, "assets/test2.mat"); // default mat
-
-        auto bonding = ent.Add<Bounding>();
-    }
+//     for (int i = 1; i < 3; ++i)
+//     {
+//         auto ent = mainScene->CreateEntity();
+// 
+//         auto trans = ent.Add<Transform>();
+//         trans->SetPosition(-i * 3.0f, 0, 0);
+// 
+//         auto meshRenderer = ent.Add<MeshRenderer>();
+//         meshRenderer->AddModel("assets/monkey.glb");
+//         meshRenderer->SetMaterial(0, "assets/test.mat");
+// 
+//         auto bonding = ent.Add<Bounding>();
+//     }
+// 
+//     for (int i = 1; i < 3; ++i)
+//     {
+//         auto ent = mainScene->CreateEntity();
+// 
+//         auto trans = ent.Add<Transform>();
+//         trans->SetPosition(0, i * 3.0f, 0);
+// 
+//         auto meshRenderer = ent.Add<MeshRenderer>();
+//         meshRenderer->AddModel("assets/monkey.glb");
+//         meshRenderer->SetMaterial(0, "assets/test.mat"); // default mat
+// 
+//         auto bonding = ent.Add<Bounding>();
+//     }
+// 
+//     for (int i = 1; i < 3; ++i)
+//     {
+//         auto ent = mainScene->CreateEntity();
+// 
+//         auto trans = ent.Add<Transform>();
+//         trans->SetPosition(0, -i * 3.0f, 0);
+// 
+//         auto meshRenderer = ent.Add<MeshRenderer>();
+//         meshRenderer->AddModel("assets/cube.glb");
+//         meshRenderer->SetMaterial(0, "assets/test.mat"); // default mat
+// 
+//         auto bonding = ent.Add<Bounding>();
+//     }
+// 
+//     for (int i = 3; i < 5; ++i)
+//     {
+//         auto ent = mainScene->CreateEntity();
+// 
+//         auto trans = ent.Add<Transform>();
+//         trans->SetPosition(0, -i * 3.0f, 0);
+// 
+//         auto meshRenderer = ent.Add<MeshRenderer>();
+//         meshRenderer->AddModel("assets/sphere.glb");
+//         meshRenderer->SetMaterial(0, "assets/test.mat"); // default mat
+// 
+//         auto bonding = ent.Add<Bounding>();
+//     }
 
     while (engine.GetMainWindow()->ShouldClose())
     {

@@ -54,23 +54,10 @@ namespace rush
 
     struct LightData
     {
-        Vector3 position;
-        float range;
-        Vector3 direction;
-        float pading;
-        Vector4 color;
-        uint32_t type;
-        float innerConeAngle; // [spot] in radians
-        float outerConeAngle; // [spot] in radians
-    };
-
-    static constexpr uint32_t kMaxPointLights = 1024;
-
-    struct LightBufferData
-    {
-        uint32_t numLights = 0;
-        uint32_t padding[3];
-        LightData data[kMaxPointLights];
+        Vector4 position = {0, 0, 0, 0};
+        Vector4 direction = {0, 0, 0, 0};
+        Vector4 color = {0, 0, 0, 0};
+        Vector4 typeAngle = {0, 0, 0, 0};
     };
 
     struct FrameBufferAttachment
@@ -169,15 +156,18 @@ namespace rush
 
         // TransformData
         Ref<RBuffer> m_TransformBuffer;
+        Ref<RBuffer> m_NormalTransformBuffer;
         DArray<Matrix4> m_Transforms;
+        DArray<Matrix4> m_NormalTransforms;
         Ref<RBindGroup> m_TransformDataGroup;
 
         // instance data
         DArray<InstanceBindGroup> m_InstanceBindGroups;
 
         // Light Data
+        Ref<RBuffer> m_LightsCountBuffer;
         Ref<RBuffer> m_LightsBuffer;
-        LightBufferData m_LightsData;
+        DArray<LightData> m_LightsData;
         Ref<RBindGroup> m_LightDataGroup;
     };
 

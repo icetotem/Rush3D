@@ -5,8 +5,9 @@ layout(location = 0) in vec2 v_TexCoord;
 
 #include <Resources/FrameBlock.glsl>
 
-// #define ENABLE_SHADOW
-// #define ENABLE_GI
+//#define ENABLE_SHADOW
+//#define ENABLE_GI
+#define USE_PBR
 
 layout(set = 1, binding = 0) uniform texture2D t_SceneDepth; 
 layout(set = 1, binding = 1) uniform sampler s_d;
@@ -57,7 +58,7 @@ layout(set = 1, binding = 27) uniform sampler s_acc_b;
 #include <Lib/Depth.glsl>
 
 #include <Lib/Light.glsl>
-_DECLARE_LIGHT_BUFFER(0, g_LightBuffer);
+_DECLARE_LIGHT_BUFFER(g_LightCount, g_LightBuffer);
 
 #include <Lib/IBL_AmbientLighting.glsl>
 #include <Lib/PBR_DirectLighting.glsl>
@@ -123,10 +124,9 @@ void main() {
   // H = halfway vector (between V and L)
 
   const vec3 fragPosViewSpace = viewPositionFromDepth(depth, v_TexCoord);
-  const vec3 fragPosWorldSpace =
-    (u_Frame.camera.inversedView * vec4(fragPosViewSpace, 1.0)).xyz;
+  const vec3 fragPosWorldSpace = (u_Frame.camera.inversedView * vec4(fragPosViewSpace, 1.0)).xyz;
 
-  const vec3 N = normalize(texture(sampler2D(t_GBuffer0, s_0), v_TexCoord).rgb);
+  const vec3 N = normalize(texture(sampler2D(t_GBuffer0, s_0), v_TexCoord).rgb * 2.0 - 1.0);
   const vec3 V = normalize(getCameraPosition() - fragPosWorldSpace);
   const float NdotV = clamp01(dot(N, V));
 
@@ -205,7 +205,7 @@ void main() {
   for (uint i = 0; i < lightCount; ++i) {
     const uint lightIndex = g_LightIndexList[startOffset + i].x;
 #else
-  for (uint i = 0; i < g_LightBuffer.numLights; ++i) {
+  for (uint i = 0; i < g_LightCount.count; ++i) {
     const uint lightIndex = i;
 #endif
     const Light light = g_LightBuffer.data[lightIndex];
@@ -231,9 +231,9 @@ void main() {
         if (visibility == 0.0) continue;
       }
 #endif
-      const vec3 radiance =
-        _getLightIntensity(light, fragToLight) * NdotL * visibility;
 
+#ifdef USE_PBR
+      const vec3 radiance = _getLightIntensity(light, fragToLight) * NdotL * visibility;
       // clang-format off
       const LightContribution directLighting = PBR_DirectLighting(
         radiance,
@@ -250,9 +250,18 @@ void main() {
 
       Lo_diffuse += directLighting.diffuse;
       Lo_specular += directLighting.specular;
+#else
+      const vec3 radiance = albedo * _getLightIntensity(light, fragToLight);
+      Lo_diffuse += radiance * NdotL * visibility;
+      Lo_specular += radiance * pow(clamp01(dot(N, H)), 64) * visibility;
+#endif
     }
   }
 
   FragColor.rgb = Lo_diffuse + Lo_specular + emissiveColor;
-  FragColor.rgb += diffuseColor;
+  //FragColor.rgb += diffuseColor;
+  //FragColor.rgb = fragPosWorldSpace;
+  //FragColor.rgb = V;
+  //FragColor.rgb = (N + 1) * 0.5;
+  //FragColor.rgb = N;
 }
