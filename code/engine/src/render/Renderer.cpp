@@ -26,6 +26,7 @@ namespace rush
         m_Height = height;
         CreateFullScreenQuad();
 
+        m_ToneMappingPassMat = AssetsManager::instance().GetMaterial("assets/engine/pipeline/tone_mapping.mat");
         m_FinalPassMat = AssetsManager::instance().GetMaterial("assets/engine/pipeline/final.mat");
         m_DeferredLightingPassMat = AssetsManager::instance().GetMaterial("assets/engine/pipeline/deferred_lighting.mat");
 
@@ -34,7 +35,8 @@ namespace rush
         RegisterFGRenderTexture("GBuffer2", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("GBuffer3", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("SceneDepth", TextureFormat::Depth32Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
-        RegisterFGRenderTexture("LDR", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("HDR", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("LDR", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("SSAO", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("BRDF", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGDynamicTexture("IrradianceMap", TextureFormat::RGBA16Float, TextureViewDimension::Cube, Vector2(1.0f, 1.0f));
@@ -403,8 +405,17 @@ namespace rush
         {
             FrameBuffer info;
             info.lable = "Deferred Lighting Pass";
-            GenAttachment(info.colorAttachment.emplace_back(), "LDR", Vector4(0));
+            GenAttachment(info.colorAttachment.emplace_back(), "HDR", Vector4(0));
             DrawQuad(m_DeferredLightingPassMat, info);
+        }
+
+        // tone mapping
+        if (1)
+        {
+            FrameBuffer info;
+            info.lable = "Tone Mapping Pass";
+            GenAttachment(info.colorAttachment.emplace_back(), "LDR", Vector4(0));
+            DrawQuad(m_ToneMappingPassMat, info);
         }
 
         // final pass

@@ -7,7 +7,7 @@ material:
 
     has_color = false;
     has_normal = true;
-    has_tangent = false;
+    has_tangent = true;
     has_texcoord0 = true;
     has_texcoord1 = false;
     is_skined = false;
@@ -16,13 +16,18 @@ material:
         { binding = 0; type = "uniform"; name = "u_MaterialFlags"; size = 4; },
         { binding = 1; type = "texture"; name = "u_baseColor"; path = "assets/rustediron2_basecolor.png"; },
         { binding = 2; type = "sampler"; name = "u_baseColorSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
-        { binding = 3; type = "texture"; name = "u_metallic"; path = "assets/rustediron2_metallic_2.png"; },
-        { binding = 4; type = "sampler"; name = "u_metallicSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
+        { binding = 3; type = "texture"; name = "u_normal"; path = "assets/rustediron2_normal.png"; },
+        { binding = 4; type = "sampler"; name = "u_normalSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
+        { binding = 5; type = "texture"; name = "u_metallic"; path = "assets/rustediron2_metallic_2.png"; },
+        { binding = 6; type = "sampler"; name = "u_metallicSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
     );
 
     code = "
         vec4 color = texture(sampler2D(u_baseColor, u_baseColorSampler), getTexCoord0());
-        material.baseColor = color.rgb;
+        material.baseColor = sRGBToLinear(color.rgb);
+
+        vec3 normal = texture(sampler2D(u_normal, u_normalSampler), getTexCoord0()).rgb;
+        material.normal = normal * 2.0 - 1.0;
 
         float metal = texture(sampler2D(u_metallic, u_metallicSampler), getTexCoord0()).r;
         material.metallic = metal;

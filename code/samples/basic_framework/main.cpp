@@ -95,19 +95,19 @@ int main(int argc, char* argv[])
     }
 
 
-//     for (int i = 1; i < 3; ++i)
-//     {
-//         auto ent = mainScene->CreateEntity();
-// 
-//         auto trans = ent.Add<Transform>();
-//         trans->SetPosition(-i * 3.0f, 0, 0);
-// 
-//         auto meshRenderer = ent.Add<MeshRenderer>();
-//         meshRenderer->AddModel("assets/monkey.glb");
-//         meshRenderer->SetMaterial(0, "assets/test.mat");
-// 
-//         auto bonding = ent.Add<Bounding>();
-//     }
+    for (int i = 1; i < 5; ++i)
+    {
+        auto ent = mainScene->CreateEntity();
+
+        auto trans = ent.Add<Transform>();
+        trans->SetPosition(0, i * 3.0f, 0);
+
+        auto meshRenderer = ent.Add<MeshRenderer>();
+        meshRenderer->AddModel("assets/sphere.glb");
+        meshRenderer->SetMaterial(0, "assets/test.mat");
+
+        auto bonding = ent.Add<Bounding>();
+    }
 // 
 //     for (int i = 1; i < 3; ++i)
 //     {

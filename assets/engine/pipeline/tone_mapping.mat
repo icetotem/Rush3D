@@ -2,12 +2,11 @@ material:
 {
     type = "post_process";
     vs = "assets/engine/shaders/FullScreenTriangle.vert";
-    fs = "assets/engine/shaders/FinalPass.frag";
+    fs = "assets/engine/shaders/TonemapPass.frag";
     depth_write = false;
     depth_test = false;
     uniforms = (
-        { binding = 0; type = "texture"; name = "t_0"; target = "LDR";},
+        { binding = 0; type = "texture"; name = "t_0"; target = "HDR";},
         { binding = 1; type = "sampler"; name = "s_0"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
-        { binding = 2; type = "uniform"; name = "Mode"; size = 4; }
     );
 }

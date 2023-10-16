@@ -117,6 +117,8 @@ namespace rush
     {
         uint64_t h(0);
         hash_combine(h, path);
+        hash_combine(h, String(code));
+        hash_combine(h, String(uniforms));
         for (const auto& define : defines)
             hash_combine(h, define);
         auto strHash = std::to_string(h);

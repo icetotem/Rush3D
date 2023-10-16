@@ -14,6 +14,66 @@
 namespace rush
 {
 
+    static void CalculateTangentArray(long vertexCount, const Vector3* vertex, const Vector3* normal,
+        const Vector2* texcoord, long triangleCount, const uint16_t* triangle, Vector3* tangent)
+    {
+        Vector3* tan1 = new Vector3[vertexCount * 2];
+        Vector3* tan2 = tan1 + vertexCount;
+        ZeroMemory(tan1, vertexCount * sizeof(Vector3) * 2);
+
+        for (long a = 0; a < triangleCount; a++)
+        {
+            long i1 = triangle[3 * a + 0];
+            long i2 = triangle[3 * a + 1];
+            long i3 = triangle[3 * a + 2];
+
+            const Vector3& v1 = vertex[i1];
+            const Vector3& v2 = vertex[i2];
+            const Vector3& v3 = vertex[i3];
+
+            const Vector2& w1 = texcoord[i1];
+            const Vector2& w2 = texcoord[i2];
+            const Vector2& w3 = texcoord[i3];
+
+            float x1 = v2.x - v1.x;
+            float x2 = v3.x - v1.x;
+            float y1 = v2.y - v1.y;
+            float y2 = v3.y - v1.y;
+            float z1 = v2.z - v1.z;
+            float z2 = v3.z - v1.z;
+
+            float s1 = w2.x - w1.x;
+            float s2 = w3.x - w1.x;
+            float t1 = w2.y - w1.y;
+            float t2 = w3.y - w1.y;
+
+            float r = 1.0F / (s1 * t2 - s2 * t1);
+            Vector3 sdir((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r,
+                (t2 * z1 - t1 * z2) * r);
+            Vector3 tdir((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r,
+                (s1 * z2 - s2 * z1) * r);
+
+            tan1[i1] += sdir;
+            tan1[i2] += sdir;
+            tan1[i3] += sdir;
+
+            tan2[i1] += tdir;
+            tan2[i2] += tdir;
+            tan2[i3] += tdir;
+        }
+
+        for (long a = 0; a < vertexCount; a++)
+        {
+            const Vector3& n = normal[a];
+            const Vector3& t = tan1[a];
+
+            // Gram-Schmidt orthogonalize
+            tangent[a] = glm::normalize(t - n * glm::dot(n, t));
+        }
+
+        delete[] tan1;
+    }
+
     bool RModel::Load(const StringView& path)
     {
         auto stream = BundleManager::instance().Get(path);
@@ -72,7 +132,6 @@ namespace rush
                     continue;
                 }
 
-                int buffIndex = 0;
                 // 访问顶点坐标
                 {
                     int accessorIdx = primitive.attributes.at("POSITION");
@@ -88,12 +147,6 @@ namespace rush
                     }
 
                     positions = reinterpret_cast<const float*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-                    vlayouts[buffIndex].attributeCount = 1;
-                    vlayouts[buffIndex].stride = 3 * sizeof(float);
-                    vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
-                    vlayouts[buffIndex].attributes[0].offset = 0;
-                    vlayouts[buffIndex].attributes[0].location = 0;
-                    ++buffIndex;
                 }
 
                 // 访问顶点色数据
@@ -111,12 +164,7 @@ namespace rush
                     else
                     {
                         colors = reinterpret_cast<const float*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-                        vlayouts[buffIndex].attributeCount = 1;
-                        vlayouts[buffIndex].stride = 3 * sizeof(float);
-                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
-                        vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = 1;
-                        ++buffIndex;
+
                     }
                 }
 
@@ -135,12 +183,6 @@ namespace rush
                     else
                     {
                         normals = reinterpret_cast<const float*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-                        vlayouts[buffIndex].attributeCount = 1;
-                        vlayouts[buffIndex].stride = 3 * sizeof(float);
-                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
-                        vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = 2;
-                        ++buffIndex;
                     }
                 }
 
@@ -159,12 +201,6 @@ namespace rush
                     else
                     {
                         tangents = reinterpret_cast<const float*>(&(tangentBuffer.data[accessor.byteOffset + tangentBufferView.byteOffset]));
-                        vlayouts[buffIndex].attributeCount = 1;
-                        vlayouts[buffIndex].stride = 3 * sizeof(float);
-                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
-                        vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = 3;
-                        ++buffIndex;
                     }
                 }
 
@@ -184,12 +220,6 @@ namespace rush
                     else
                     {
                         texcoords0 = reinterpret_cast<const float*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-                        vlayouts[buffIndex].attributeCount = 1;
-                        vlayouts[buffIndex].stride = 2 * sizeof(float);
-                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x2;
-                        vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = 4;
-                        ++buffIndex;
                     }
                 }
 
@@ -209,12 +239,6 @@ namespace rush
                     else
                     {
                         texcoords1 = reinterpret_cast<const float*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-                        vlayouts[buffIndex].attributeCount = 1;
-                        vlayouts[buffIndex].stride = 2 * sizeof(float);
-                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x2;
-                        vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = 5;
-                        ++buffIndex;
                     }
                 }
 
@@ -240,20 +264,8 @@ namespace rush
                     else
                     {
                         const uint16_t* jointIndices = reinterpret_cast<const uint16_t*>(&(jointsBuffer.data[jointsAccessor.byteOffset + jointsBufferView.byteOffset]));
-                        vlayouts[buffIndex].attributeCount = 1;
-                        vlayouts[buffIndex].stride = 4 * sizeof(uint16_t);
-                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Uint16x4;
-                        vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = 6;
-                        ++buffIndex;
 
                         const float* jointWeights = reinterpret_cast<const float*>(&(weightsBuffer.data[weightsAccessor.byteOffset + weightsBufferView.byteOffset]));
-                        vlayouts[buffIndex].attributeCount = 1;
-                        vlayouts[buffIndex].stride = 4 * sizeof(float);
-                        vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x4;
-                        vlayouts[buffIndex].attributes[0].offset = 0;
-                        vlayouts[buffIndex].attributes[0].location = 7;
-                        ++buffIndex;
                     }
                 }
 
@@ -267,6 +279,90 @@ namespace rush
                     // 访问索引数据
                     indices = reinterpret_cast<const uint16_t*>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
                     numIndices = accessor.count;
+                }
+
+                RUSH_ASSERT(positions);
+                int buffIndex = 0;
+                vlayouts[buffIndex].attributeCount = 1;
+                vlayouts[buffIndex].stride = 3 * sizeof(float);
+                vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
+                vlayouts[buffIndex].attributes[0].offset = 0;
+                vlayouts[buffIndex].attributes[0].location = VertexSementic::V_POSITION;
+                ++buffIndex;
+
+                if (colors)
+                {
+                    vlayouts[buffIndex].attributeCount = 1;
+                    vlayouts[buffIndex].stride = 3 * sizeof(float);
+                    vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
+                    vlayouts[buffIndex].attributes[0].offset = 0;
+                    vlayouts[buffIndex].attributes[0].location = VertexSementic::V_COLOR;
+                    ++buffIndex;
+                }
+
+                if (normals)
+                {
+                    vlayouts[buffIndex].attributeCount = 1;
+                    vlayouts[buffIndex].stride = 3 * sizeof(float);
+                    vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
+                    vlayouts[buffIndex].attributes[0].offset = 0;
+                    vlayouts[buffIndex].attributes[0].location = VertexSementic::V_NORMAL;
+                    ++buffIndex;
+                }
+
+                bool computeTangents = false;
+                if (!tangents && texcoords0)
+                {
+                    tangents = new float[numVertices * 3];
+                    CalculateTangentArray(numVertices, (const Vector3*)positions, (const Vector3*)normals, (const Vector2*)texcoords0, numIndices / 3, indices, (Vector3*)tangents);
+                    computeTangents = true;
+                }
+
+                if (tangents)
+                {
+                    vlayouts[buffIndex].attributeCount = 1;
+                    vlayouts[buffIndex].stride = 3 * sizeof(float);
+                    vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x3;
+                    vlayouts[buffIndex].attributes[0].offset = 0;
+                    vlayouts[buffIndex].attributes[0].location = VertexSementic::V_TANGENT;
+                    ++buffIndex;
+                }
+
+                if (texcoords0)
+                {
+                    vlayouts[buffIndex].attributeCount = 1;
+                    vlayouts[buffIndex].stride = 2 * sizeof(float);
+                    vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x2;
+                    vlayouts[buffIndex].attributes[0].offset = 0;
+                    vlayouts[buffIndex].attributes[0].location = VertexSementic::V_TEXCOORD0;
+                    ++buffIndex;
+                }
+
+                if (texcoords1)
+                {
+                    vlayouts[buffIndex].attributeCount = 1;
+                    vlayouts[buffIndex].stride = 2 * sizeof(float);
+                    vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x2;
+                    vlayouts[buffIndex].attributes[0].offset = 0;
+                    vlayouts[buffIndex].attributes[0].location = VertexSementic::V_TEXCOORD1;
+                    ++buffIndex;
+                }
+
+                if (jointIndices && jointWeights)
+                {
+                    vlayouts[buffIndex].attributeCount = 1;
+                    vlayouts[buffIndex].stride = 4 * sizeof(uint16_t);
+                    vlayouts[buffIndex].attributes[0].format = VertexFormat::Uint16x4;
+                    vlayouts[buffIndex].attributes[0].offset = 0;
+                    vlayouts[buffIndex].attributes[0].location = VertexSementic::V_JOINT;
+                    ++buffIndex;
+
+                    vlayouts[buffIndex].attributeCount = 1;
+                    vlayouts[buffIndex].stride = 4 * sizeof(float);
+                    vlayouts[buffIndex].attributes[0].format = VertexFormat::Float32x4;
+                    vlayouts[buffIndex].attributes[0].offset = 0;
+                    vlayouts[buffIndex].attributes[0].location = VertexSementic::V_WEIGHT;
+                    ++buffIndex;
                 }
 
                 auto& inner_primitive = inner_mesh.primitives.emplace_back();
@@ -305,6 +401,11 @@ namespace rush
 
                 inner_primitive.geometry = geo;
                 inner_primitive.material = "";//primitive.material;
+
+                if (computeTangents)
+                {
+                    delete[] tangents;
+                }
             }
 
         }

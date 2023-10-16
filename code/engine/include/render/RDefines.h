@@ -40,6 +40,7 @@ namespace rush
         Masked,
     };
 
+
     static constexpr StringView kBackBufferName = "BackBuffer";
 }
 

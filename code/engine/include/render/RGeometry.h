@@ -8,6 +8,18 @@
 namespace rush
 {
 
+    enum VertexSementic
+    {
+        V_POSITION,
+        V_COLOR,
+        V_NORMAL,
+        V_TANGENT,
+        V_TEXCOORD0,
+        V_TEXCOORD1,
+        V_JOINT,
+        V_WEIGHT,
+    };
+
     struct VertexAttr
     {
         VertexFormat format;

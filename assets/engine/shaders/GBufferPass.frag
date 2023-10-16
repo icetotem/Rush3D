@@ -38,6 +38,10 @@ void main() {
   }
 #endif
 
+#if defined(HAS_NORMAL) && defined(HAS_TANGENTS)
+  material.normal = tangentToWorld(material.normal, getTexCoord0());
+#endif
+
   GBuffer0.rgb = (normalize(material.normal) + 1) * 0.5;
   GBuffer1 = vec4(material.baseColor, material.specular);
   GBuffer2.rgb = material.emissiveColor;

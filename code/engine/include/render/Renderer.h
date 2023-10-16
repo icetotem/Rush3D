@@ -146,6 +146,7 @@ namespace rush
         Ref<RSurface> m_Surface;
         // frame graph resources
         HMap<String, SceneGraphTexture> m_RenderTextures;
+        Ref<RMaterial> m_ToneMappingPassMat;
         Ref<RMaterial> m_FinalPassMat;
         Ref<RMaterial> m_DeferredLightingPassMat;
 
