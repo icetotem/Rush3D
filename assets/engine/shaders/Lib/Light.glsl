@@ -37,11 +37,13 @@ struct LightContribution {
 float _getLightRange(const in Light light) { return light.position.w; }
 
 float _getLightAttenuation(const in Light light, vec3 fragToLight) {
-  if (light.type == LightType_Directional) return 1.0;
+  if (light.type == LightType_Directional) 
+    return 1.0;
 
   const float d = length(fragToLight);
   const float lightRange = _getLightRange(light);
-  if (d > lightRange) return 0.0;
+  if (d > lightRange) 
+    return 0.0;
 
 #if 1
   // https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_lights_punctual/README.md
@@ -57,8 +59,7 @@ float _getLightAttenuation(const in Light light, vec3 fragToLight) {
   if (light.type == LightType_Spot) {
     const float innerConeCos = cos(light.innerConeAngle);
     const float outerConeCos = cos(light.outerConeAngle);
-    const float actualCos =
-      dot(normalize(light.direction.xyz), normalize(-fragToLight));
+    const float actualCos = dot(normalize(light.direction.xyz), normalize(-fragToLight));
     if (actualCos > outerConeCos) {
       if (actualCos < innerConeCos)
         spotAttenuation = smoothstep(outerConeCos, innerConeCos, actualCos);

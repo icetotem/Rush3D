@@ -57,7 +57,10 @@ namespace rush
         Vector4 position = {0, 0, 0, 0};
         Vector4 direction = {0, 0, 0, 0};
         Vector4 color = {0, 0, 0, 0};
-        Vector4 typeAngle = {0, 0, 0, 0};
+        uint32_t type = 0;
+        float innerConeAngle = 0;
+        float outerConeAngle = 0;
+        float padding = 0;
     };
 
     struct FrameBufferAttachment

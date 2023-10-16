@@ -41,24 +41,25 @@ int main(int argc, char* argv[])
         auto dirLight = mainScene->CreateEntity("dirLight");
         auto light = dirLight.Add<Light>();
         light->SetType(LightType::LT_Directional);
-        light->SetColor(Vector3(1.0f));
+        //light->SetColor(Vector3(1.0f));
         //light->SetIntensity(1.f);
         auto transform = dirLight.Add<Transform>();
         transform->SetPosition(2, 2, 2);
         transform->LookAt(0, 0, 0);
     }
+
     // point lights
-//     for (int i = -3; i <= 3; ++i)
-//     {
-//         auto pointLight = mainScene->CreateEntity();
-//         auto light = pointLight.Add<Light>();
-//         light->SetType(LightType::LT_Point);
-//         light->SetColor(Vector3(1.0f, 0.5f, 0.5f));
-//         light->SetIntensity(10.5F);
-//         light->SetRadius(15.0f);
-//         auto transform = pointLight.Add<Transform>();
-//         transform->SetPosition(i * 3.0f, 1.5, 0);
-//     }
+    for (int i = -3; i <= 3; ++i)
+    {
+        auto pointLight = mainScene->CreateEntity();
+        auto light = pointLight.Add<Light>();
+        light->SetType(LightType::LT_Point);
+        light->SetColor(Vector3(1.0f, 1.0f, 0));
+        light->SetIntensity(10.5F);
+        light->SetRadius(1.56f);
+        auto transform = pointLight.Add<Transform>();
+        transform->SetPosition(i * 3.0f, 1.5, -1.5f);
+    }
 
     // spot light #1
     for (int i = -3; i <= 3; ++i)
@@ -68,16 +69,31 @@ int main(int argc, char* argv[])
         light->SetType(LightType::LT_Spot);
         light->SetColor(Vector3(0.0f, 1.0f, 0.5f));
         light->SetIntensity(5.5F);
-        light->SetRadius(1.1f);
-        light->SetInerAngle(0.0f);
-        light->SetOutterAngle(0.0f);
+        light->SetRadius(2.1f);
+        light->SetInnerAngle(0.0f);
+        light->SetOuterAngle(20.0f);
         auto transform = pointLight.Add<Transform>();
-        transform->SetPosition(i * 3.0f, 0, 2.0);
-        transform->LookAt(0, 0, 0);
+        transform->SetPosition(i * 3.0f, 1, 0.0);
+        transform->LookAt(i * 3.0f, 0, 1.0);
     }
 
     CameraCtrlFirstPerson firstPersonCtrl;
     firstPersonCtrl.Setup(engine.GetMainWindow(), mainCamera);
+
+    // add plane
+    {
+        auto ent = mainScene->CreateEntity();
+
+        auto trans = ent.Add<Transform>();
+        trans->SetPosition(0, 0, 0);
+        trans->SetScale(10, 1, 10);
+
+        auto meshRenderer = ent.Add<MeshRenderer>();
+        meshRenderer->AddModel("assets/plane.glb");
+        //meshRenderer->SetMaterial(0, "assets/test.mat");
+
+        auto bonding = ent.Add<Bounding>();
+    }
 
     // create the entity
     for (int i = -3; i <= 3; ++i)
@@ -85,29 +101,29 @@ int main(int argc, char* argv[])
         auto ent = mainScene->CreateEntity();
 
         auto trans = ent.Add<Transform>();
-        trans->SetPosition(i * 3.0f, 0, 0);
+        trans->SetPosition(i * 3.0f, 1.5, 0);
 
         auto meshRenderer = ent.Add<MeshRenderer>();
-        meshRenderer->AddModel("assets/Cube.glb");
-        //meshRenderer->SetMaterial(0, "assets/test.mat");
-
-        auto bonding = ent.Add<Bounding>();
-    }
-
-
-    for (int i = 1; i < 5; ++i)
-    {
-        auto ent = mainScene->CreateEntity();
-
-        auto trans = ent.Add<Transform>();
-        trans->SetPosition(0, i * 3.0f, 0);
-
-        auto meshRenderer = ent.Add<MeshRenderer>();
-        meshRenderer->AddModel("assets/sphere.glb");
+        meshRenderer->AddModel("assets/monkey.glb");
         meshRenderer->SetMaterial(0, "assets/test.mat");
 
         auto bonding = ent.Add<Bounding>();
     }
+
+
+//     for (int i = 1; i < 5; ++i)
+//     {
+//         auto ent = mainScene->CreateEntity();
+// 
+//         auto trans = ent.Add<Transform>();
+//         trans->SetPosition(0, i * 3.0f, 0);
+// 
+//         auto meshRenderer = ent.Add<MeshRenderer>();
+//         meshRenderer->AddModel("assets/sphere.glb");
+//         meshRenderer->SetMaterial(0, "assets/test.mat");
+// 
+//         auto bonding = ent.Add<Bounding>();
+//     }
 // 
 //     for (int i = 1; i < 3; ++i)
 //     {

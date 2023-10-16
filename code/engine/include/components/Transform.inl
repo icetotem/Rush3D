@@ -518,7 +518,7 @@ namespace rush
 
     inline void Transform::SetScale(const Vector3& sc)
     {
-        if (!m_Parent.Valid())
+        if (m_Parent.Valid())
         {
             auto trans = m_Parent.Get<Transform>();
             trans->CheckUpdateTree();

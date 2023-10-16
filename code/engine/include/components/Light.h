@@ -31,11 +31,11 @@ namespace rush
         void SetRadius(float radius);
         float GetRaidus() const { return m_Radius; }
 
-        void SetInerAngle(float angle) { m_SpotInnerAngle = glm::clamp(angle, 0.0f, m_SpotOutterAngle); }
+        void SetInnerAngle(float angle) { m_SpotInnerAngle = glm::clamp(angle, 0.0f, m_SpotOutterAngle); }
         float GetInnerAngle() const { return m_SpotInnerAngle; }
 
-        void SetOutterAngle(float angle) { m_SpotOutterAngle = glm::clamp(angle, m_SpotInnerAngle, 80.0f); }
-        float GetOutterAngle() const { return m_SpotOutterAngle; }
+        void SetOuterAngle(float angle) { m_SpotOutterAngle = glm::clamp(angle, m_SpotInnerAngle, 80.0f); }
+        float GetOuterAngle() const { return m_SpotOutterAngle; }
 
         void UpdateBoundings();
         const AABB& GetAABB() const { return m_AABB; }

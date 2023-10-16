@@ -378,7 +378,9 @@ namespace rush
                 auto& lightData = m_LightsData.emplace_back();
                 lightData.color = Vector4(light->GetColor(), light->GetIntensity());
                 lightData.direction = Vector4(light->Get<Transform>()->GetForward(), 0);
-                lightData.typeAngle = Vector4((uint32_t)light->GetType(), degToRad(light->GetInnerAngle()), degToRad(light->GetOutterAngle()), 0);
+                lightData.type = (uint32_t)light->GetType();
+                lightData.innerConeAngle = degToRad(light->GetInnerAngle());
+                lightData.outerConeAngle = degToRad(light->GetOuterAngle());
                 lightData.position = Vector4(light->Get<Transform>()->GetPosition(), light->GetRaidus());
             }
             m_LightsCountBuffer->UpdateData(&count, sizeof(count));
