@@ -117,7 +117,9 @@ namespace rush
 
         ImGui_ImplWGPU_NewFrame();
         ImGui::NewFrame();
+
         //ImGui::ShowDemoWindow(); // Show demo window! :)
+
         ImGui::Render();
 
         m_SceneManager.Update<MainSceneTag>(m_MainRenderer, m_MainWindow->GetSurface());

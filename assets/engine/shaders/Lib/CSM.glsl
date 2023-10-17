@@ -10,8 +10,8 @@ float _getDirLightVisibility(uint cascadeIndex, vec3 fragPos, float NdotL) {
   const float bias = 0.0;
 
 #if !SOFT_SHADOWS
-  return texture(sampler2D(t_CascadedShadowMaps, s_shadow),
-                 vec4(shadowCoord.xy, cascadeIndex, shadowCoord.z - bias));
+  return texture(sampler2DArray(t_CascadedShadowMaps, s_shadow),
+                 vec3(shadowCoord.xy, cascadeIndex/*, shadowCoord.z - bias*/)).r;
 #else
   const ivec2 shadowMapSize = textureSize(t_CascadedShadowMaps, 0).xy;
   const float kScale = 1.0;
@@ -23,9 +23,9 @@ float _getDirLightVisibility(uint cascadeIndex, vec3 fragPos, float NdotL) {
   uint count = 0;
   for (int x = -kRange; x <= kRange; ++x) {
     for (int y = -kRange; y <= kRange; ++y) {
-      shadowFactor += texture(sampler2D(t_CascadedShadowMaps, s_shadow),
-                              vec4(shadowCoord.xy + vec2(dx * x, dy * y),
-                                   cascadeIndex, shadowCoord.z - bias));
+      shadowFactor += texture(sampler2DArray(t_CascadedShadowMaps, s_shadow),
+                              vec3(shadowCoord.xy + vec2(dx * x, dy * y),
+                                   cascadeIndex/*, shadowCoord.z - bias*/)).r;
       count++;
     }
   }

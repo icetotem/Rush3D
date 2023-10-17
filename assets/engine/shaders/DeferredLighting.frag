@@ -5,7 +5,7 @@ layout(location = 0) in vec2 v_TexCoord;
 
 #include <Resources/FrameBlock.glsl>
 
-//#define ENABLE_SHADOW
+#define ENABLE_SHADOW
 //#define ENABLE_GI
 #define USE_PBR
 
@@ -41,7 +41,7 @@ layout(set = 1, binding = 18, std430) restrict readonly buffer LightIndexList {
 layout(set = 1, binding = 19, rgba32ui) restrict readonly uniform uimage2D i_LightGrid;
 #endif
 
-#if ENABLE_SHADOW
+#ifdef ENABLE_SHADOW
 layout(set = 1, binding = 20) uniform texture2DArray t_CascadedShadowMaps;
 layout(set = 1, binding = 21) uniform sampler s_shadow;
 #endif
@@ -64,7 +64,7 @@ _DECLARE_LIGHT_BUFFER(g_LightCount, g_LightBuffer);
 #include <Lib/PBR_DirectLighting.glsl>
 
 #ifdef ENABLE_SHADOW
-#define SOFT_SHADOWS 1
+#define SOFT_SHADOWS 0
 #include <Lib/CSM.glsl>
 #include "LPV.glsl"
 #endif
