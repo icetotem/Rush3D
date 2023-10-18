@@ -18,11 +18,11 @@ struct Light {
 };
 
 #define _DECLARE_LIGHT_BUFFER(countName, buffername)                           \
-  layout(set = 2, binding = 0, std430) restrict readonly buffer LightCount {   \
+  layout(set = 1, binding = 28, std430) restrict readonly buffer LightCount {   \
     uint count;                                                                \
     uint _pad[3];                                                              \
   } countName;                                                                 \
-  layout(set = 2, binding = 1, std430) restrict readonly buffer LightBuffer {  \
+  layout(set = 1, binding = 29, std430) restrict readonly buffer LightBuffer {  \
     Light data[];                                                              \
   }                                                                            \
   buffername;

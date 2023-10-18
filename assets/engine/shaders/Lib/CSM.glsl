@@ -4,14 +4,10 @@
 #include <Resources/Cascades.glsl>
 
 float _getDirLightVisibility(uint cascadeIndex, vec3 fragPos, float NdotL) {
-  vec4 shadowCoord =
-    u_Cascades.viewProjMatrices[cascadeIndex] * vec4(fragPos, 1.0);
-
+  vec4 shadowCoord = u_Cascades.viewProjMatrices[cascadeIndex] * vec4(fragPos, 1.0);
   const float bias = 0.0;
-
 #if !SOFT_SHADOWS
-  return texture(sampler2DArray(t_CascadedShadowMaps, s_shadow),
-                 vec3(shadowCoord.xy, cascadeIndex/*, shadowCoord.z - bias*/)).r;
+  return texture(sampler2DArray(t_CascadedShadowMaps, s_shadow), vec3(shadowCoord.xy, cascadeIndex/*, shadowCoord.z - bias*/)).r;
 #else
   const ivec2 shadowMapSize = textureSize(t_CascadedShadowMaps, 0).xy;
   const float kScale = 1.0;

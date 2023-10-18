@@ -153,18 +153,6 @@ namespace rush
             customCode = tempStr;
         }
 
-        auto globalBindGroups = config_lookup(&cfg, "material.global_bind_groups");
-        if (globalBindGroups)
-        {
-            int count = config_setting_length(globalBindGroups);
-            for (int i = 0; i < count; ++i)
-            {
-                auto bg = config_setting_get_elem(globalBindGroups, i);
-                m_GlobalBindGroups.push_back(bg->value.sval);
-            }
-        }
-
-
         String uniformCode;
         auto uniforms = config_lookup(&cfg, "material.uniforms");
         if (uniforms)
@@ -199,7 +187,7 @@ namespace rush
                 }
                 hash_combine(m_BindGroupHash, info.name);
 
-                if (String(type) == "texture" || String(type) == "texture_cube" || String(type) == "texture_3d")
+                if (String(type) == "texture" || String(type) == "texture_cube" || String(type) == "texture_3d" || String(type) == "texture_array")
                 {
                     info.type = BindingType::Texture;
                     hash_combine(m_BindGroupHash, info.type);
@@ -211,6 +199,10 @@ namespace rush
                     else if (String(type) == "texture_cube")
                     {
                         info.dim = TextureViewDimension::Cube;
+                    }
+                    else if (String(type) == "texture_array")
+                    {
+                        info.dim = TextureViewDimension::e2DArray;
                     }
                     else if (String(type) == "texture_3d")
                     {
@@ -349,15 +341,37 @@ namespace rush
                         hash_combine(m_BindGroupHash, sampleBindType);
                     }
                 }
-                else if (String(type) == "uniform")
+                else if (String(type) == "uniform" || String(type) == "storage")
                 {
-                    info.type = BindingType::Uniform;
-                    hash_combine(m_BindGroupHash, info.type);
-                    int size = 0;
-                    if (CONFIG_TRUE == config_setting_lookup_int(uniform, "size", &size))
+                    if (String(type) == "uniform")
                     {
-                        info.size = size;
-                        hash_combine(m_BindGroupHash, info.size);
+                        info.type = BindingType::Uniform;
+                    }
+                    else
+                    {
+                        info.type = BindingType::Storage;
+                    }
+                    hash_combine(m_BindGroupHash, info.type);
+
+                    const char* target = nullptr;
+                    if (CONFIG_TRUE == config_setting_lookup_string(uniform, "target", &target))
+                    {
+                        info.target = target;
+                        hash_combine(m_BindGroupHash, target);
+                    }
+                    
+                    auto valueScalar = config_setting_lookup(uniform, "value");
+                    if (valueScalar)
+                    {
+                        Vector4 value;
+                        int count = config_setting_length(valueScalar);
+                        for (int i = 0; i < count; ++i)
+                        {
+                            auto v = config_setting_get_elem(valueScalar, i);
+                            value[i] = v->value.fval;
+                            hash_combine(m_BindGroupHash, value[i]);
+                        }
+                        info.value = value;
                     }
                 }
                 else if (String(type) == "storage")
@@ -366,29 +380,40 @@ namespace rush
                     hash_combine(m_BindGroupHash, info.type);
                 }
 
-                char uniformLine[128];
-                if (info.type == BindingType::Texture && info.name != "")
+                int custom = 0;
+                if (CONFIG_TRUE == config_setting_lookup_bool(uniform, "custom", &custom))
                 {
-                    String tex;
-                    if (info.dim == TextureViewDimension::e2D)
-                        tex = "texture2D";
-                    else if (info.dim == TextureViewDimension::e3D)
-                        tex = "texture2D";
-                    else if (info.dim == TextureViewDimension::Cube)
-                        tex = "textureCube";
+                    hash_combine(m_BindGroupHash, custom);
+                }
 
-                    sprintf(uniformLine, "layout(set = 1, binding = %d) uniform %s %s;\n", info.binding, tex.c_str(), info.name.c_str());
-                    uniformCode += uniformLine;
-                }
-                else if (info.type == BindingType::Sampler && info.name != "")
+                if ((bool)custom)
                 {
-                    sprintf(uniformLine, "layout(set = 1, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
-                    uniformCode += uniformLine;
+                    char uniformLine[128];
+                    if (info.type == BindingType::Texture && info.name != "")
+                    {
+                        String tex;
+                        if (info.dim == TextureViewDimension::e2D)
+                            tex = "texture2D";
+                        else if (info.dim == TextureViewDimension::e3D)
+                            tex = "texture2D";
+                        else if (info.dim == TextureViewDimension::Cube)
+                            tex = "textureCube";
+                        else if (info.dim == TextureViewDimension::e2DArray)
+                            tex = "texture2DArray";
+
+                        sprintf(uniformLine, "layout(set = 1, binding = %d) uniform %s %s;\n", info.binding, tex.c_str(), info.name.c_str());
+                        uniformCode += uniformLine;
+                    }
+                    else if (info.type == BindingType::Sampler && info.name != "")
+                    {
+                        sprintf(uniformLine, "layout(set = 1, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
+                        uniformCode += uniformLine;
+                    }
+                    else if (info.type == BindingType::Uniform && info.name != "")
+                    {
+                        // TODO:
+                    }
                 }
-//                 else if (info.type == BindingType::Uniform && info.name != "")
-//                 {
-//                     sprintf(uniformLine, "layout(set = 2, binding = %d) uniform sampler %s;\n", info.binding, info.name.c_str());
-//                 }
             }
         }
 
@@ -454,9 +479,27 @@ namespace rush
         return true;
     }
 
-    void RMaterial::UpdateFrameData(const FrameData& data)
+    void RMaterial::SetUniformData(const StringView& name, const Vector4& data)
     {
-        
+        auto iter = m_Uniforms.find(String(name));
+        if (iter != m_Uniforms.end())
+        {
+            iter->second.data = data;
+            iter->second.buffer->UpdateData(&iter->second.data, sizeof(Vector4), 0);
+        }
+    }
+
+    Vector4 RMaterial::GetUniformValue(const StringView& name) const
+    {
+        auto iter = m_Uniforms.find(String(name));
+        if (iter != m_Uniforms.end())
+        {
+            return iter->second.data;
+        }
+        else
+        {
+            return Vector4(0);
+        }
     }
 
     const wgpu::RenderPipeline RMaterial::GetPipeline(Renderer* renderer, Ref<RGeometry> geometry, Ref<RMaterial> material, const FrameBuffer& outputBuffers)
@@ -543,12 +586,32 @@ namespace rush
                         }
                         material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, sampler, type);
                     }
-                    else if (info.type == BindingType::Uniform)
+                    else if (info.type == BindingType::Uniform || info.type == BindingType::Storage)
                     {
-                        material->m_UniformBuffer = CreateRef<RUniformBuffer>(info.size.value());
-                        uint32_t mode = 0;
-                        material->m_UniformBuffer->UpdateData(&mode, sizeof(uint32_t));
-                        material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, material->m_UniformBuffer, wgpu::BufferBindingType::Uniform);
+                        UniformWrapper uniform;
+                        if (info.value.has_value())
+                        {
+                            uniform.data = info.value.value();
+                            uniform.buffer = CreateRef<RUniformBuffer>(sizeof(Vector4), &uniform.data);
+                        }
+                        else if (info.target.has_value())
+                        {       
+                            auto buffer = renderer->GetFGBuffer(info.target.value());
+                            if (buffer == nullptr)
+                            {
+                                LOG_WARN("Cannot find global uniform registered in renderer: {} {}", info.name, info.target.value());
+                            }
+                            else
+                                uniform.buffer = buffer;
+                        }
+                        else
+                        {
+                            LOG_WARN("Error uniform defination: {} in material {}", info.name, material->GetPath());
+                        }
+
+                        RUSH_ASSERT(uniform.buffer);
+                        material->m_Uniforms.insert({ info.name, uniform });
+                        material->m_BindGroup->AddBinding(info.binding, ShaderStage::Vertex | ShaderStage::Fragment, uniform.buffer, info.type == BindingType::Uniform ? wgpu::BufferBindingType::Uniform : wgpu::BufferBindingType::ReadOnlyStorage);
                     }
                 }
 
@@ -562,24 +625,6 @@ namespace rush
             {
                 bindingGroupLayouts.push_back(renderer->GetTransformDataGroup()->GetBindLayoutHandle());
                 bindingGroupLayouts.push_back(renderer->GetInstanceDataGroup()->GetBindLayoutHandle());
-            }
-            else if (material->GetType() == MaterialType::PostProcess)
-            {
-                for (auto bg : material->m_GlobalBindGroups)
-                {
-                    if (bg == "light_data")
-                    {
-                        bindingGroupLayouts.push_back(renderer->GetLightDataGroup()->GetBindLayoutHandle());
-                    }
-                    else if (bg == "transform_data")
-                    {
-                        bindingGroupLayouts.push_back(renderer->GetTransformDataGroup()->GetBindLayoutHandle());
-                    }
-                    else if (bg == "instance_data")
-                    {
-                        bindingGroupLayouts.push_back(renderer->GetInstanceDataGroup()->GetBindLayoutHandle());
-                    }
-                }
             }
 
             plLayoutDesc.bindGroupLayoutCount = bindingGroupLayouts.size();

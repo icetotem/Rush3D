@@ -6,8 +6,8 @@ material:
     depth_write = false;
     depth_test = false;
     uniforms = (
-        { binding = 0; type = "texture"; name = "t_0"; target = "LDR";},
+        { binding = 0; type = "texture"; name = "t_0"; target = "LDR"; },
         { binding = 1; type = "sampler"; name = "s_0"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
-        { binding = 2; type = "uniform"; name = "Mode"; size = 4; }
+        { binding = 2; type = "uniform"; name = "Mode"; value = [0,0,0,0]; },
     );
 }

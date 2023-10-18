@@ -5,9 +5,9 @@ layout(location = 0) in vec2 v_TexCoord;
 
 #include <Resources/FrameBlock.glsl>
 
-#define ENABLE_SHADOW
+//#define ENABLE_SHADOW
 //#define ENABLE_GI
-#define USE_PBR
+//#define ENABLE_IBL
 
 layout(set = 1, binding = 0) uniform texture2D t_SceneDepth; 
 layout(set = 1, binding = 1) uniform sampler s_d;
@@ -58,18 +58,19 @@ layout(set = 1, binding = 27) uniform sampler s_acc_b;
 #include <Lib/Depth.glsl>
 
 #include <Lib/Light.glsl>
-_DECLARE_LIGHT_BUFFER(g_LightCount, g_LightBuffer);
+_DECLARE_LIGHT_BUFFER(u_LightCount, u_LightBuffer); // layout(set = 1, binding = 28, std140) u_LightCount   
+                                                    // layout(set = 1, binding = 29, std140) u_LightCount
 
 #include <Lib/IBL_AmbientLighting.glsl>
 #include <Lib/PBR_DirectLighting.glsl>
 
 #ifdef ENABLE_SHADOW
 #define SOFT_SHADOWS 0
-#include <Lib/CSM.glsl>
+#include <Lib/CSM.glsl>  // layout(set = 1, binding = 30, std140) uniform Cascades
 #include "LPV.glsl"
 #endif
 
-layout(set = 1, binding = 28) uniform LightGrid_t {
+layout(set = 1, binding = 31) uniform LightGrid_t {
   vec3 minCorner;
   float padding;
   vec3 gridSize;
@@ -205,10 +206,10 @@ void main() {
   for (uint i = 0; i < lightCount; ++i) {
     const uint lightIndex = g_LightIndexList[startOffset + i].x;
 #else
-  for (uint i = 0; i < g_LightCount.count; ++i) {
+  for (uint i = 0; i < u_LightCount.count; ++i) {
     const uint lightIndex = i;
 #endif
-    const Light light = g_LightBuffer.data[lightIndex];
+    const Light light = u_LightBuffer.data[lightIndex];
 
     const vec3 fragToLight = light.type != LightType_Directional
                                ? light.position.xyz - fragPosWorldSpace
@@ -220,19 +221,19 @@ void main() {
     const float NdotL = clamp01(dot(N, L));
     if (NdotL > 0.0 || NdotV > 0.0) {
       float visibility = 1.0;
+
 #ifdef ENABLE_SHADOW
       if (hasRenderFeatures(RenderFeature_Shadows) && receiveShadow) {
         if (light.type == LightType_Directional) {
           const uint cascadeIndex = _selectCascadeIndex(fragPosViewSpace);
-          visibility =
-            _getDirLightVisibility(cascadeIndex, fragPosWorldSpace, NdotL);
+          visibility = _getDirLightVisibility(cascadeIndex, fragPosWorldSpace, NdotL);
         }
 
         if (visibility == 0.0) continue;
       }
 #endif
 
-#ifdef USE_PBR
+      // pbr shading
       const vec3 radiance = _getLightIntensity(light, fragToLight) * NdotL * visibility;
       // clang-format off
       const LightContribution directLighting = PBR_DirectLighting(
@@ -250,18 +251,8 @@ void main() {
 
       Lo_diffuse += directLighting.diffuse;
       Lo_specular += directLighting.specular;
-#else
-      const vec3 radiance = albedo * _getLightIntensity(light, fragToLight);
-      Lo_diffuse += radiance * NdotL * visibility;
-      Lo_specular += radiance * pow(clamp01(dot(N, H)), 64) * visibility;
-#endif
     }
   }
 
   FragColor.rgb = Lo_diffuse + Lo_specular + emissiveColor;
-  //FragColor.rgb += diffuseColor;
-  //FragColor.rgb = fragPosWorldSpace;
-  //FragColor.rgb = V;
-  //FragColor.rgb = (N + 1) * 0.5;
-  //FragColor.rgb = N;
 }

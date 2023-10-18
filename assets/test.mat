@@ -13,13 +13,13 @@ material:
     is_skined = false;
 
     uniforms = (
-        { binding = 0; type = "uniform"; name = "u_MaterialFlags"; size = 4; },
-        { binding = 1; type = "texture"; name = "u_baseColor"; path = "assets/rustediron2_basecolor.png"; },
-        { binding = 2; type = "sampler"; name = "u_baseColorSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
-        { binding = 3; type = "texture"; name = "u_normal"; path = "assets/rustediron2_normal.png"; },
-        { binding = 4; type = "sampler"; name = "u_normalSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
-        { binding = 5; type = "texture"; name = "u_metallic"; path = "assets/rustediron2_metallic_2.png"; },
-        { binding = 6; type = "sampler"; name = "u_metallicSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
+        { binding = 0; type = "uniform"; name = "u_MaterialFlags"; value = [0,0,0,0]; },
+        { binding = 1; type = "texture"; name = "u_baseColor"; path = "assets/rustediron2_basecolor.png"; custom = true; },
+        { binding = 2; type = "sampler"; name = "u_baseColorSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; custom = true; },
+        { binding = 3; type = "texture"; name = "u_normal"; path = "assets/rustediron2_normal.png"; custom = true; },
+        { binding = 4; type = "sampler"; name = "u_normalSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; custom = true; },
+        { binding = 5; type = "texture"; name = "u_metallic"; path = "assets/rustediron2_metallic_2.png"; custom = true; },
+        { binding = 6; type = "sampler"; name = "u_metallicSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; custom = true; },
     );
 
     code = "

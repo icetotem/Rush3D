@@ -50,7 +50,7 @@ namespace rush
         std::optional<FilterMode> mag;
         std::optional<FilterMode> min;
         std::optional<MipmapFilterMode> mip;
-        std::optional<int> size;
+        std::optional<Vector4> value;
     };
 
     class RMaterial : public Asset
@@ -79,10 +79,8 @@ namespace rush
 
         Ref<RBindGroup> GetBindGroup() const { return m_BindGroup; }
 
-        const DArray<String>& GetGlobalBindGroups() const { return m_GlobalBindGroups; }
-
-    public:
-        void UpdateFrameData(const FrameData& data);
+        void SetUniformData(const StringView& name, const Vector4& data);
+        Vector4 GetUniformValue(const StringView& name) const;
 
     protected:
         String m_Path;
@@ -112,8 +110,12 @@ namespace rush
         Ref<RBindGroup> m_BindGroup;
         DArray<BindInfo> m_BindInfos;
         static Map<uint64_t, wgpu::RenderPipeline> s_PipelineCache;
-        Ref<RUniformBuffer> m_UniformBuffer;
-        DArray<String> m_GlobalBindGroups;
+        struct UniformWrapper
+        {
+            Ref<RBuffer> buffer;
+            Vector4 data;
+        };
+        HMap<String, UniformWrapper> m_Uniforms;
     };
 
 }

@@ -30,6 +30,15 @@ namespace rush
         m_FinalPassMat = AssetsManager::instance().GetMaterial("assets/engine/pipeline/final.mat");
         m_DeferredLightingPassMat = AssetsManager::instance().GetMaterial("assets/engine/pipeline/deferred_lighting.mat");
 
+        m_LightsCountBuffer = CreateRef<RStorageBuffer>(sizeof(IVector4), nullptr, "LightCount");
+        RegisterFGBuffer("LightCount", m_LightsCountBuffer);
+
+        m_LightsBuffer = CreateRef<RStorageBuffer>(sizeof(LightData) * 2048, nullptr, "LightBuffer");
+        RegisterFGBuffer("LightBuffer", m_LightsBuffer);
+
+        m_CascadesBuffer = CreateRef<RUniformBuffer>(sizeof(m_Cascades), nullptr, "Cascades");
+        RegisterFGBuffer("Cascades", m_CascadesBuffer);
+
         RegisterFGRenderTexture("GBuffer0", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("GBuffer1", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("GBuffer2", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
@@ -39,6 +48,7 @@ namespace rush
         RegisterFGRenderTexture("LDR", TextureFormat::BGRA8Unorm, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("SSAO", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
         RegisterFGRenderTexture("BRDF", TextureFormat::RGBA16Float, TextureViewDimension::e2D, Vector2(1.0f, 1.0f));
+        RegisterFGRenderTexture("ShadowMap", TextureFormat::R16Float, TextureViewDimension::e2DArray, Vector2(1.0f, 1.0f));
         RegisterFGDynamicTexture("IrradianceMap", TextureFormat::RGBA16Float, TextureViewDimension::Cube, Vector2(1.0f, 1.0f));
         RegisterFGDynamicTexture("PrefilteredEnvMap", TextureFormat::RGBA16Float, TextureViewDimension::Cube, Vector2(1.0f, 1.0f));
 
@@ -63,12 +73,6 @@ namespace rush
             instBindGroup.group->Create("InstanceData_group");
         }
 
-        m_LightsCountBuffer = CreateRef<RStorageBuffer>(sizeof(IVector4), nullptr, "LightCountData_buffer");
-        m_LightsBuffer = CreateRef<RStorageBuffer>(sizeof(LightData) * 2048, nullptr, "LightData_buffer");
-        m_LightDataGroup = CreateRef<RBindGroup>();
-        m_LightDataGroup->AddBinding(0, ShaderStage::Fragment, m_LightsCountBuffer, wgpu::BufferBindingType::ReadOnlyStorage);
-        m_LightDataGroup->AddBinding(1, ShaderStage::Fragment, m_LightsBuffer, wgpu::BufferBindingType::ReadOnlyStorage);
-        m_LightDataGroup->Create("LightData_group");
     }
 
     void Renderer::CreateFullScreenQuad()
@@ -286,29 +290,11 @@ namespace rush
         if (m_FrameDataGroup->GetBindGroupHandle())
             pass.SetBindGroup(0, m_FrameDataGroup->GetBindGroupHandle());
 
+        // set local data
         pass.SetPipeline(RMaterial::GetPipeline(this, m_ScreenQuadGeo, material, outputBuffers));
         if (material->GetBindGroup() && material->GetBindGroup()->GetBindGroupHandle())
         {
             pass.SetBindGroup(1, material->GetBindGroup()->GetBindGroupHandle());
-        }
-
-        const auto& globalGroups = material->GetGlobalBindGroups();
-        int bgIndex = 2;
-        for (const auto& bg : globalGroups)
-        {
-            if (bg == "light_data")
-            {
-                pass.SetBindGroup(bgIndex, GetLightDataGroup()->GetBindGroupHandle());
-            }
-            else if (bg == "transform_data")
-            {
-                pass.SetBindGroup(bgIndex, GetTransformDataGroup()->GetBindGroupHandle());
-            }
-            else if (bg == "instance_data")
-            {
-                pass.SetBindGroup(bgIndex, GetInstanceDataGroup()->GetBindGroupHandle());
-            }
-            ++bgIndex;
         }
 
         pass.SetVertexBuffer(0, m_ScreenQuadGeo->GetVB(0)->GetBufferHandle());
@@ -370,22 +356,22 @@ namespace rush
 
         // update light data
         m_LightsData.clear();
-        if (m_LightDataGroup->GetBindGroupHandle())
+        IVector4 count = Vector4(renderQueue->GetLights().size(), 0, 0, 0);
+        for (auto light : renderQueue->GetLights())
         {
-            IVector4 count = Vector4(renderQueue->GetLights().size(), 0, 0, 0);
-            for (auto light : renderQueue->GetLights())
-            {
-                auto& lightData = m_LightsData.emplace_back();
-                lightData.color = Vector4(light->GetColor(), light->GetIntensity());
-                lightData.direction = Vector4(light->Get<Transform>()->GetForward(), 0);
-                lightData.type = (uint32_t)light->GetType();
-                lightData.innerConeAngle = degToRad(light->GetInnerAngle());
-                lightData.outerConeAngle = degToRad(light->GetOuterAngle());
-                lightData.position = Vector4(light->Get<Transform>()->GetPosition(), light->GetRaidus());
-            }
-            m_LightsCountBuffer->UpdateData(&count, sizeof(count));
-            m_LightsBuffer->UpdateData(m_LightsData.data(), sizeof(LightData) * m_LightsData.size());
+            auto& lightData = m_LightsData.emplace_back();
+            lightData.color = Vector4(light->GetColor(), light->GetIntensity());
+            lightData.direction = Vector4(light->Get<Transform>()->GetForward(), 0);
+            lightData.type = (uint32_t)light->GetType();
+            lightData.innerConeAngle = degToRad(light->GetInnerAngle());
+            lightData.outerConeAngle = degToRad(light->GetOuterAngle());
+            lightData.position = Vector4(light->Get<Transform>()->GetPosition(), light->GetRaidus());
         }
+        m_LightsCountBuffer->UpdateData(&count, sizeof(count));
+        m_LightsBuffer->UpdateData(m_LightsData.data(), sizeof(LightData) * m_LightsData.size());
+
+        // update cascades
+        m_CascadesBuffer->UpdateData(&m_Cascades, sizeof(m_Cascades));
 
         // g-buffer pass
         if (1)
@@ -463,6 +449,28 @@ namespace rush
             ft.dim = dim;
             ft.isRT = false;
             m_RenderTextures.insert({ String(name), ft });
+        }
+    }
+
+    void Renderer::RegisterFGBuffer(const StringView& name, Ref<RBuffer> buffer)
+    {
+        auto iter = m_FGBuffers.find(String(name));
+        if (iter == m_FGBuffers.end())
+        {
+            m_FGBuffers.insert({ String(name), buffer });
+        }
+    }
+
+    Ref<RBuffer> Renderer::GetFGBuffer(const StringView& name)
+    {
+        auto iter = m_FGBuffers.find(String(name));
+        if (iter == m_FGBuffers.end())
+        {
+            return nullptr;
+        }
+        else
+        {
+            return iter->second;
         }
     }
 
@@ -546,4 +554,4 @@ namespace rush
         }
     }
 
-}
+    }

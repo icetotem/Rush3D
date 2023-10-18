@@ -13,7 +13,7 @@ material:
     is_skined = false;
 
     uniforms = (
-        { binding = 0; type = "uniform"; name = "u_MaterialFlags"; size = 4; }
+        { binding = 0; type = "uniform"; name = "u_MaterialFlags"; value = [0,0,0,0]; }
     );
 
 }

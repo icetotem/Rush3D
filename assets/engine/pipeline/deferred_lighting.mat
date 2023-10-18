@@ -7,25 +7,28 @@ material:
     depth_write = false;
     depth_test = false;
     uniforms = (
-        { binding = 0; type = "texture"; target = "SceneDepth";  sample_type = "unfilterable"; },
-        { binding = 1; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; binding_type = "non_filtering"; },
-        { binding = 2; type = "texture"; target = "GBuffer0";},
+        { binding = 0; type = "texture"; target = "SceneDepth";  sample_type = "unfilterable";  },
+        { binding = 1; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; binding_type = "non_filtering";  },
+        { binding = 2; type = "texture"; target = "GBuffer0"; },
         { binding = 3; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
-        { binding = 4; type = "texture"; target = "GBuffer1";},
+        { binding = 4; type = "texture"; target = "GBuffer1"; },
         { binding = 5; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
-        { binding = 6; type = "texture"; target = "GBuffer2";},
+        { binding = 6; type = "texture"; target = "GBuffer2"; },
         { binding = 7; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
-        { binding = 8; type = "texture"; target = "GBuffer3";},
+        { binding = 8; type = "texture"; target = "GBuffer3"; },
         { binding = 9; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
-        { binding = 10; type = "texture"; target = "SSAO";},
+        { binding = 10; type = "texture"; target = "SSAO"; },
         { binding = 11; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
-        { binding = 12; type = "texture"; target = "BRDF";},
+        { binding = 12; type = "texture"; target = "BRDF"; },
         { binding = 13; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
-        { binding = 14; type = "texture_cube"; target = "IrradianceMap";},
+        { binding = 14; type = "texture_cube"; target = "IrradianceMap"; },
         { binding = 15; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
-        { binding = 16; type = "texture_cube"; target = "PrefilteredEnvMap";},
+        { binding = 16; type = "texture_cube"; target = "PrefilteredEnvMap"; },
         { binding = 17; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
-        { binding = 28; type = "uniform"; size = 32; }
+        { binding = 20; type = "texture_array"; name = "t_CascadedShadowMaps"; target = "ShadowMap"; },
+        { binding = 21; type = "sampler"; name = "s_shadow"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
+        { binding = 28; type = "storage"; name = "u_LightCount"; target = "LightCount"; },
+        { binding = 29; type = "storage"; name = "u_LightBuffer"; target = "LightBuffer"; },
+        //{ binding = 30; type = "uniform"; name = "u_Cascades"; target = "Cascades"; }, 
     );
-    global_bind_groups = ["light_data"]; // maybe "transform_data", "instance_data"
 }

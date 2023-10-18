@@ -89,6 +89,14 @@ namespace rush
         Vector2 size = { 1.0f, 1.0f };
     };
 
+#define MAX_NUM_CASCADES 4
+
+    struct Cascades
+    {
+        Vector4 splitDepth;
+        Matrix4 viewProjMatrices[MAX_NUM_CASCADES];
+    };
+
     /// <summary>
     /// Renderer
     /// </summary>
@@ -107,6 +115,7 @@ namespace rush
         Ref<RTexture> GetFGTexture(const StringView& name);
         TextureFormat GetFGTextureFormat(const StringView& name);
         TextureViewDimension GetFGTextureViewDim(const StringView& name);
+        Ref<RBuffer> GetFGBuffer(const StringView& name);
 
         void GenAttachment(FrameBufferAttachment& inout, const StringView& name, const Vector4& clearColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f))
         {
@@ -118,7 +127,6 @@ namespace rush
         const Ref<RBindGroup> GetFrameDataGroup() const { return m_FrameDataGroup; }
         const Ref<RBindGroup> GetTransformDataGroup() const { return m_TransformDataGroup; }
         const Ref<RBindGroup> GetInstanceDataGroup() const { return m_InstanceBindGroups[0].group; }
-        const Ref<RBindGroup> GetLightDataGroup() const { return m_LightDataGroup; }
 
     protected:
         friend class Engine;
@@ -134,6 +142,7 @@ namespace rush
 
         void RegisterFGRenderTexture(const StringView& name, TextureFormat format, TextureViewDimension dim, Vector2 viewScale);
         void RegisterFGDynamicTexture(const StringView& name, TextureFormat format, TextureViewDimension dim, Vector2 size);
+        void RegisterFGBuffer(const StringView& name, Ref<RBuffer> buffer);
 
         void BeginDraw(Ref<RSurface> surface);
         void DrawScene(Ref<RenderQueue> renderQueue, const FrameBuffer& outputBuffers);
@@ -152,6 +161,7 @@ namespace rush
         Ref<RMaterial> m_ToneMappingPassMat;
         Ref<RMaterial> m_FinalPassMat;
         Ref<RMaterial> m_DeferredLightingPassMat;
+        HMap<String, Ref<RBuffer>> m_FGBuffers;
 
         // FrameData
         Ref<RBuffer> m_FrameDataBuffer;
@@ -165,6 +175,10 @@ namespace rush
         DArray<Matrix4> m_NormalTransforms;
         Ref<RBindGroup> m_TransformDataGroup;
 
+        // for shadow map
+        Cascades m_Cascades;
+        Ref<RBuffer> m_CascadesBuffer;
+
         // instance data
         DArray<InstanceBindGroup> m_InstanceBindGroups;
 
@@ -172,7 +186,6 @@ namespace rush
         Ref<RBuffer> m_LightsCountBuffer;
         Ref<RBuffer> m_LightsBuffer;
         DArray<LightData> m_LightsData;
-        Ref<RBindGroup> m_LightDataGroup;
     };
 
 }
