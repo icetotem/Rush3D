@@ -27,7 +27,7 @@ material:
         { binding = 17; type = "sampler"; address = "repeat"; mag = "nearest"; min = "nearest"; mip = "nearest"; },
         { binding = 20; type = "texture_array"; name = "t_CascadedShadowMaps"; target = "ShadowMap"; },
         { binding = 21; type = "sampler"; name = "s_shadow"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; },
-        { binding = 28; type = "storage"; name = "u_LightCount"; target = "LightCount"; },
+        { binding = 28; type = "uniform"; name = "u_LightCount"; target = "LightCount"; },
         { binding = 29; type = "storage"; name = "u_LightBuffer"; target = "LightBuffer"; },
         //{ binding = 30; type = "uniform"; name = "u_Cascades"; target = "Cascades"; }, 
     );

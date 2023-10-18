@@ -30,7 +30,7 @@ namespace rush
         m_FinalPassMat = AssetsManager::instance().GetMaterial("assets/engine/pipeline/final.mat");
         m_DeferredLightingPassMat = AssetsManager::instance().GetMaterial("assets/engine/pipeline/deferred_lighting.mat");
 
-        m_LightsCountBuffer = CreateRef<RStorageBuffer>(sizeof(IVector4), nullptr, "LightCount");
+        m_LightsCountBuffer = CreateRef<RUniformBuffer>(sizeof(IVector4), nullptr, "LightCount");
         RegisterFGBuffer("LightCount", m_LightsCountBuffer);
 
         m_LightsBuffer = CreateRef<RStorageBuffer>(sizeof(LightData) * 2048, nullptr, "LightBuffer");
