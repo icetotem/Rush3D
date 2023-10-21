@@ -409,6 +409,18 @@ namespace rush
             }
 
         }
+
+        if (model.skins.size() > 0)
+        {
+            // Assuming there is only one skin in the model for simplicity
+            const tinygltf::Skin& skin = model.skins[0];
+            for (int jointIndex : skin.joints) {
+                const tinygltf::Node& jointNode = model.nodes[jointIndex];
+                // Access jointNode for bone information
+            }
+        }
+
+
         return true;
     }
 

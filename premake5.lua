@@ -47,6 +47,7 @@ solution "Rush3D"
 
 include "3rdparty"
 include "code/engine"
+include "code/editor"
 
 group "samples"
 include "code/samples/basic_framework"
