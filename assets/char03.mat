@@ -1,0 +1,35 @@
+material:
+{
+    type  = "surface";
+    shading_model = "default_lit";
+    vs  = "assets/engine/shaders/geometry.vert";
+    fs  = "assets/engine/shaders/gbufferpass.frag";
+
+    has_color = false;
+    has_normal = true;
+    has_tangent = true;
+    has_texcoord0 = true;
+    has_texcoord1 = false;
+    is_skined = false;
+
+    uniforms = (
+        { binding = 0; type = "uniform"; name = "u_MaterialFlags"; value = [0,0,0,0]; },
+        { binding = 1; type = "texture"; name = "u_baseColor"; path = "assets/ch03_1001_diffuse.png"; custom = true; },
+        { binding = 2; type = "sampler"; name = "u_baseColorSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; custom = true; },
+        { binding = 3; type = "texture"; name = "u_normal"; path = "assets/ch03_1001_normal.png"; custom = true; },
+        { binding = 4; type = "sampler"; name = "u_normalSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; custom = true; },
+        { binding = 5; type = "texture"; name = "u_roughness"; path = "assets/ch03_1001_glossiness.png"; custom = true; },
+        { binding = 6; type = "sampler"; name = "u_roughnessSampler"; address = "repeat"; mag = "linear"; min = "linear"; mip = "linear"; custom = true; },
+    );
+
+    code = "
+        vec4 color = texture(sampler2D(u_baseColor, u_baseColorSampler), getTexCoord0());
+        material.baseColor = sRGBToLinear(color.rgb);
+
+        vec3 normal = texture(sampler2D(u_normal, u_normalSampler), getTexCoord0()).rgb;
+        material.normal = normal * 2.0 - 1.0;
+
+        float roughness = texture(sampler2D(u_roughness, u_roughnessSampler), getTexCoord0()).b;
+        material.roughness = roughness;
+    ";
+}

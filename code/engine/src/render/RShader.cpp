@@ -79,7 +79,7 @@ namespace rush
 
         str_replace(templateCode, "#pragma USER_CODE", code);
         str_replace(templateCode, "#pragma USER_SAMPLERS", uniforms);
-        auto outPath = std::filesystem::absolute("../../assets/temp/user.glsl").string();
+        auto outPath = std::filesystem::absolute("../../assets/spv/user.glsl").string();
         std::remove(outPath.c_str());
         std::ofstream outputFile(outPath.c_str(), std::ios::out | std::ios::trunc);
         if (!outputFile.is_open()) {
@@ -90,7 +90,7 @@ namespace rush
         outputFile << templateCode;
         outputFile.close();
 
-        sprintf(cmd, "glslc \"%s\" -I \"%s\" -I \"%s\" -o \"%s\"", src.c_str(), inc.c_str(), "../../assets/temp", relPath.c_str());
+        sprintf(cmd, "glslc \"%s\" -I \"%s\" -I \"%s\" -o \"%s\"", src.c_str(), inc.c_str(), "../../assets/spv", relPath.c_str());
 
         // macros
         for (const auto& define : defines)

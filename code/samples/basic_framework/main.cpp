@@ -95,6 +95,20 @@ int main(int argc, char* argv[])
         auto bonding = ent.Add<Bounding>();
     }
 
+    // create character
+    {
+        auto chr = mainScene->CreateEntity();
+        auto trans = chr.Add<Transform>();
+        trans->SetPosition(0, 0, 3);
+        trans->SetScale(3, 3, 3);
+
+        auto meshRenderer = chr.Add<MeshRenderer>();
+        meshRenderer->AddModel("assets/char03.glb");
+        meshRenderer->SetMaterial(0, "assets/char03.mat");
+
+        auto bonding = chr.Add<Bounding>();
+    }
+
     // create the entity
     for (int i = -3; i <= 3; ++i)
     {
